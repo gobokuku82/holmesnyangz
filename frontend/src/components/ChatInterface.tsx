@@ -129,12 +129,10 @@ const ChatInterface: React.FC = () => {
       await mockApi.simulateWorkflow((status) => {
         setWorkflowStatus(status);
         
-        // Create system message for workflow status
-        let systemMessage: Message | null = null;
-        
+        // Create system message for workflow status        
         switch (status.stage) {
           case 'analyzing':
-            systemMessage = {
+            const analyzeMessage: Message = {
               id: `system-analyzing-${Date.now()}`,
               content: '사용자 질의를 분석하고 있습니다...',
               sender: 'system',
@@ -145,6 +143,10 @@ const ChatInterface: React.FC = () => {
                 progress: status.progress,
               },
             };
+            setMessages(prev => {
+              const filteredMessages = prev.filter(m => m.sender !== 'system');
+              return [...filteredMessages, analyzeMessage];
+            });
             setSpinnerConfig({
               type: 'thinking',
               message: '사용자 질의를 분석하고 있습니다...',
@@ -152,7 +154,7 @@ const ChatInterface: React.FC = () => {
             });
             break;
           case 'planning':
-            systemMessage = {
+            const planMessage: Message = {
               id: `system-planning-${Date.now()}`,
               content: '최적의 실행 계획을 수립하고 있습니다...',
               sender: 'system',
@@ -163,6 +165,10 @@ const ChatInterface: React.FC = () => {
                 progress: status.progress,
               },
             };
+            setMessages(prev => {
+              const filteredMessages = prev.filter(m => m.sender !== 'system');
+              return [...filteredMessages, planMessage];
+            });
             setSpinnerConfig({
               type: 'planning',
               message: '최적의 실행 계획을 수립하고 있습니다...',
@@ -191,7 +197,7 @@ const ChatInterface: React.FC = () => {
             
             setAgentStatuses(currentAgents);
             
-            systemMessage = {
+            const executeMessage: Message = {
               id: `system-executing-${Date.now()}`,
               content: '에이전트를 실행하고 있습니다',
               sender: 'system',
@@ -204,6 +210,11 @@ const ChatInterface: React.FC = () => {
               },
             };
             
+            setMessages(prev => {
+              const filteredMessages = prev.filter(m => m.sender !== 'system');
+              return [...filteredMessages, executeMessage];
+            });
+            
             setSpinnerConfig({
               type: 'executing',
               message: '에이전트를 실행하고 있습니다...',
@@ -213,15 +224,6 @@ const ChatInterface: React.FC = () => {
           case 'completed':
             setSpinnerConfig(null);
             break;
-        }
-        
-        // Add or update system message
-        if (systemMessage) {
-          setMessages(prev => {
-            // Remove previous system messages and add new one
-            const filteredMessages = prev.filter(m => m.sender !== 'system');
-            return [...filteredMessages, systemMessage];
-          });
         }
       });
 

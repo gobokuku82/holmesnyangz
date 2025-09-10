@@ -8,7 +8,8 @@
       "Read(//c/kdy/Projects/holmesnyangz/**)",
       "Bash(npm install:*)",
       "Bash(npm start)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "ask": []

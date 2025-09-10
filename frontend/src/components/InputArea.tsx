@@ -1,6 +1,5 @@
 import React, { useState, KeyboardEvent } from 'react';
 import styled from 'styled-components';
-import { FiSend, FiPaperclip, FiMic } from 'react-icons/fi';
 
 interface InputAreaProps {
   onSendMessage: (message: string) => void;
@@ -55,6 +54,7 @@ const Button = styled.button<{ primary?: boolean }>`
   justify-content: center;
   transition: all 0.3s ease;
   margin-left: 5px;
+  font-size: ${props => props.primary ? '20px' : '18px'};
   
   &:hover {
     transform: scale(1.1);
@@ -156,11 +156,11 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled }) => {
         </CharCount>
         
         <Button disabled={disabled}>
-          <>{<FiPaperclip size={18} />}</>
+          📎
         </Button>
         
         <Button disabled={disabled}>
-          <>{<FiMic size={18} />}</>
+          🎤
         </Button>
         
         <Button
@@ -168,7 +168,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled }) => {
           onClick={handleSend}
           disabled={disabled || !message.trim()}
         >
-          <>{<FiSend size={18} />}</>
+          ➤
         </Button>
       </InputWrapper>
     </Container>
