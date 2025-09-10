@@ -156,11 +156,11 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled }) => {
         </CharCount>
         
         <Button disabled={disabled}>
-          <FiPaperclip size={18} />
+          <>{<FiPaperclip size={18} />}</>
         </Button>
         
         <Button disabled={disabled}>
-          <FiMic size={18} />
+          <>{<FiMic size={18} />}</>
         </Button>
         
         <Button
@@ -168,7 +168,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled }) => {
           onClick={handleSend}
           disabled={disabled || !message.trim()}
         >
-          <FiSend size={18} />
+          <>{<FiSend size={18} />}</>
         </Button>
       </InputWrapper>
     </Container>

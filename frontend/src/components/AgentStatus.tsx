@@ -111,13 +111,13 @@ const AgentStatus: React.FC<AgentStatusProps> = ({ agents }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <FiCheckCircle size={20} />;
+        return <>{<FiCheckCircle size={20} />}</>;
       case 'running':
-        return <FiLoader size={20} />;
+        return <>{<FiLoader size={20} />}</>;
       case 'error':
-        return <FiAlertCircle size={20} />;
+        return <>{<FiAlertCircle size={20} />}</>;
       default:
-        return <FiClock size={20} />;
+        return <>{<FiClock size={20} />}</>;
     }
   };
 

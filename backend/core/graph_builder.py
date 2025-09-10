@@ -5,7 +5,6 @@ Context-aware graph construction for real estate chatbot
 
 from typing import Dict, Any, Optional, List, Literal
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 from backend.core.state import AgentState

@@ -8,12 +8,13 @@ python-dotenv==1.0.1
 pydantic==2.9.0
 pydantic-settings==2.4.0
 
-# LangGraph 0.6.6+ (Latest as of August 2025)
+# LangGraph 0.6.6+ (Latest as of September 2025)
 langgraph==0.6.6
+langgraph-checkpoint-sqlite==2.0.11
 langchain>=0.3.0
-langchain-anthropic>=0.2.0
-langchain-openai>=0.2.0
-langchain-core==0.3.70
+langchain-anthropic==0.3.19
+langchain-openai==0.3.32
+langchain-core==0.3.75  # Updated to resolve dependency conflict
 langchain-community>=0.3.0
 langchain-chroma>=0.2.5
 langchain-huggingface>=0.3.1
