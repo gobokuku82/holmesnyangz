@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
-import SpinnerModal from './SpinnerModal';
-import { Message, WorkflowStatus, AgentStatus as AgentStatusType, SpinnerConfig } from '../types';
+import { Message, WorkflowStatus, AgentStatus as AgentStatusType } from '../types';
 import { mockApi } from '../services/api';
 
 const Container = styled.div`
@@ -85,7 +84,6 @@ const ChatInterface: React.FC = () => {
     progress: 0,
   });
   const [agentStatuses, setAgentStatuses] = useState<AgentStatusType[]>([]);
-  const [spinnerConfig, setSpinnerConfig] = useState<SpinnerConfig | null>(null);
   const [sessionId, setSessionId] = useState<string>('');
 
   // Initialize session
@@ -147,11 +145,6 @@ const ChatInterface: React.FC = () => {
               const filteredMessages = prev.filter(m => m.sender !== 'system');
               return [...filteredMessages, analyzeMessage];
             });
-            setSpinnerConfig({
-              type: 'thinking',
-              message: '사용자 질의를 분석하고 있습니다...',
-              progress: status.progress,
-            });
             break;
           case 'planning':
             const planMessage: Message = {
@@ -168,11 +161,6 @@ const ChatInterface: React.FC = () => {
             setMessages(prev => {
               const filteredMessages = prev.filter(m => m.sender !== 'system');
               return [...filteredMessages, planMessage];
-            });
-            setSpinnerConfig({
-              type: 'planning',
-              message: '최적의 실행 계획을 수립하고 있습니다...',
-              progress: status.progress,
             });
             break;
           case 'executing':
@@ -214,15 +202,8 @@ const ChatInterface: React.FC = () => {
               const filteredMessages = prev.filter(m => m.sender !== 'system');
               return [...filteredMessages, executeMessage];
             });
-            
-            setSpinnerConfig({
-              type: 'executing',
-              message: '에이전트를 실행하고 있습니다...',
-              progress: status.progress,
-            });
             break;
           case 'completed':
-            setSpinnerConfig(null);
             break;
         }
       });
@@ -252,7 +233,6 @@ const ChatInterface: React.FC = () => {
       
     } finally {
       setIsProcessing(false);
-      setSpinnerConfig(null);
       setWorkflowStatus({ stage: 'idle', progress: 0 });
       setAgentStatuses([]);
     }
@@ -281,14 +261,6 @@ const ChatInterface: React.FC = () => {
           />
         </ChatContainer>
       </MainContent>
-
-      <SpinnerModal 
-        config={spinnerConfig}
-        agentStatuses={agentStatuses.map(agent => ({
-          name: agent.name,
-          progress: agent.progress,
-        }))}
-      />
     </Container>
   );
 };

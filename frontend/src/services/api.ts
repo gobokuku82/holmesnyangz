@@ -76,47 +76,40 @@ export const mockApi = {
     onProgress: (status: any) => void
   ): Promise<ChatResponse> => {
     // Stage 1: Analyzing
-    onProgress({
-      stage: 'analyzing',
-      progress: 0,
-      message: '사용자 질의를 분석하고 있습니다...',
-    });
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    onProgress({
-      stage: 'analyzing',
-      progress: 100,
-      message: '분석 완료',
-    });
+    for (let i = 0; i <= 100; i += 25) {
+      onProgress({
+        stage: 'analyzing',
+        progress: i,
+        message: '사용자 질의를 분석하고 있습니다...',
+      });
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
 
     // Stage 2: Planning
-    onProgress({
-      stage: 'planning',
-      progress: 0,
-      message: '실행 계획을 수립하고 있습니다...',
-    });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onProgress({
-      stage: 'planning',
-      progress: 100,
-      message: '계획 수립 완료',
-    });
+    for (let i = 0; i <= 100; i += 33) {
+      onProgress({
+        stage: 'planning',
+        progress: Math.min(i, 100),
+        message: '실행 계획을 수립하고 있습니다...',
+      });
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
 
     // Stage 3: Executing
     const agents = ['price_search_agent', 'finance_agent', 'legal_agent'];
     for (let i = 0; i < agents.length; i++) {
-      onProgress({
-        stage: 'executing',
-        progress: (i / agents.length) * 100,
-        currentAgent: agents[i],
-        message: `${agents[i]} 실행 중...`,
-      });
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Each agent progresses from 0 to 100
+      for (let progress = 0; progress <= 100; progress += 20) {
+        const overallProgress = ((i * 100 + progress) / agents.length);
+        onProgress({
+          stage: 'executing',
+          progress: Math.min(overallProgress, 100),
+          currentAgent: agents[i],
+          message: `에이전트를 실행하고 있습니다...`,
+        });
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
     }
-    onProgress({
-      stage: 'executing',
-      progress: 100,
-      message: '모든 에이전트 실행 완료',
-    });
 
     // Stage 4: Completed
     onProgress({
