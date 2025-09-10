@@ -3,9 +3,15 @@
 export interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'bot';
+  sender: 'user' | 'bot' | 'system';
   timestamp: Date;
   status?: 'sending' | 'sent' | 'error';
+  metadata?: {
+    type?: 'progress' | 'agent-status' | 'workflow';
+    stage?: string;
+    progress?: number;
+    agents?: AgentStatus[];
+  };
 }
 
 export interface WorkflowStatus {

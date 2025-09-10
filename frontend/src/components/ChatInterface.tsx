@@ -3,8 +3,6 @@ import styled from 'styled-components';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
 import SpinnerModal from './SpinnerModal';
-import ProgressBar from './ProgressBar';
-import AgentStatus from './AgentStatus';
 import { Message, WorkflowStatus, AgentStatus as AgentStatusType, SpinnerConfig } from '../types';
 import { mockApi } from '../services/api';
 
@@ -131,9 +129,22 @@ const ChatInterface: React.FC = () => {
       await mockApi.simulateWorkflow((status) => {
         setWorkflowStatus(status);
         
-        // Update spinner based on stage
+        // Create system message for workflow status
+        let systemMessage: Message | null = null;
+        
         switch (status.stage) {
           case 'analyzing':
+            systemMessage = {
+              id: `system-analyzing-${Date.now()}`,
+              content: '사용자 질의를 분석하고 있습니다...',
+              sender: 'system',
+              timestamp: new Date(),
+              metadata: {
+                type: 'progress',
+                stage: 'analyzing',
+                progress: status.progress,
+              },
+            };
             setSpinnerConfig({
               type: 'thinking',
               message: '사용자 질의를 분석하고 있습니다...',
@@ -141,6 +152,17 @@ const ChatInterface: React.FC = () => {
             });
             break;
           case 'planning':
+            systemMessage = {
+              id: `system-planning-${Date.now()}`,
+              content: '최적의 실행 계획을 수립하고 있습니다...',
+              sender: 'system',
+              timestamp: new Date(),
+              metadata: {
+                type: 'progress',
+                stage: 'planning',
+                progress: status.progress,
+              },
+            };
             setSpinnerConfig({
               type: 'planning',
               message: '최적의 실행 계획을 수립하고 있습니다...',
@@ -148,29 +170,58 @@ const ChatInterface: React.FC = () => {
             });
             break;
           case 'executing':
-            setSpinnerConfig({
-              type: 'executing',
-              message: '에이전트를 실행하고 있습니다...',
-              progress: status.progress,
-            });
-            
             // Update agent statuses
             const agents = ['price_search_agent', 'finance_agent', 'legal_agent'];
+            const agentNames: { [key: string]: string } = {
+              'price_search_agent': '시세 검색',
+              'finance_agent': '금융 분석',
+              'legal_agent': '법률 검토',
+            };
             const currentAgentIndex = Math.floor(status.progress / (100 / agents.length));
             
-            setAgentStatuses(agents.map((id, index) => ({
+            const currentAgents = agents.map((id, index) => ({
               id,
-              name: id,
+              name: agentNames[id] || id,
               status: index < currentAgentIndex ? 'completed' : 
                       index === currentAgentIndex ? 'running' : 'pending',
               progress: index === currentAgentIndex ? 
                         (status.progress % (100 / agents.length)) * agents.length : 
                         index < currentAgentIndex ? 100 : 0,
-            })));
+            } as AgentStatusType));
+            
+            setAgentStatuses(currentAgents);
+            
+            systemMessage = {
+              id: `system-executing-${Date.now()}`,
+              content: '에이전트를 실행하고 있습니다',
+              sender: 'system',
+              timestamp: new Date(),
+              metadata: {
+                type: 'agent-status',
+                stage: 'executing',
+                progress: status.progress,
+                agents: currentAgents,
+              },
+            };
+            
+            setSpinnerConfig({
+              type: 'executing',
+              message: '에이전트를 실행하고 있습니다...',
+              progress: status.progress,
+            });
             break;
           case 'completed':
             setSpinnerConfig(null);
             break;
+        }
+        
+        // Add or update system message
+        if (systemMessage) {
+          setMessages(prev => {
+            // Remove previous system messages and add new one
+            const filteredMessages = prev.filter(m => m.sender !== 'system');
+            return [...filteredMessages, systemMessage];
+          });
         }
       });
 
@@ -218,14 +269,6 @@ const ChatInterface: React.FC = () => {
           </Status>
         </HeaderContent>
       </Header>
-
-      {workflowStatus.stage !== 'idle' && (
-        <ProgressBar status={workflowStatus} />
-      )}
-
-      {agentStatuses.length > 0 && (
-        <AgentStatus agents={agentStatuses} />
-      )}
 
       <MainContent>
         <ChatContainer>
