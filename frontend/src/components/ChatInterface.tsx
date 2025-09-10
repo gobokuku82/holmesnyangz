@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
-import { Message, WorkflowStatus, AgentStatus as AgentStatusType } from '../types';
+import ProgressFlow from './ProgressFlow';
+import { Message, WorkflowStatus } from '../types';
 import { mockApi } from '../services/api';
 
 const Container = styled.div`
@@ -83,7 +84,6 @@ const ChatInterface: React.FC = () => {
     stage: 'idle',
     progress: 0,
   });
-  const [agentStatuses, setAgentStatuses] = useState<AgentStatusType[]>([]);
   const [sessionId, setSessionId] = useState<string>('');
 
   // Initialize session
@@ -126,86 +126,6 @@ const ChatInterface: React.FC = () => {
       // Simulate workflow with progress updates
       await mockApi.simulateWorkflow((status) => {
         setWorkflowStatus(status);
-        
-        // Create system message for workflow status        
-        switch (status.stage) {
-          case 'analyzing':
-            const analyzeMessage: Message = {
-              id: `system-analyzing-${Date.now()}`,
-              content: '사용자 질의를 분석하고 있습니다...',
-              sender: 'system',
-              timestamp: new Date(),
-              metadata: {
-                type: 'progress',
-                stage: 'analyzing',
-                progress: status.progress,
-              },
-            };
-            setMessages(prev => {
-              const filteredMessages = prev.filter(m => m.sender !== 'system');
-              return [...filteredMessages, analyzeMessage];
-            });
-            break;
-          case 'planning':
-            const planMessage: Message = {
-              id: `system-planning-${Date.now()}`,
-              content: '최적의 실행 계획을 수립하고 있습니다...',
-              sender: 'system',
-              timestamp: new Date(),
-              metadata: {
-                type: 'progress',
-                stage: 'planning',
-                progress: status.progress,
-              },
-            };
-            setMessages(prev => {
-              const filteredMessages = prev.filter(m => m.sender !== 'system');
-              return [...filteredMessages, planMessage];
-            });
-            break;
-          case 'executing':
-            // Update agent statuses
-            const agents = ['price_search_agent', 'finance_agent', 'legal_agent'];
-            const agentNames: { [key: string]: string } = {
-              'price_search_agent': '시세 검색',
-              'finance_agent': '금융 분석',
-              'legal_agent': '법률 검토',
-            };
-            const currentAgentIndex = Math.floor(status.progress / (100 / agents.length));
-            
-            const currentAgents = agents.map((id, index) => ({
-              id,
-              name: agentNames[id] || id,
-              status: index < currentAgentIndex ? 'completed' : 
-                      index === currentAgentIndex ? 'running' : 'pending',
-              progress: index === currentAgentIndex ? 
-                        (status.progress % (100 / agents.length)) * agents.length : 
-                        index < currentAgentIndex ? 100 : 0,
-            } as AgentStatusType));
-            
-            setAgentStatuses(currentAgents);
-            
-            const executeMessage: Message = {
-              id: `system-executing-${Date.now()}`,
-              content: '에이전트를 실행하고 있습니다',
-              sender: 'system',
-              timestamp: new Date(),
-              metadata: {
-                type: 'agent-status',
-                stage: 'executing',
-                progress: status.progress,
-                agents: currentAgents,
-              },
-            };
-            
-            setMessages(prev => {
-              const filteredMessages = prev.filter(m => m.sender !== 'system');
-              return [...filteredMessages, executeMessage];
-            });
-            break;
-          case 'completed':
-            break;
-        }
       });
 
       // Get response
@@ -233,8 +153,10 @@ const ChatInterface: React.FC = () => {
       
     } finally {
       setIsProcessing(false);
-      setWorkflowStatus({ stage: 'idle', progress: 0 });
-      setAgentStatuses([]);
+      // Keep the completed status for a moment before resetting
+      setTimeout(() => {
+        setWorkflowStatus({ stage: 'idle', progress: 0 });
+      }, 2000);
     }
   }, [isProcessing]);
 
@@ -255,6 +177,10 @@ const ChatInterface: React.FC = () => {
       <MainContent>
         <ChatContainer>
           <MessageList messages={messages} />
+          <ProgressFlow 
+            status={workflowStatus}
+            visible={workflowStatus.stage !== 'idle'}
+          />
           <InputArea 
             onSendMessage={handleSendMessage} 
             disabled={isProcessing}
