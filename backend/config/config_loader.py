@@ -212,7 +212,7 @@ class OptimizationConfig(BaseModel):
     caching: CachingConfig
     rate_limiting: RateLimitingConfig
     batching: Dict[str, Any]
-    model_config: ModelConfig
+    model_settings: ModelConfig  # model_config는 Pydantic 예약어이므로 변경
 
 
 class InputValidationConfig(BaseModel):

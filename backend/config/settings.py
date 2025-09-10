@@ -209,8 +209,8 @@ def reload_settings() -> Settings:
     return get_settings()
 
 
-# Export settings instance
-settings = get_settings()
+# Export settings instance - 모듈 로드 시 즉시 생성하지 않음
+# settings = get_settings()  # 나중에 필요할 때 호출
 
 
 if __name__ == "__main__":

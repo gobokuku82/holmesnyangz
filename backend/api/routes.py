@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from typing import Optional, Dict, Any
 import asyncio
 import json
+import time
 from datetime import datetime
 
 from backend.api.models import (
@@ -26,6 +27,9 @@ router = APIRouter(prefix="/api/v1", tags=["chatbot"])
 
 # 세션 저장소 (실제로는 Redis/DB 사용)
 sessions: Dict[str, AsyncWorkflowEngine] = {}
+
+# 서버 시작 시간 (업타임 계산용)
+server_start_time = time.time()
 
 
 # === 의존성 ===
@@ -202,16 +206,19 @@ async def list_threads(
         threads = await engine.list_threads(limit=page_size)
         
         # ThreadInfo 변환
-        thread_infos = [
-            ThreadInfo(
+        thread_infos = []
+        for t in threads:
+            # 메시지 수 계산 (상태에서 messages 필드 확인)
+            thread_state = await engine.get_state(t["thread_id"])
+            message_count = len(thread_state.get("messages", [])) if thread_state else 0
+            
+            thread_infos.append(ThreadInfo(
                 thread_id=t["thread_id"],
                 created_at=t.get("created_at", ""),
                 last_update=t.get("last_update", ""),
-                message_count=0,  # TODO: 실제 메시지 수 계산
+                message_count=message_count,
                 status=t.get("status", "active")
-            )
-            for t in threads
-        ]
+            ))
         
         return ThreadListResponse(
             threads=thread_infos,
@@ -335,15 +342,21 @@ async def get_system_status() -> SystemStatus:
         )
     ]
     
+    # 활성 스레드 수 계산
+    active_threads = 0
+    for engine in sessions.values():
+        threads = await engine.list_threads(limit=100)
+        active_threads += len([t for t in threads if t.get("status") != "completed"])
+    
     return SystemStatus(
         status="healthy",
         version="1.0.0",
-        uptime=0.0,  # TODO: 실제 uptime 계산
+        uptime=time.time() - server_start_time,  # 실제 업타임 (초)
         agents=agents,
         database_connected=True,
         checkpoint_enabled=True,
         total_sessions=len(sessions),
-        active_threads=0  # TODO: 실제 활성 스레드 수 계산
+        active_threads=active_threads  # 실제 활성 스레드 수
     )
 
 
@@ -360,20 +373,35 @@ async def health_check() -> Dict[str, str]:
 
 # === 피드백 ===
 
+# 임시 피드백 저장소 (실제로는 DB 사용)
+feedbacks: Dict[str, Dict[str, Any]] = {}
+
 @router.post("/feedback", response_model=FeedbackResponse)
 async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
     """
     사용자 피드백 제출
     """
-    # TODO: 피드백을 데이터베이스에 저장
-    
     feedback_id = f"feedback_{request.thread_id}_{datetime.now().timestamp()}"
+    
+    # 피드백을 메모리에 저장 (실제로는 데이터베이스에 저장)
+    feedbacks[feedback_id] = {
+        "thread_id": request.thread_id,
+        "message_id": request.message_id,
+        "rating": request.rating,
+        "feedback": request.feedback,
+        "received_at": datetime.now().isoformat()
+    }
+    
+    # 로깅
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Feedback received: {feedback_id} - Rating: {request.rating}")
     
     return FeedbackResponse(
         feedback_id=feedback_id,
         thread_id=request.thread_id,
         received_at=datetime.now().isoformat(),
-        status="received"
+        status="processed"
     )
 
 

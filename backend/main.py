@@ -260,13 +260,39 @@ async def handle_websocket_query(
 async def cleanup_inactive_sessions():
     """비활성 세션 정리 (백그라운드 태스크)"""
     
+    INACTIVE_TIMEOUT = 1800  # 30분 비활성 타임아웃
+    
     while True:
         try:
             await asyncio.sleep(300)  # 5분마다 실행
             
             # 비활성 세션 확인 및 정리
-            # TODO: 실제 구현 필요
-            logger.debug("Cleaning up inactive sessions...")
+            current_time = datetime.now()
+            sessions_to_remove = []
+            
+            for session_id, websocket in manager.active_connections.items():
+                # WebSocket 연결 상태 확인
+                try:
+                    # 핑 메시지로 연결 상태 확인
+                    await websocket.send_json({"type": "ping"})
+                except:
+                    # 연결이 끊어진 경우 제거 목록에 추가
+                    sessions_to_remove.append(session_id)
+            
+            # 비활성 세션 정리
+            for session_id in sessions_to_remove:
+                logger.info(f"Removing inactive session: {session_id}")
+                manager.disconnect(session_id)
+                
+                # 엔진도 정리
+                if session_id in manager.user_engines:
+                    engine = manager.user_engines[session_id]
+                    await engine.close()
+            
+            if sessions_to_remove:
+                logger.info(f"Cleaned up {len(sessions_to_remove)} inactive sessions")
+            else:
+                logger.debug("No inactive sessions to clean up")
             
         except asyncio.CancelledError:
             break

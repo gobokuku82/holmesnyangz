@@ -10,6 +10,7 @@ from .config_loader import (
     IntentConfig,
     RoutingConfig
 )
+from .settings import Settings
 
 __all__ = [
     'ConfigManager',
@@ -19,5 +20,6 @@ __all__ = [
     'SupervisorConfig',
     'AgentConfig',
     'IntentConfig',
-    'RoutingConfig'
+    'RoutingConfig',
+    'Settings'
 ]
