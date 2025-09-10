@@ -66,16 +66,23 @@ const MessageTime = styled.span`
 `;
 
 const Avatar = styled.div<{ isUser: boolean }>`
-  width: 40px;
-  height: 40px;
+  width: ${props => props.isUser ? '40px' : '60px'};
+  height: ${props => props.isUser ? '40px' : '60px'};
   border-radius: 50%;
   margin: ${props => props.isUser ? '0 0 0 10px' : '0 10px 0 0'};
-  background: ${props => props.isUser ? '#667eea' : '#e0e0e0'};
+  background: ${props => props.isUser ? '#667eea' : 'transparent'};
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
+  overflow: hidden;
+`;
+
+const BotAvatarImg = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const MessageContent = styled.div<{ isUser: boolean }>`
@@ -137,7 +144,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         >
           <MessageContent isUser={message.sender === 'user'}>
             <Avatar isUser={message.sender === 'user'}>
-              {message.sender === 'user' ? '👤' : '🏠'}
+              {message.sender === 'user' ? (
+                '👤'
+              ) : (
+                <BotAvatarImg src="/character/img_main.png" alt="Bot" />
+              )}
             </Avatar>
             <MessageBubble isUser={message.sender === 'user'}>
               <MessageText>{message.content}</MessageText>
@@ -151,7 +162,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       {messages.length > 0 && messages[messages.length - 1].sender === 'user' && (
         <MessageItem isUser={false}>
           <MessageContent isUser={false}>
-            <Avatar isUser={false}>🏠</Avatar>
+            <Avatar isUser={false}>
+              <BotAvatarImg src="/character/img_main.png" alt="Bot" />
+            </Avatar>
             <TypingIndicator>
               <span />
               <span />
