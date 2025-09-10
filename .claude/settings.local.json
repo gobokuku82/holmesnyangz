@@ -3,7 +3,11 @@
     "allow": [
       "Bash(dir backend)",
       "Bash(dir:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx create-react-app:*)",
+      "Read(//c/kdy/Projects/holmesnyangz/**)",
+      "Bash(npm install:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []
