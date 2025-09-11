@@ -185,7 +185,11 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible }) => {
             >
               <SpinnerContainer>
                 {stage.id === 'completed' && isCompleted ? (
-                  <CompletedIcon>✅</CompletedIcon>
+                  <SpinnerImage 
+                    src="/character/complete.png"
+                    alt="완료"
+                    active={true}
+                  />
                 ) : (
                   <SpinnerImage 
                     src={stage.gif}
