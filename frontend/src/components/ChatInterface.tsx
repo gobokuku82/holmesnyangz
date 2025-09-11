@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
-import { Message, WorkflowStatus } from '../types';
-import { mockApi } from '../services/api';
+import { Message, WorkflowStatus, WorkflowUpdateEvent, Agent } from '../types';
+import { createSession } from '../services/api';
+import websocketService, { WebSocketMessage } from '../services/websocket';
 
 const Container = styled.div`
   display: flex;
@@ -82,15 +83,35 @@ const ChatInterface: React.FC = () => {
   const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus>({
     stage: 'idle',
     progress: 0,
+    agentsSequence: [],
   });
   const [sessionId, setSessionId] = useState<string>('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [useWebSocket, setUseWebSocket] = useState(true); // WebSocket 사용 여부
 
-  // Initialize session
+  // Initialize session and WebSocket
   useEffect(() => {
     const initSession = async () => {
       try {
-        const session = await mockApi.createSession();
+        // Create real session with backend
+        const session = await createSession('user-' + Date.now(), 'User');
         setSessionId(session.sessionId);
+        
+        // WebSocket 연결 시도 (선택적)
+        if (useWebSocket) {
+          try {
+            await websocketService.connect(session.sessionId);
+            setIsConnected(true);
+            
+            // WebSocket 이벤트 리스너 등록
+            websocketService.on('workflow_update', handleWorkflowUpdate);
+            websocketService.on('response', handleResponse);
+            websocketService.on('error', handleError);
+          } catch (wsError) {
+            console.error('WebSocket connection failed:', wsError);
+            setIsConnected(false);
+          }
+        }
         
         // Add welcome message
         const welcomeMessage: Message = {
@@ -106,6 +127,57 @@ const ChatInterface: React.FC = () => {
     };
     
     initSession();
+    
+    // Cleanup
+    return () => {
+      if (isConnected) {
+        websocketService.off('workflow_update', handleWorkflowUpdate);
+        websocketService.off('response', handleResponse);
+        websocketService.off('error', handleError);
+        websocketService.disconnect();
+      }
+    };
+  }, [useWebSocket]);
+
+  // WebSocket 이벤트 핸들러
+  const handleWorkflowUpdate = useCallback((message: WebSocketMessage) => {
+    if (message.metadata) {
+      const event = message.metadata as WorkflowUpdateEvent;
+      
+      // 워크플로우 상태 업데이트
+      setWorkflowStatus({
+        stage: event.stage,
+        progress: event.stageProgress,
+        currentAgent: event.currentAgent,
+        message: event.message,
+        agentsSequence: event.agentsSequence,
+        currentAgentIndex: event.currentAgentIndex,
+        agentProgress: event.agentProgress,
+      });
+    }
+  }, []);
+
+  const handleResponse = useCallback((message: WebSocketMessage) => {
+    if (message.content) {
+      const botMessage: Message = {
+        id: `bot-ws-${Date.now()}`,
+        content: message.content,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
+  }, []);
+
+  const handleError = useCallback((message: WebSocketMessage) => {
+    console.error('WebSocket error:', message.content);
+    const errorMessage: Message = {
+      id: `error-ws-${Date.now()}`,
+      content: message.content || '오류가 발생했습니다.',
+      sender: 'system',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, errorMessage]);
   }, []);
 
   const handleSendMessage = useCallback(async (content: string) => {
@@ -122,23 +194,45 @@ const ChatInterface: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // Simulate workflow with progress updates
-      await mockApi.simulateWorkflow((status) => {
-        setWorkflowStatus(status);
-      });
+      if (isConnected && useWebSocket) {
+        // WebSocket을 통한 메시지 전송
+        websocketService.sendQuery(content);
+        // WebSocket 이벤트로 응답을 받음
+      } else {
+        // Fallback to simple message if WebSocket not connected
+        const botMessage: Message = {
+          id: `bot-${Date.now()}`,
+          content: 'WebSocket 연결이 필요합니다. 페이지를 새로고침해주세요.',
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
+        /*await mockApi.simulateWorkflow((status) => {
+          setWorkflowStatus({
+            ...status,
+            agentsSequence: status.agentsSequence || [
+              { id: 'analyzer_agent', name: '분석 에이전트', order: 0, status: 'completed', progress: 100 },
+              { id: 'price_search_agent', name: '시세 검색', order: 1, status: 'completed', progress: 100 },
+              { id: 'finance_agent', name: '금융 분석', order: 2, status: 'running', progress: 50 },
+              { id: 'legal_agent', name: '법률 검토', order: 3, status: 'pending', progress: 0 },
+            ],
+            currentAgentIndex: 2,
+            agentProgress: 50,
+          });
+        });*/
 
-      // Get response
-      const response = await mockApi.sendMessage(content);
-      
-      // Add bot response
-      const botMessage: Message = {
-        id: `bot-${Date.now()}`,
-        content: response.response,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, botMessage]);
-      
+        // Get response
+        //const response = await mockApi.sendMessage(content);
+        
+        // Add bot response
+        /*const botMessage: Message = {
+          id: `bot-${Date.now()}`,
+          content: response.response,
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);*/
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       
@@ -149,15 +243,16 @@ const ChatInterface: React.FC = () => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
-      
     } finally {
-      setIsProcessing(false);
-      // Keep the completed status for a moment before resetting
-      setTimeout(() => {
-        setWorkflowStatus({ stage: 'idle', progress: 0 });
-      }, 2000);
+      if (!isConnected || !useWebSocket) {
+        setIsProcessing(false);
+        // Keep the completed status for a moment before resetting
+        setTimeout(() => {
+          setWorkflowStatus({ stage: 'idle', progress: 0, agentsSequence: [] });
+        }, 2000);
+      }
     }
-  }, [isProcessing]);
+  }, [isProcessing, isConnected, useWebSocket]);
 
   return (
     <Container>
@@ -167,8 +262,10 @@ const ChatInterface: React.FC = () => {
             🏠 부동산 AI 어시스턴트
           </Title>
           <Status>
-            <StatusDot online={true} />
-            <span>온라인 | 세션: {sessionId}</span>
+            <StatusDot online={isConnected || !useWebSocket} />
+            <span>
+              {isConnected ? 'WebSocket 연결됨' : useWebSocket ? 'WebSocket 연결 끊김' : 'Mock API'} | 세션: {sessionId}
+            </span>
           </Status>
         </HeaderContent>
       </Header>

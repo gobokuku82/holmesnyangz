@@ -1,7 +1,7 @@
 // WebSocket Service for real-time updates
 
 export interface WebSocketMessage {
-  type: 'query' | 'response' | 'event' | 'error' | 'ping' | 'pong';
+  type: 'query' | 'response' | 'event' | 'error' | 'ping' | 'pong' | 'workflow_update';
   content?: string;
   metadata?: any;
   timestamp: string;

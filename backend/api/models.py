@@ -208,10 +208,39 @@ class ErrorResponse(BaseModel):
 
 class WebSocketMessage(BaseModel):
     """WebSocket 메시지"""
-    type: Literal["query", "response", "event", "error", "ping", "pong"]
+    type: Literal["query", "response", "event", "error", "ping", "pong", "workflow_update"]
     content: Optional[str] = Field(None, description="메시지 내용")
     metadata: Optional[Dict[str, Any]] = Field(None, description="메타데이터")
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class WorkflowUpdateMessage(BaseModel):
+    """워크플로우 업데이트 메시지"""
+    type: Literal["workflow_update"] = Field("workflow_update", description="메시지 타입")
+    session_id: str = Field(..., description="세션 ID")
+    thread_id: str = Field(..., description="스레드 ID")
+    stage: Literal["idle", "analyzing", "planning", "executing", "completed", "error"]
+    stage_progress: float = Field(..., ge=0, le=100, description="단계별 진행률")
+    agents_sequence: List[Dict[str, Any]] = Field(default_factory=list, description="에이전트 실행 순서")
+    current_agent: Optional[str] = Field(None, description="현재 실행 중인 에이전트")
+    current_agent_index: int = Field(-1, description="현재 에이전트 인덱스")
+    agent_progress: float = Field(0, ge=0, le=100, description="에이전트 진행률")
+    message: Optional[str] = Field(None, description="상태 메시지")
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    elapsed_time: float = Field(0, description="경과 시간(초)")
+
+
+class AgentExecutionInfo(BaseModel):
+    """에이전트 실행 정보"""
+    id: str = Field(..., description="에이전트 ID")
+    name: str = Field(..., description="에이전트 이름")
+    order: int = Field(..., description="실행 순서")
+    status: Literal["pending", "running", "completed", "error"]
+    progress: float = Field(0, ge=0, le=100, description="진행률")
+    start_time: Optional[str] = Field(None, description="시작 시간")
+    end_time: Optional[str] = Field(None, description="종료 시간")
+    result: Optional[Any] = Field(None, description="실행 결과")
+    error: Optional[str] = Field(None, description="에러 메시지")
 
 
 class FeedbackRequest(BaseModel):

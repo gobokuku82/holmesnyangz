@@ -11,6 +11,52 @@ metadata:
   domain: "real_estate"
   created_by: "Holmes & Yangz System"
   created_date: "2025-01-10"
+  version: "0.6.7"
+  optimization_level: "enhanced"  # enhanced for detailed LLM context
+
+# ===== 데이터 소스 설정 =====
+data_sources:
+  mock_database:
+    type: "json_files"
+    base_path: "database/mockup"
+    files:
+      laws: "real_estate_laws.json"
+      dictionary: "real_estate_dictionary.json"
+      faqs: "real_estate_faqs.json"
+      policies: "subscription_policies.json"
+      area_info: "area_info.json"
+      transit: "transit_accessibility.json"
+      transactions: "transaction_history.json"
+      loans: "loan_info.json"
+      benefits: "subscription_benefits.json"
+      statistics: "subscription_statistics.json"
+    cache_ttl: 3600
+    
+  api_endpoints:
+    base_url: "http://localhost:8000/api/v1"
+    timeout: 30
+    retry_count: 3
+
+# ===== 워크플로우 시퀀스 정의 =====
+workflow_sequences:
+  default:
+    stages:
+      - id: "analyzing"
+        name: "질의 분석"
+        description: "사용자 의도 파악 및 엔티티 추출"
+        duration_estimate: 2
+      - id: "planning"
+        name: "계획 수립"
+        description: "실행할 에이전트 선택 및 순서 결정"
+        duration_estimate: 3
+      - id: "executing"
+        name: "실행"
+        description: "선택된 에이전트들 실행"
+        duration_estimate: 10
+      - id: "completed"
+        name: "완료"
+        description: "결과 통합 및 응답 생성"
+        duration_estimate: 2
 
 # ===== 질의 분석 규칙 =====
 query_analyzer:
@@ -112,22 +158,28 @@ agents:
   # 시세 검색 전문가
   - id: "price_search_agent"
     name: "시세 검색 전문가"
-    description: "부동산 시세 정보를 검색하고 분석합니다"
+    description: |
+      이 에이전트는 부동산 시세와 관련된 모든 정보를 전문적으로 처리합니다.
+      주요 기능:
+      1. 실거래가 조회: 아파트, 빌라, 오피스텔, 단독주택의 최근 거래 가격
+      2. 전월세 시세: 전세, 월세, 반전세 가격 정보 및 전세가율 분석
+      3. 시세 동향: 과거 대비 가격 변동률, 상승/하락 추세 분석
+      4. 지역 비교: 동일 평형대, 동일 지역 내 단지별 가격 비교
+      5. 가격 계산: 평당가, 제곱미터당 가격, 전세가율 등 계산
+      
+      데이터 출처: 국토교통부 실거래가, 한국부동산원 통계, Mock 거래 데이터
+      데이터 범위: 2019년 ~ 2024년 (최근 5년)
+      업데이트 주기: 월 1회 (실제 서비스에서는 일일 업데이트)
+    
     capabilities:
-      - "아파트/빌라/오피스텔 실거래가 조회"
-      - "전세/월세 시세 분석"
-      - "시세 동향 및 예측"
-      - "지역별 가격 비교"
+      - "아파트/빌라/오피스텔/단독주택 실거래가 조회"
+      - "전세/월세/반전세 시세 분석"
+      - "최근 5년간 시세 동향 분석"
+      - "지역별, 평형별, 단지별 가격 비교"
       - "평당/㎡당 가격 계산"
+      - "전세가율, 월세 수익률 계산"
+      - "시장 과열/침체 지표 분석"
     trigger_conditions:
-      intents: 
-        - "information_search"
-        - "calculation"
-        - "recommendation"
-      entities: 
-        - "price"
-        - "property_type"
-        - "transaction_type"
       keywords:
         - "시세"
         - "가격"
@@ -135,9 +187,16 @@ agents:
         - "전세"
         - "월세"
         - "실거래가"
-        - "호가"
-        - "시장가"
-        - "평당가"
+        - "얼마"
+      intents: 
+        - "information_search"
+        - "calculation"
+        - "comparison"
+      entities: 
+        - "price"
+        - "property_type"
+        - "transaction_type"
+        - "location"
     tools:
       - "search_real_estate_price"
       - "analyze_price_trend"
@@ -153,14 +212,42 @@ agents:
   # 자본 관리 전문가
   - id: "finance_agent"
     name: "자본 관리 전문가"
-    description: "대출, 예산 등 금융 관련 상담을 제공합니다"
+    
+    # 간단 설명
+    brief: "대출, 예산, 세금 등 부동산 금융 전문 상담"
+    
+    # 상세 설명
+    detailed_description: |
+      부동산 구매와 관련된 모든 금융 문제를 전문적으로 다룹니다.
+      주요 기능:
+      1. 대출 상담: DTI, LTV, DSR 기준 대출 한도 계산
+      2. 상환 계획: 원리금균등/원금균등 상환 시뮬레이션
+      3. 예산 분석: 가용 자금으로 구매 가능한 매물 검색
+      4. 금리 비교: 은행별, 상품별 대출 금리 비교
+      5. 세금 계산: 취득세, 재산세, 양도세 계산
+      6. 투자 분석: 수익률, 손익분기점, 갭투자 가능성 분석
+      
+      고려 요소: 소득, 신용등급, 기존 대출, 주택 보유 수, 규제 지역 여부
+      데이터: 시중 은행 금리, 정부 대출 규제, 세금 정책
+    
+    # 능력과 한계  
     capabilities:
-      - "대출 한도 계산 (DTI/LTV/DSR)"
-      - "월 상환액 시뮬레이션"
-      - "예산별 매물 추천"
-      - "금리 비교 분석"
-      - "세금 계산 (취득세, 재산세)"
-      - "투자 수익률 분석"
+      can_do:
+        - "DTI, LTV, DSR 기준 대출 한도 정확 계산"
+        - "원리금균등/원금균등 상환액 시뮬레이션"
+        - "주택담보대출, 전세자금대출 상담"
+        - "취득세, 재산세, 종부세 계산"
+        - "양도세 비과세 요건 확인"
+        - "월 소득 대비 적정 대출 규모 제안"
+        - "갭투자 리스크 분석"
+        - "임대 수익률 계산"
+        
+      cannot_do:
+        - "개인 신용등급 조회"
+        - "실제 대출 승인 (은행 심사 필요)"
+        - "탈세 방법 조언"
+        - "불법 자금 조달 방법"
+        - "특정 은행 상품 판매"
     trigger_conditions:
       intents:
         - "calculation"
@@ -199,14 +286,41 @@ agents:
   # 입지 분석 전문가
   - id: "location_agent"
     name: "입지 분석 전문가"
-    description: "위치 기반 정보와 인프라 접근성을 분석합니다"
+    
+    # 간단 설명
+    brief: "위치 기반 인프라, 교통, 학군 정보 분석"
+    
+    # 상세 설명
+    detailed_description: |
+      부동산의 입지와 관련된 모든 정보를 종합적으로 분석합니다.
+      주요 기능:
+      1. 교통: 지하철역, 버스정류장 접근성, 출퇴근 시간 계산
+      2. 교육: 학군, 학교 배정, 학원가 정보
+      3. 생활: 마트, 병원, 은행, 공원 등 편의시설
+      4. 환경: 소음, 일조권, 조망권, 혐오시설 여부
+      5. 발전성: 개발 계획, 교통 확충, 지역 성장 가능성
+      
+      분석 방법: GIS 기반 거리 계산, 도보/차량 이동 시간 측정
+      데이터: 교통 인프라, 교육청 학군 정보, 도시계획 정보
+    
+    # 능력과 한계
     capabilities:
-      - "교통 접근성 분석 (지하철, 버스)"
-      - "학군 정보 제공"
-      - "생활 인프라 평가"
-      - "주변 편의시설 검색"
-      - "직장 통근 거리 계산"
-      - "지역 발전 가능성 분석"
+      can_do:
+        - "역세권 여부 판단 (도보 10분 이내)"
+        - "초중고 학군 정보 및 배정 학교"
+        - "대형마트, 병원, 은행 접근성 평가"
+        - "직장까지 대중교통 경로 및 시간"
+        - "주변 공원, 하천, 산책로 정보"
+        - "버스, 지하철 노선 정보"
+        - "주요 대학까지 거리"
+        - "혐오시설 존재 여부"
+        
+      cannot_do:
+        - "실시간 교통 상황"
+        - "특정 학원 수강료"
+        - "미확정 개발 계획"
+        - "개인 차량 주차 가능 여부"
+        - "층간 소음 정도"
     trigger_conditions:
       intents:
         - "information_search"
@@ -245,14 +359,43 @@ agents:
   # 법률 자문 전문가
   - id: "legal_agent"
     name: "법률 자문 전문가"
-    description: "부동산 관련 법률 및 규정 정보를 제공합니다"
+    
+    # 간단 설명
+    brief: "부동산 법률, 계약, 세금, 규제 전문 상담"
+    
+    # 상세 설명
+    detailed_description: |
+      부동산 거래와 관련된 모든 법적 사항을 전문적으로 안내합니다.
+      주요 기능:
+      1. 계약: 매매/임대차 계약서 검토, 특약사항 제안
+      2. 법률: 주택임대차보호법, 부동산거래신고법 안내
+      3. 세금: 취득세, 양도세 요건 및 절세 방법
+      4. 규제: 대출 규제, 청약 자격, 전매 제한
+      5. 분쟁: 보증금 반환, 하자 보수, 계약 해지
+      6. 재개발: 조합원 자격, 분담금, 이주 대책
+      
+      근거 법령: 민법, 주택임대차보호법, 부동산거래신고법, 지방세법
+      주의: 법률 정보 제공만 가능, 실제 소송 대리 불가
+    
+    # 능력과 한계
     capabilities:
-      - "계약서 주요 사항 설명"
-      - "세금 계산 및 안내"
-      - "법적 주의사항 안내"
-      - "임대차보호법 상담"
-      - "분양권/입주권 관련 규정"
-      - "재개발/재건축 정보"
+      can_do:
+        - "매매/임대차 계약서 주요 조항 설명"
+        - "취득세, 재산세, 종부세 계산"
+        - "양도세 비과세 요건 확인"
+        - "임차인 권리 보호 방법 안내"
+        - "전입신고, 확정일자 중요성 설명"
+        - "보증금 반환 절차 안내"
+        - "청약 자격 요건 확인"
+        - "재개발/재건축 절차 설명"
+        - "부동산 거래 신고 의무 안내"
+        
+      cannot_do:
+        - "실제 법적 대리"
+        - "구체적 소송 전략"
+        - "탈법 방법 조언"
+        - "개별 사건 법적 판단"
+        - "공인중개사 업무 대행"
     trigger_conditions:
       intents:
         - "information_search"
@@ -288,10 +431,44 @@ agents:
       backoff: "constant"
     priority: 4
 
+# ===== 에이전트 간 의존성 및 협업 규칙 =====
+agent_coordination:
+  dependencies:
+    finance_agent:
+      requires_from:
+        price_search_agent: ["property_price", "market_value"]
+      provides_to:
+        legal_agent: ["loan_amount", "tax_calculations"]
+        
+    legal_agent:
+      requires_from:
+        price_search_agent: ["transaction_type", "property_value"]
+        finance_agent: ["buyer_status", "loan_details"]
+      provides_to:
+        response_generator: ["legal_validation", "warnings"]
+        
+  collaboration_patterns:
+    - name: "주택 구매 종합 상담"
+      agents_sequence:
+        - price_search_agent  # 시세 확인
+        - finance_agent      # 대출 가능 금액
+        - location_agent     # 입지 분석 (병렬 가능)
+        - legal_agent       # 법적 검토
+      parallel_groups:
+        - [price_search_agent, location_agent]
+        - [finance_agent]
+        - [legal_agent]
+        
+    - name: "투자 수익성 분석"
+      agents_sequence:
+        - price_search_agent  # 매매가, 전세가
+        - finance_agent      # 대출, 수익률
+        - legal_agent       # 세금, 규제
+
 # ===== 라우팅 규칙 =====
 routing:
   # 라우팅 전략
-  strategy: "confidence_based"  # confidence_based, rule_based, hybrid
+  strategy: "hybrid"  # confidence_based + rule_based
   
   # 라우팅 규칙
   rules:
@@ -301,6 +478,9 @@ routing:
       action: "parallel_execution"
       agents: ["dynamic"]  # 동적으로 선택
       max_agents: 3
+      example_queries:
+        - "강남 아파트 시세랑 대출 가능 금액 알려줘"
+        - "이 지역 학군이랑 교통은 어때? 가격은?"
     
     - name: "단순 질의 처리"
       description: "단일 도메인 질의를 직접 라우팅"
@@ -314,7 +494,11 @@ routing:
       condition: "low_confidence"
       action: "clarification_request"
       fallback_agent: "analyzer_agent"
-      clarification_prompt: "좀 더 구체적으로 말씀해 주시겠어요?"
+      clarification_prompts:
+        missing_location: "어느 지역의 정보를 원하시나요?"
+        missing_property_type: "아파트, 빌라, 오피스텔 중 어떤 것을 찾으시나요?"
+        missing_transaction_type: "매매, 전세, 월세 중 어떤 거래를 원하시나요?"
+        general: "좀 더 구체적으로 말씀해 주시겠어요?"
     
     - name: "긴급 처리"
       description: "시간 민감한 요청 우선 처리"
@@ -452,11 +636,18 @@ optimization:
   # 캐싱 설정
   caching:
     enabled: true
-    provider: "redis"  # memory, redis, memcached
+    provider: "memory"  # memory for development, redis for production
     ttl: 3600  # 1시간
     cache_similar_queries: true
     similarity_threshold: 0.95
     max_cache_size: "1GB"
+    cache_strategies:
+      price_data:
+        ttl: 300  # 5분 (시세는 자주 변경)
+      location_data:
+        ttl: 86400  # 24시간 (입지 정보는 거의 불변)
+      legal_info:
+        ttl: 604800  # 7일 (법률 정보는 주기적 업데이트)
   
   # 레이트 리미팅
   rate_limiting:

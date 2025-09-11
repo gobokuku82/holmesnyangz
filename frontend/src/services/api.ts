@@ -12,12 +12,40 @@ const api = axios.create({
 
 // Session Management
 export const createSession = async (userId: string, userName: string): Promise<SessionResponse> => {
-  const response = await api.post<SessionResponse>('/sessions', {
-    user_id: userId,
-    user_name: userName,
-    user_role: 'user',
-  });
-  return response.data;
+  // Real API call for session creation
+  try {
+    const response = await api.post('/sessions', {
+      user_id: userId,
+      user_name: userName,
+      user_role: 'user',
+    });
+    // Convert snake_case to camelCase for frontend
+    return {
+      sessionId: response.data.session_id,
+      userId: response.data.user_id,
+      userName: response.data.user_name,
+      userRole: response.data.user_role,
+      createdAt: response.data.created_at,
+      availableAgents: response.data.available_agents,
+      features: response.data.features,
+    };
+  } catch (error) {
+    console.error('Failed to create session with backend, using mock:', error);
+    // Fallback to mock session if backend is not available
+    return {
+      sessionId: 'mock-session-' + Date.now(),
+      userId: userId,
+      userName: userName,
+      userRole: 'user',
+      createdAt: new Date().toISOString(),
+      availableAgents: ['analyzer_agent', 'price_search_agent', 'finance_agent', 'location_agent', 'legal_agent'],
+      features: {
+        enable_memory: true,
+        enable_tools: true,
+        enable_streaming: false,
+      },
+    };
+  }
 };
 
 export const deleteSession = async (sessionId: string): Promise<void> => {

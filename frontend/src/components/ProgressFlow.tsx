@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { WorkflowStatus } from '../types';
+import { WorkflowStatus, Agent } from '../types';
 
 interface ProgressFlowProps {
   status: WorkflowStatus;
@@ -122,14 +122,18 @@ const ProgressFill = styled.div<{ progress: number }>`
   transition: width 0.3s ease;
 `;
 
-const AgentsContainer = styled.div<{ visible: boolean }>`
+const AgentsContainer = styled.div<{ visible: boolean; columns: number }>`
   display: ${props => props.visible ? 'grid' : 'none'};
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(${props => Math.min(props.columns, 3)}, 1fr);
   gap: 8px;
   margin-top: 12px;
   padding: 12px;
   background: rgba(255, 255, 255, 0.5);
   border-radius: 8px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(${props => Math.min(props.columns, 2)}, 1fr);
+  }
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -196,10 +200,9 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible, style }) =
     }
   ];
 
-  const agents = [
-    { id: 'price_search', name: '시세 검색' },
-    { id: 'finance', name: '금융 분석' },
-    { id: 'legal', name: '법률 검토' }
+  // 동적으로 에이전트 목록 가져오기 (없으면 기본값 사용)
+  const agents: Agent[] = status.agentsSequence || [
+    { id: 'default', name: '처리 중...', order: 0, status: 'pending', progress: 0 }
   ];
 
   const getStageIndex = (stage: string) => {
@@ -208,13 +211,8 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible, style }) =
 
   const currentStageIndex = getStageIndex(status.stage);
 
-  // Calculate which agent is active during execution
-  const getActiveAgent = () => {
-    if (status.stage !== 'executing') return -1;
-    return Math.floor((status.progress / 100) * agents.length);
-  };
-
-  const activeAgentIndex = getActiveAgent();
+  // 현재 활성 에이전트 인덱스 가져오기
+  const activeAgentIndex = status.currentAgentIndex ?? -1;
 
   return (
     <Container visible={visible} style={style}>
@@ -262,18 +260,29 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible, style }) =
         })}
       </StagesContainer>
 
-      <AgentsContainer visible={status.stage === 'executing'}>
-        {agents.map((agent, index) => (
-          <AgentCard
-            key={agent.id}
-            active={index === activeAgentIndex}
-            completed={index < activeAgentIndex}
-          >
-            {agent.name}
-            {index < activeAgentIndex && ' ✓'}
-            {index === activeAgentIndex && ' 🔄'}
-          </AgentCard>
-        ))}
+      <AgentsContainer 
+        visible={status.stage === 'executing' || (status.stage === 'completed' && agents.length > 0)}
+        columns={agents.length}
+      >
+        {agents.map((agent, index) => {
+          const isActive = agent.status === 'running';
+          const isCompleted = agent.status === 'completed';
+          const isPending = agent.status === 'pending';
+          const isError = agent.status === 'error';
+          
+          return (
+            <AgentCard
+              key={agent.id}
+              active={isActive}
+              completed={isCompleted}
+            >
+              {agent.name}
+              {isCompleted && ' ✓'}
+              {isActive && ` ${Math.round(agent.progress)}%`}
+              {isError && ' ⚠'}
+            </AgentCard>
+          );
+        })}
       </AgentsContainer>
 
       {status.message && (

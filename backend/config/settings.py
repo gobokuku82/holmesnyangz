@@ -93,8 +93,17 @@ class Settings(BaseSettings):
     upload_dir: str = Field(default="uploads", env="UPLOAD_DIR")
     static_dir: str = Field(default="static", env="STATIC_DIR")
     
+    # Additional fields from .env file
+    api_reload: bool = Field(default=False, env="API_RELOAD")
+    use_sqlite_checkpointer: bool = Field(default=False, env="USE_SQLITE_CHECKPOINTER")
+    mock_db_enabled: bool = Field(default=True, env="MOCK_DB_ENABLED")
+    mock_db_seed_data: bool = Field(default=True, env="MOCK_DB_SEED_DATA")
+    algorithm: str = Field(default="HS256", env="ALGORITHM")
+    access_token_expire_minutes: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    
     class Config:
-        env_file = ".env"
+        # Use the .env file in the project root
+        env_file = Path(__file__).parent.parent.parent / ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
     

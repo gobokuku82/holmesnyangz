@@ -19,6 +19,21 @@ export interface WorkflowStatus {
   progress: number;
   currentAgent?: string;
   message?: string;
+  agentsSequence?: Agent[];
+  currentAgentIndex?: number;
+  agentProgress?: number;
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  order: number;
+  status: 'pending' | 'running' | 'completed' | 'error';
+  progress: number;
+  startTime?: string;
+  endTime?: string;
+  result?: any;
+  error?: string;
 }
 
 export interface AgentStatus {
@@ -27,6 +42,21 @@ export interface AgentStatus {
   status: 'pending' | 'running' | 'completed' | 'error';
   progress: number;
   message?: string;
+}
+
+export interface WorkflowUpdateEvent {
+  type: 'workflow_update';
+  sessionId: string;
+  threadId: string;
+  stage: 'idle' | 'analyzing' | 'planning' | 'executing' | 'completed' | 'error';
+  stageProgress: number;
+  agentsSequence: Agent[];
+  currentAgent?: string;
+  currentAgentIndex: number;
+  agentProgress: number;
+  message?: string;
+  timestamp: string;
+  elapsedTime: number;
 }
 
 export interface ChatSession {

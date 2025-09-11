@@ -12,6 +12,9 @@ from .config_loader import (
 )
 from .settings import Settings
 
+# Create settings instance
+settings = Settings()
+
 __all__ = [
     'ConfigManager',
     'get_config_manager',
@@ -21,5 +24,6 @@ __all__ = [
     'AgentConfig',
     'IntentConfig',
     'RoutingConfig',
-    'Settings'
+    'Settings',
+    'settings'
 ]

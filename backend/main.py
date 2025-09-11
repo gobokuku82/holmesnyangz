@@ -14,8 +14,9 @@ from datetime import datetime
 
 from backend.api.routes import router as api_router
 from backend.api.data_routes import router as data_router
-from backend.api.models import WebSocketMessage
+from backend.api.models import WebSocketMessage, WorkflowUpdateMessage
 from backend.core.workflow_engine import AsyncWorkflowEngine, WorkflowEngineFactory
+from backend.core.workflow_tracker import get_tracker_manager, WorkflowTracker
 from backend.core.logging_config import setup_logging, get_logger
 from backend.core.error_handlers import register_error_handlers
 
@@ -197,24 +198,68 @@ async def handle_websocket_query(
     query: str,
     engine: AsyncWorkflowEngine
 ):
-    """WebSocket 쿼리 처리"""
+    """WebSocket 쿼리 처리 with 워크플로우 추적"""
     
     try:
         # 스트리밍으로 처리
         thread_id = f"ws_{session_id}_{datetime.now().timestamp()}"
         
-        # 처리 시작 알림
-        await manager.send_message(
-            session_id,
-            WebSocketMessage(
-                type="event",
-                content="Processing query...",
-                metadata={"thread_id": thread_id}
+        # 워크플로우 추적기 생성
+        tracker_manager = get_tracker_manager()
+        tracker = tracker_manager.create_tracker(session_id, thread_id)
+        
+        # WebSocket으로 워크플로우 업데이트 전송하는 리스너 추가
+        async def workflow_listener(event):
+            await manager.send_message(
+                session_id,
+                WebSocketMessage(
+                    type="workflow_update",
+                    metadata=event
+                )
             )
-        )
+        
+        tracker.add_listener(workflow_listener)
+        
+        # 워크플로우 시작
+        await tracker.start_workflow()
+        
+        # 분석 단계
+        await tracker.update_analyzing(0, "사용자 의도를 분석하고 있습니다...")
+        await asyncio.sleep(0.5)  # 시뮬레이션
+        await tracker.update_analyzing(50)
+        await asyncio.sleep(0.5)
+        await tracker.update_analyzing(100, "분석 완료")
+        
+        # 계획 단계 - 실제로는 엔진에서 선택된 에이전트 정보를 받아옴
+        selected_agents = [
+            {"id": "price_search_agent", "name": "시세 검색"},
+            {"id": "finance_agent", "name": "금융 분석"},
+            {"id": "legal_agent", "name": "법률 검토"}
+        ]
+        await tracker.update_planning(0, selected_agents, "실행 계획을 수립하고 있습니다...")
+        await asyncio.sleep(0.5)
+        await tracker.update_planning(50, selected_agents)
+        await asyncio.sleep(0.5)
+        await tracker.update_planning(100, selected_agents, "계획 수립 완료")
+        
+        # 실행 단계
+        await tracker.start_execution()
+        
+        # 각 에이전트 실행 시뮬레이션
+        for agent in selected_agents:
+            await tracker.update_agent_progress(agent["id"], 0, f"{agent['name']} 시작...")
+            await asyncio.sleep(0.3)
+            await tracker.update_agent_progress(agent["id"], 33)
+            await asyncio.sleep(0.3)
+            await tracker.update_agent_progress(agent["id"], 66)
+            await asyncio.sleep(0.3)
+            await tracker.update_agent_progress(agent["id"], 100, f"{agent['name']} 완료")
+        
+        # 실제 엔진 실행 - stream_events는 async generator이므로 직접 사용
+        event_stream = engine.stream_events(query, thread_id)
         
         # 이벤트 스트리밍
-        async for event in engine.stream_events(query, thread_id):
+        async for event in event_stream:
             # 이벤트 타입별 메시지 전송
             if event["type"] == "token":
                 # 토큰 스트리밍
@@ -228,15 +273,11 @@ async def handle_websocket_query(
                 )
             
             elif event["type"] in ["chain_start", "chain_end", "tool_start", "tool_end"]:
-                # 상태 업데이트
-                await manager.send_message(
-                    session_id,
-                    WebSocketMessage(
-                        type="event",
-                        content=f"{event['type']}: {event.get('name', '')}",
-                        metadata=event
-                    )
-                )
+                # 상태 업데이트는 tracker를 통해 처리
+                pass
+        
+        # 워크플로우 완료
+        await tracker.complete_workflow("모든 작업이 완료되었습니다!")
         
         # 완료 메시지
         await manager.send_message(
@@ -248,8 +289,16 @@ async def handle_websocket_query(
             )
         )
         
+        # 리스너 제거
+        tracker.remove_listener(workflow_listener)
+        
     except Exception as e:
         logger.error(f"Query processing error: {e}")
+        
+        # 워크플로우 실패 처리
+        if 'tracker' in locals():
+            await tracker.fail_workflow(str(e))
+        
         await manager.send_message(
             session_id,
             WebSocketMessage(

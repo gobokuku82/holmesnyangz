@@ -279,7 +279,7 @@ class ConfigManager:
         """기본 설정 파일 경로 반환"""
         return os.path.join(
             os.path.dirname(__file__),
-            "supervisor_config.yaml"
+            "supervisor_config_simple.yaml"
         )
     
     def _load_config(self) -> None:
