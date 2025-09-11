@@ -115,7 +115,8 @@ class RealEstateGraphBuilder:
             }
         )
         
-        self.graph = builder.compile()
+        # StateGraph를 반환 (compile은 workflow_engine에서 처리)
+        self.graph = builder
         return self.graph
     
     async def _analyze_node(self, state: AgentState) -> AgentState:

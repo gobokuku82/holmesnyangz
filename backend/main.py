@@ -200,6 +200,8 @@ async def handle_websocket_query(
 ):
     """WebSocket 쿼리 처리 with 워크플로우 추적"""
     
+    logger.info(f"[WebSocket] Processing query from session {session_id}: {query[:50]}...")
+    
     try:
         # 스트리밍으로 처리
         thread_id = f"ws_{session_id}_{datetime.now().timestamp()}"
@@ -256,6 +258,7 @@ async def handle_websocket_query(
             await tracker.update_agent_progress(agent["id"], 100, f"{agent['name']} 완료")
         
         # 실제 엔진 실행 - stream_events는 async generator이므로 직접 사용
+        logger.info(f"[WebSocket] Starting workflow engine for thread {thread_id}")
         event_stream = engine.stream_events(query, thread_id)
         
         # 이벤트 스트리밍
@@ -293,7 +296,7 @@ async def handle_websocket_query(
         tracker.remove_listener(workflow_listener)
         
     except Exception as e:
-        logger.error(f"Query processing error: {e}")
+        logger.error(f"[WebSocket] Query processing error for session {session_id}: {e}", exc_info=True)
         
         # 워크플로우 실패 처리
         if 'tracker' in locals():

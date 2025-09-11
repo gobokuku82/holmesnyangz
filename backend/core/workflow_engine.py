@@ -51,16 +51,20 @@ class AsyncWorkflowEngine:
         if self._initialized:
             return
             
+        logger.info(f"[Engine] Initializing workflow engine for session: {self.context.session_id}")
+        
         # 그래프 빌더 생성 및 컴파일
         builder = RealEstateGraphBuilder(self.context)
         self.graph = builder.build()
+        logger.info(f"[Engine] Graph built successfully")
         
         # 체크포인터 초기화
         if self.enable_checkpointing:
             self.checkpointer = await self._create_checkpointer()
+            logger.info(f"[Engine] Checkpointer initialized")
             
         self._initialized = True
-        logger.info(f"Workflow engine initialized for session: {self.context.session_id}")
+        logger.info(f"[Engine] Workflow engine initialized successfully for session: {self.context.session_id}")
     
     async def _create_checkpointer(self) -> AsyncSqliteSaver:
         """AsyncSqliteSaver 생성"""
@@ -317,6 +321,8 @@ class AsyncWorkflowEngine:
         Yields:
             이벤트 데이터
         """
+        logger.info(f"[Engine] Starting stream_events for query: {query[:50]}...")
+        
         if not self._initialized:
             await self.initialize()
             
@@ -334,47 +340,67 @@ class AsyncWorkflowEngine:
         }
         
         async with self._get_checkpointer_context() as checkpointer:
+            # graph가 이미 컴파일된 상태인지 확인
             if checkpointer:
-                graph = self.graph.compile(checkpointer=checkpointer)
+                # self.graph가 StateGraph 인스턴스면 compile, 아니면 그대로 사용
+                if hasattr(self.graph, 'compile'):
+                    graph = self.graph.compile(checkpointer=checkpointer)
+                else:
+                    # 이미 컴파일된 graph
+                    graph = self.graph
             else:
-                graph = self.graph
+                # checkpointer가 없을 때도 동일한 처리
+                if hasattr(self.graph, 'compile'):
+                    graph = self.graph.compile()
+                else:
+                    graph = self.graph
                 
             # 스트리밍 이벤트 생성
-            async for event in graph.astream_events(initial_state, config, version="v1"):
-                # 이벤트 타입별 처리
-                if event["event"] == "on_chain_start":
-                    yield {
-                        "type": "chain_start",
-                        "name": event["name"],
-                        "timestamp": datetime.now().isoformat()
-                    }
-                elif event["event"] == "on_chain_end":
-                    yield {
-                        "type": "chain_end",
-                        "name": event["name"],
-                        "output": event.get("data", {}).get("output"),
-                        "timestamp": datetime.now().isoformat()
-                    }
-                elif event["event"] == "on_llm_stream":
-                    # LLM 스트리밍 토큰
-                    yield {
-                        "type": "token",
-                        "content": event.get("data", {}).get("chunk", ""),
-                        "timestamp": datetime.now().isoformat()
-                    }
-                elif event["event"] == "on_tool_start":
-                    yield {
-                        "type": "tool_start",
-                        "tool": event["name"],
-                        "timestamp": datetime.now().isoformat()
-                    }
-                elif event["event"] == "on_tool_end":
-                    yield {
-                        "type": "tool_end",
-                        "tool": event["name"],
-                        "output": event.get("data", {}).get("output"),
-                        "timestamp": datetime.now().isoformat()
-                    }
+            logger.info(f"[Engine] Starting astream_events with thread_id: {thread_id}")
+            try:
+                async for event in graph.astream_events(initial_state, config, version="v1"):
+                    # 이벤트 타입별 처리
+                    if event["event"] == "on_chain_start":
+                        yield {
+                            "type": "chain_start",
+                            "name": event["name"],
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    elif event["event"] == "on_chain_end":
+                        yield {
+                            "type": "chain_end",
+                            "name": event["name"],
+                            "output": event.get("data", {}).get("output"),
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    elif event["event"] == "on_llm_stream":
+                        # LLM 스트리밍 토큰
+                        yield {
+                            "type": "token",
+                            "content": event.get("data", {}).get("chunk", ""),
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    elif event["event"] == "on_tool_start":
+                        yield {
+                            "type": "tool_start",
+                            "tool": event["name"],
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    elif event["event"] == "on_tool_end":
+                        yield {
+                            "type": "tool_end",
+                            "tool": event["name"],
+                            "output": event.get("data", {}).get("output"),
+                            "timestamp": datetime.now().isoformat()
+                        }
+            except Exception as e:
+                logger.error(f"[Engine] Error in astream_events: {e}", exc_info=True)
+                yield {
+                    "type": "error",
+                    "content": f"Workflow engine error: {str(e)}",
+                    "timestamp": datetime.now().isoformat()
+                }
+                raise
     
     async def close(self):
         """엔진 종료"""

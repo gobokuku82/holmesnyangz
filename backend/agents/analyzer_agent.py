@@ -12,7 +12,8 @@ from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from backend.agents.base_agent import BaseAgent
 from backend.core.state import AgentState
-from backend.config import get_config_manager, settings
+from backend.config import get_config_manager
+from backend.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

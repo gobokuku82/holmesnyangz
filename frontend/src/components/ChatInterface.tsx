@@ -199,14 +199,14 @@ const ChatInterface: React.FC = () => {
         websocketService.sendQuery(content);
         // WebSocket 이벤트로 응답을 받음
       } else {
-        // Fallback to simple message if WebSocket not connected
-        const botMessage: Message = {
-          id: `bot-${Date.now()}`,
-          content: 'WebSocket 연결이 필요합니다. 페이지를 새로고침해주세요.',
-          sender: 'bot',
+        // WebSocket 연결 실패 시 명확한 에러 메시지
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          content: `❌ WebSocket 연결 실패\n\n다음 사항을 확인해주세요:\n1. 백엔드 서버가 실행 중인지 확인 (http://localhost:8000)\n2. 터미널에서 'cd backend && python main.py' 실행\n3. OpenAI API 키가 .env 파일에 올바르게 설정되어 있는지 확인\n\n현재 상태: ${isConnected ? '연결됨' : '연결 안됨'}\n세션 ID: ${sessionId || '생성되지 않음'}`,
+          sender: 'system',
           timestamp: new Date(),
         };
-        setMessages(prev => [...prev, botMessage]);
+        setMessages(prev => [...prev, errorMessage]);
         /*await mockApi.simulateWorkflow((status) => {
           setWorkflowStatus({
             ...status,
