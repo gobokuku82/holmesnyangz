@@ -9,18 +9,20 @@ interface ProgressFlowProps {
 
 const Container = styled.div<{ visible: boolean }>`
   display: ${props => props.visible ? 'block' : 'none'};
-  padding: 30px 20px;
+  padding: 20px 15px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 15px;
-  margin: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  margin: 10px 0;
+  margin-left: 0;
+  max-width: 600px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 `;
 
 const StagesContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin-bottom: 15px;
 `;
 
 const StageSection = styled.div<{ active: boolean; completed: boolean }>`
@@ -32,8 +34,8 @@ const StageSection = styled.div<{ active: boolean; completed: boolean }>`
 `;
 
 const SpinnerContainer = styled.div`
-  width: 150px;
-  height: 150px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,8 +43,8 @@ const SpinnerContainer = styled.div`
 `;
 
 const SpinnerImage = styled.img<{ active: boolean }>`
-  width: 150px;
-  height: 150px;
+  width: 80px;
+  height: 80px;
   opacity: ${props => props.active ? 1 : 0.2};
   filter: ${props => !props.active ? 'grayscale(100%)' : 'none'};
   transition: all 0.3s ease;
@@ -55,8 +57,8 @@ const pulse = keyframes`
 `;
 
 const StageLabel = styled.div<{ active: boolean; completed: boolean }>`
-  margin-top: 15px;
-  font-size: 16px;
+  margin-top: 10px;
+  font-size: 13px;
   font-weight: ${props => props.active ? 'bold' : 'normal'};
   color: ${props => 
     props.completed ? '#4CAF50' : 
@@ -70,11 +72,11 @@ const StageLabel = styled.div<{ active: boolean; completed: boolean }>`
 
 const ProgressBar = styled.div`
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: 8px;
 `;
 
 const ProgressFill = styled.div<{ progress: number }>`
@@ -87,16 +89,17 @@ const ProgressFill = styled.div<{ progress: number }>`
 const AgentsContainer = styled.div<{ visible: boolean }>`
   display: ${props => props.visible ? 'grid' : 'none'};
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 15px;
-  padding: 15px;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
+  border-radius: 8px;
 `;
 
 const AgentCard = styled.div<{ active: boolean; completed: boolean }>`
-  padding: 10px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
   background: ${props => 
     props.completed ? 'linear-gradient(135deg, #4CAF50, #8BC34A)' :
     props.active ? 'linear-gradient(135deg, #FFC107, #FFD54F)' :
@@ -111,15 +114,15 @@ const AgentCard = styled.div<{ active: boolean; completed: boolean }>`
 `;
 
 const CompletedIcon = styled.div`
-  font-size: 100px;
+  font-size: 60px;
   text-align: center;
 `;
 
 const StatusMessage = styled.div`
   text-align: center;
   color: #666;
-  font-size: 14px;
-  margin-top: 10px;
+  font-size: 12px;
+  margin-top: 8px;
   font-style: italic;
 `;
 
@@ -127,22 +130,22 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible }) => {
   const stages = [
     { 
       id: 'analyzing', 
-      label: '생각중이냥 🐱',
+      label: '생각중이냥!',
       gif: '/spinner/thinking_spinner.gif'
     },
     { 
       id: 'planning', 
-      label: '계획수립중이냥 📝',
+      label: '계획중이냥!',
       gif: '/spinner/planning_spinner.gif'
     },
     { 
       id: 'executing', 
-      label: '에이전트 실행중 🚀',
+      label: '작업중이냥!',
       gif: '/spinner/excute_spnnier.gif'
     },
     { 
       id: 'completed', 
-      label: '완료했냥! ✨',
+      label: '완료했냥!',
       gif: '/spinner/main_spinner.gif'
     }
   ];

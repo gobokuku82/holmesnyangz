@@ -1,9 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { Message } from '../types';
+import { Message, WorkflowStatus } from '../types';
+import ProgressFlow from './ProgressFlow';
 
 interface MessageListProps {
   messages: Message[];
+  workflowStatus: WorkflowStatus;
+  isProcessing: boolean;
 }
 
 const Container = styled.div`
@@ -117,7 +120,7 @@ const TypingIndicator = styled.div`
   }
 `;
 
-const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, workflowStatus, isProcessing }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -158,18 +161,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         </MessageItem>
       ))}
       
-      {/* Show typing indicator when bot is processing */}
-      {messages.length > 0 && messages[messages.length - 1].sender === 'user' && (
+      {/* Show ProgressFlow when bot is processing */}
+      {isProcessing && workflowStatus.stage !== 'idle' && (
         <MessageItem isUser={false}>
           <MessageContent isUser={false}>
             <Avatar isUser={false}>
               <BotAvatarImg src="/character/img_main.png" alt="Bot" />
             </Avatar>
-            <TypingIndicator>
-              <span />
-              <span />
-              <span />
-            </TypingIndicator>
+            <div style={{ width: '100%' }}>
+              <ProgressFlow 
+                status={workflowStatus}
+                visible={true}
+              />
+            </div>
           </MessageContent>
         </MessageItem>
       )}

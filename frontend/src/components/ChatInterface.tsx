@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import MessageList from './MessageList';
 import InputArea from './InputArea';
-import ProgressFlow from './ProgressFlow';
 import { Message, WorkflowStatus } from '../types';
 import { mockApi } from '../services/api';
 
@@ -176,10 +175,10 @@ const ChatInterface: React.FC = () => {
 
       <MainContent>
         <ChatContainer>
-          <MessageList messages={messages} />
-          <ProgressFlow 
-            status={workflowStatus}
-            visible={workflowStatus.stage !== 'idle'}
+          <MessageList 
+            messages={messages} 
+            workflowStatus={workflowStatus}
+            isProcessing={isProcessing}
           />
           <InputArea 
             onSendMessage={handleSendMessage} 
