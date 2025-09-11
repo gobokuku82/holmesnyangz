@@ -8,19 +8,25 @@ from langchain_core.tools import tool
 import random
 import logging
 from datetime import datetime, timedelta
+import httpx
+import asyncio
+import os
 
 logger = logging.getLogger(__name__)
 
+# API 베이스 URL (환경변수에서 가져오거나 기본값 사용)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
 
 @tool
-def search_real_estate_price(
+async def search_real_estate_price(
     location: str,
     property_type: str = "아파트",
     transaction_type: str = "매매",
     area_range: Optional[tuple] = None
 ) -> Dict[str, Any]:
     """
-    부동산 실거래가 검색
+    부동산 실거래가 검색 (FastAPI 연동)
     
     Args:
         location: 지역명 (예: "강남구")
@@ -33,22 +39,66 @@ def search_real_estate_price(
     """
     logger.info(f"Searching prices for {location} {property_type} ({transaction_type})")
     
-    # 실제로는 외부 API 호출 (국토교통부, 네이버 부동산 등)
-    # 여기서는 더미 데이터 생성
-    
+    try:
+        # FastAPI 엔드포인트 호출
+        async with httpx.AsyncClient() as client:
+            params = {
+                "location": location,
+                "property_type": property_type,
+                "transaction_type": transaction_type,
+                "limit": 10
+            }
+            
+            response = await client.get(
+                f"{API_BASE_URL}/api/v1/data/transactions",
+                params=params
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "status": "success",
+                    "location": location,
+                    "total_results": data.get("count", 0),
+                    "results": data.get("transactions", []),
+                    "search_params": {
+                        "property_type": property_type,
+                        "transaction_type": transaction_type,
+                        "area_range": area_range
+                    }
+                }
+            else:
+                logger.error(f"API call failed: {response.status_code}")
+                return {
+                    "status": "error",
+                    "message": f"API call failed with status {response.status_code}"
+                }
+                
+    except Exception as e:
+        logger.error(f"Failed to call API: {e}")
+        # 폴백: 기존 더미 데이터 생성 로직
+        return _generate_dummy_price_data(location, property_type, transaction_type, area_range)
+
+def _generate_dummy_price_data(
+    location: str,
+    property_type: str,
+    transaction_type: str,
+    area_range: Optional[tuple]
+) -> Dict[str, Any]:
+    """API 실패 시 더미 데이터 생성"""
     results = []
     num_results = random.randint(3, 7)
     
     for i in range(num_results):
         if transaction_type == "매매":
-            price = random.randint(5, 30) * 100000000  # 5억 ~ 30억
+            price = random.randint(5, 30) * 100000000
             price_str = f"{price // 100000000}억 {(price % 100000000) // 10000000}천만원" if price % 100000000 else f"{price // 100000000}억"
         elif transaction_type == "전세":
-            price = random.randint(3, 15) * 100000000  # 3억 ~ 15억
+            price = random.randint(3, 15) * 100000000
             price_str = f"{price // 100000000}억 {(price % 100000000) // 10000000}천만원" if price % 100000000 else f"{price // 100000000}억"
-        else:  # 월세
-            deposit = random.randint(5000, 30000) * 10000  # 5천 ~ 3억
-            monthly = random.randint(50, 200) * 10000  # 50만 ~ 200만
+        else:
+            deposit = random.randint(5000, 30000) * 10000
+            monthly = random.randint(50, 200) * 10000
             price_str = f"보증금 {deposit // 10000}만원 / 월세 {monthly // 10000}만원"
         
         area = random.randint(20, 50) if not area_range else random.randint(area_range[0], area_range[1])
@@ -60,7 +110,7 @@ def search_real_estate_price(
             "property_type": property_type,
             "transaction_type": transaction_type,
             "price": price_str,
-            "area_sqm": area * 3.3,  # 평을 ㎡로 변환
+            "area_sqm": area * 3.3,
             "area_pyeong": area,
             "floor": f"{random.randint(1, 20)}층",
             "year_built": 2024 - random.randint(0, 20),
@@ -76,12 +126,13 @@ def search_real_estate_price(
             "property_type": property_type,
             "transaction_type": transaction_type,
             "area_range": area_range
-        }
+        },
+        "note": "Fallback to dummy data due to API failure"
     }
 
 
 @tool
-def analyze_price_trend(
+async def analyze_price_trend(
     location: str,
     property_type: str = "아파트",
     period_months: int = 12
@@ -99,7 +150,34 @@ def analyze_price_trend(
     """
     logger.info(f"Analyzing price trend for {location} {property_type} over {period_months} months")
     
-    # 더미 트렌드 데이터 생성
+    try:
+        # FastAPI 엔드포인트 호출
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{API_BASE_URL}/api/v1/data/market-trends/{location.lower()}"
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                trends = data.get("trends", {})
+                
+                # API 응답을 기반으로 트렌드 분석
+                return {
+                    "status": "success",
+                    "location": location,
+                    "property_type": property_type,
+                    "period_months": period_months,
+                    "trend_summary": {
+                        "current_avg_price": trends.get("2024_01", {}).get("avg_price", 0),
+                        "price_change_yoy": trends.get("2024_01", {}).get("price_change_yoy", 0),
+                        "transaction_volume": trends.get("2024_01", {}).get("transaction_volume", 0)
+                    },
+                    "analysis": f"{location} {property_type} 시세는 전년 대비 {trends.get('2024_01', {}).get('price_change_yoy', 0)}% 변동했습니다."
+                }
+    except Exception as e:
+        logger.error(f"Failed to call API: {e}")
+    
+    # 폴백: 더미 트렌드 데이터 생성
     trend_data = []
     current_date = datetime.now()
     base_price = random.randint(5, 15) * 100000000  # 5억 ~ 15억
@@ -140,7 +218,7 @@ def analyze_price_trend(
 
 
 @tool
-def compare_prices(
+async def compare_prices(
     locations: List[str],
     property_type: str = "아파트",
     transaction_type: str = "매매"
@@ -241,7 +319,7 @@ def calculate_price_per_area(
 
 
 @tool
-def get_market_statistics(location: str) -> Dict[str, Any]:
+async def get_market_statistics(location: str) -> Dict[str, Any]:
     """
     시장 통계 정보 조회
     
@@ -253,6 +331,38 @@ def get_market_statistics(location: str) -> Dict[str, Any]:
     """
     logger.info(f"Getting market statistics for {location}")
     
+    try:
+        # FastAPI 엔드포인트 호출
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{API_BASE_URL}/api/v1/data/area-info/{location}"
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                area_info = data.get("info", {})
+                
+                # 지역 정보를 기반으로 통계 생성
+                return {
+                    "status": "success",
+                    "location": location,
+                    "statistics": {
+                        "population": area_info.get("characteristics", {}).get("population", "정보 없음"),
+                        "area_type": area_info.get("characteristics", {}).get("type", "주거지역"),
+                        "apartment_complexes": len(area_info.get("apartment_complexes", [])),
+                        "schools": len(area_info.get("schools", {}).get("elementary", [])),
+                        "avg_days_on_market": random.randint(20, 60),
+                        "inventory_level": random.choice(["낮음", "보통", "높음"])
+                    },
+                    "insights": [
+                        f"{location} 지역의 주요 특성: {area_info.get('characteristics', {}).get('type', '주거지역')}",
+                        f"총 {len(area_info.get('apartment_complexes', []))}개의 주요 아파트 단지가 있습니다."
+                    ]
+                }
+    except Exception as e:
+        logger.error(f"Failed to call API: {e}")
+    
+    # 폴백: 기존 더미 데이터
     return {
         "status": "success",
         "location": location,
