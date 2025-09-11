@@ -1,0 +1,291 @@
+{
+  "housing_benefits": [
+    {
+      "id": "BEN001",
+      "name": "생애최초 주택구입 지원",
+      "category": "구매지원",
+      "target": "생애최초 주택 구매자",
+      "benefits": {
+        "tax_reduction": {
+          "acquisition_tax": {
+            "under_150m": "100% 면제",
+            "150m_300m": "50% 감면",
+            "condition": "취득가액 기준"
+          },
+          "property_tax": "3년간 50% 감면 (전용 60㎡ 이하)"
+        },
+        "loan_support": {
+          "ltv": "최대 80%",
+          "preferred_rate": "0.2~0.5%p 우대",
+          "products": ["디딤돌대출", "보금자리론"]
+        },
+        "subscription": {
+          "special_supply": "생애최초 특별공급 20% 배정",
+          "priority": "1순위 자격 완화"
+        }
+      },
+      "eligibility": {
+        "age": "만 19세 이상",
+        "ownership": "세대구성원 전원 무주택",
+        "income": "도시근로자 월평균소득 160% 이하",
+        "assets": "3.31억원 이하",
+        "work_period": "근로/사업 5년 이상",
+        "tax_payment": "소득세 납부 5년 이상"
+      },
+      "application": {
+        "documents": [
+          "무주택서약서",
+          "소득증빙서류",
+          "납세증명서",
+          "건강보험자격득실확인서"
+        ],
+        "process": "주택 취득 후 60일 이내 신고"
+      }
+    },
+    {
+      "id": "BEN002",
+      "name": "신혼부부 주거지원",
+      "category": "신혼부부",
+      "target": "혼인 7년 이내 부부",
+      "benefits": {
+        "purchase_support": {
+          "special_supply": "공공분양 30%, 민간분양 20%",
+          "loan": {
+            "amount": "최대 4억원",
+            "rate": "연 1.5~2.7%",
+            "ltv": "최대 80%"
+          },
+          "tax": "취득세 50% 감면 (생애최초 중복 가능)"
+        },
+        "rental_support": {
+          "public_rental": "신혼부부 전용 임대주택",
+          "jeonse_loan": {
+            "amount": "최대 2억원",
+            "rate": "연 1.2~2.1%"
+          },
+          "housing_allowance": "월 최대 20만원 (소득 기준)"
+        }
+      },
+      "eligibility": {
+        "marriage": "혼인신고 7년 이내",
+        "income": {
+          "public": "전년도 도시근로자 월평균소득 140% 이하",
+          "private": "전년도 도시근로자 월평균소득 160% 이하"
+        },
+        "priority": {
+          "1순위": "혼인 기간 3년 이내, 자녀 있음",
+          "2순위": "혼인 기간 3~7년, 자녀 있음",
+          "3순위": "자녀 없음"
+        }
+      },
+      "special_cases": [
+        "예비신혼부부 (6개월 이내 결혼 예정)",
+        "한부모가족",
+        "6세 이하 자녀 둔 가구"
+      ]
+    },
+    {
+      "id": "BEN003",
+      "name": "청년 주거지원",
+      "category": "청년",
+      "target": "만 19~39세 청년",
+      "benefits": {
+        "purchase": {
+          "loan": {
+            "product": "청년전용 버팀목전세대출",
+            "amount": "최대 2억원",
+            "rate": "연 1.8~2.7%"
+          },
+          "savings": {
+            "product": "청년우대형 청약통장",
+            "interest": "최대 4.3%",
+            "benefit": "이자소득 비과세 (연 600만원 한도)"
+          }
+        },
+        "rental": {
+          "monthly_rent_loan": {
+            "deposit": "최대 5천만원",
+            "monthly": "최대 50만원",
+            "rate": "연 1.5%"
+          },
+          "public_housing": "청년전용 임대주택",
+          "share_house": "청년 셰어하우스"
+        },
+        "allowance": {
+          "housing_allowance": "월 최대 20만원",
+          "deposit_support": "최대 500만원 무이자 대출"
+        }
+      },
+      "eligibility": {
+        "age": "만 19~39세",
+        "income": "중위소득 120% 이하",
+        "assets": "2.92억원 이하",
+        "employment": "재직 또는 구직활동 중"
+      }
+    },
+    {
+      "id": "BEN004",
+      "name": "다자녀가구 주거지원",
+      "category": "다자녀",
+      "target": "미성년 자녀 2명 이상 가구",
+      "benefits": {
+        "purchase": {
+          "special_supply": "10~15% 배정",
+          "loan_benefit": {
+            "ltv": "최대 80%",
+            "rate_discount": "0.5~1.0%p",
+            "amount": "최대 5억원"
+          },
+          "tax": {
+            "acquisition_tax": {
+              "2children": "50% 감면",
+              "3children": "100% 면제"
+            },
+            "property_tax": "감면 (지자체별 상이)"
+          }
+        },
+        "priority": {
+          "public_rental": "우선 공급",
+          "area_expansion": "전용면적 확대 배정"
+        }
+      },
+      "scoring": {
+        "3children": "40점",
+        "2children": "35점",
+        "regional_residence": "15점",
+        "no_house_period": "20점"
+      }
+    },
+    {
+      "id": "BEN005",
+      "name": "신생아특례 대출",
+      "category": "출산가구",
+      "target": "2년 내 출산 가구",
+      "introduction_date": "2024-01-29",
+      "benefits": {
+        "loan_conditions": {
+          "amount": "최대 5억원",
+          "ltv": "최대 80% (9억 이하 주택)",
+          "interest_rates": {
+            "income_under_85m": "연 1.6~2.35%",
+            "income_85m_130m": "연 2.7~3.3%"
+          },
+          "repayment": {
+            "period": "최대 30년",
+            "grace_period": "최대 4년"
+          }
+        },
+        "additional_benefits": {
+          "second_child": "금리 0.2%p 추가 인하",
+          "third_child": "금리 0.5%p 추가 인하"
+        }
+      },
+      "eligibility": {
+        "birth": "대출신청일 기준 2년 이내 출산",
+        "income": "부부합산 1.3억원 이하",
+        "property": "주택가격 9억원 이하",
+        "ownership": "무주택 또는 1주택자 (대체 구입)"
+      }
+    },
+    {
+      "id": "BEN006",
+      "name": "주거급여",
+      "category": "저소득층",
+      "target": "중위소득 48% 이하 가구",
+      "benefits": {
+        "rental_support": {
+          "seoul": {
+            "1person": 341000,
+            "2person": 382000,
+            "3person": 455000,
+            "4person": 527000
+          },
+          "gyeonggi": {
+            "1person": 268000,
+            "2person": 310000,
+            "3person": 370000,
+            "4person": 428000
+          }
+        },
+        "home_repair": {
+          "light": "4730000원 (3년)",
+          "medium": "8490000원 (5년)",
+          "heavy": "12410000원 (7년)"
+        }
+      },
+      "income_criteria_2024": {
+        "1person": 1069654,
+        "2person": 1767652,
+        "3person": 2274035,
+        "4person": 2771886
+      }
+    }
+  ],
+  "regional_benefits": [
+    {
+      "region": "서울특별시",
+      "programs": [
+        {
+          "name": "서울형 주택바우처",
+          "target": "저소득 민간임대 거주자",
+          "amount": "월 최대 10만원",
+          "condition": "중위소득 60% 이하"
+        },
+        {
+          "name": "청년월세지원",
+          "target": "만 19~39세 1인 가구",
+          "amount": "월 최대 20만원",
+          "period": "최대 10개월"
+        }
+      ]
+    },
+    {
+      "region": "경기도",
+      "programs": [
+        {
+          "name": "경기도 청년 전세보증금 대출",
+          "amount": "최대 1억원",
+          "rate": "연 1.0%",
+          "condition": "도내 1년 이상 거주"
+        },
+        {
+          "name": "따복하우스",
+          "type": "공공임대",
+          "rent": "시세 50~80%",
+          "target": "신혼부부, 청년"
+        }
+      ]
+    }
+  ],
+  "tax_benefits": [
+    {
+      "name": "주택청약종합저축 소득공제",
+      "benefit": "납입액의 40% (연 240만원 한도)",
+      "condition": "무주택 세대주, 총급여 7천만원 이하"
+    },
+    {
+      "name": "주택임차차입금 원리금상환액 공제",
+      "benefit": "연 300만원 한도",
+      "condition": "무주택 세대주"
+    },
+    {
+      "name": "장기주택저당차입금 이자상환액 공제",
+      "benefit": "연 300~1800만원",
+      "condition": "1주택자, 기준시가 5억원 이하"
+    }
+  ],
+  "upcoming_policies": [
+    {
+      "name": "청년 원가주택",
+      "expected_date": "2024년 하반기",
+      "description": "건축원가 수준 공급",
+      "target": "청년·신혼부부"
+    },
+    {
+      "name": "늘봄주택",
+      "expected_date": "2024년",
+      "description": "장기전세주택",
+      "supply": "연 5만호"
+    }
+  ]
+}

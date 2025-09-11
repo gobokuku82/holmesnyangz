@@ -1,0 +1,291 @@
+{
+  "transit_zones": [
+    {
+      "id": "TRANSIT001",
+      "name": "강남역 역세권",
+      "station": {
+        "name": "강남역",
+        "lines": ["2호선", "신분당선"],
+        "daily_passengers": "약 30만명",
+        "exit_count": 12
+      },
+      "zones": {
+        "zone_250m": {
+          "description": "도보 3분 이내",
+          "premium": "30-40%",
+          "complexes": [
+            {
+              "name": "강남역 한화오벨리스크",
+              "distance": "150m",
+              "walking_time": "2분",
+              "type": "오피스텔"
+            },
+            {
+              "name": "강남 S타워",
+              "distance": "200m",
+              "walking_time": "3분",
+              "type": "주상복합"
+            }
+          ]
+        },
+        "zone_500m": {
+          "description": "도보 5-7분",
+          "premium": "20-30%",
+          "complexes": [
+            {
+              "name": "래미안 강남힐스테이트",
+              "distance": "450m",
+              "walking_time": "6분"
+            }
+          ]
+        },
+        "zone_1km": {
+          "description": "도보 10-15분",
+          "premium": "10-20%",
+          "complexes": [
+            {
+              "name": "개포자이",
+              "distance": "850m",
+              "walking_time": "12분"
+            }
+          ]
+        }
+      },
+      "accessibility": {
+        "to_gangnam_business": "0분",
+        "to_gwanghwamun": "25분",
+        "to_yeouido": "20분",
+        "to_pangyo": "35분",
+        "to_incheon_airport": "65분"
+      },
+      "nearby_stations": [
+        {
+          "name": "역삼역",
+          "distance": "700m",
+          "lines": ["2호선"]
+        },
+        {
+          "name": "신논현역",
+          "distance": "650m",
+          "lines": ["9호선"]
+        }
+      ]
+    },
+    {
+      "id": "TRANSIT002",
+      "name": "홍대입구역 역세권",
+      "station": {
+        "name": "홍대입구역",
+        "lines": ["2호선", "경의중앙선", "공항철도"],
+        "daily_passengers": "약 25만명",
+        "exit_count": 9
+      },
+      "zones": {
+        "zone_250m": {
+          "description": "도보 3분 이내",
+          "premium": "25-35%",
+          "complexes": [
+            {
+              "name": "마포 트라팰리스",
+              "distance": "180m",
+              "walking_time": "2분"
+            }
+          ]
+        },
+        "zone_500m": {
+          "description": "도보 5-7분",
+          "premium": "15-25%",
+          "complexes": [
+            {
+              "name": "서교 자이",
+              "distance": "420m",
+              "walking_time": "6분"
+            }
+          ]
+        }
+      },
+      "accessibility": {
+        "to_gangnam": "30분",
+        "to_gwanghwamun": "15분",
+        "to_yeouido": "15분",
+        "to_digital_media_city": "10분",
+        "to_incheon_airport": "43분 (직통)"
+      }
+    },
+    {
+      "id": "TRANSIT003",
+      "name": "판교역 역세권",
+      "station": {
+        "name": "판교역",
+        "lines": ["신분당선"],
+        "daily_passengers": "약 8만명",
+        "exit_count": 4
+      },
+      "zones": {
+        "zone_250m": {
+          "description": "도보 3분 이내",
+          "premium": "20-30%",
+          "complexes": [
+            {
+              "name": "판교 알파돔시티",
+              "distance": "200m",
+              "walking_time": "3분"
+            }
+          ]
+        }
+      },
+      "accessibility": {
+        "to_gangnam": "15분",
+        "to_gwanghwamun": "40분",
+        "to_pangyo_techno": "5분 (버스)",
+        "to_bundang": "10분"
+      }
+    }
+  ],
+  "bus_routes": [
+    {
+      "id": "BUS001",
+      "number": "9407",
+      "type": "광역급행",
+      "route": "수원-판교-강남",
+      "interval": "5-10분",
+      "first_bus": "05:00",
+      "last_bus": "23:30",
+      "major_stops": [
+        "수원역",
+        "영통역",
+        "판교역",
+        "양재역",
+        "강남역"
+      ],
+      "travel_time": {
+        "수원_강남": "60분",
+        "판교_강남": "25분"
+      }
+    },
+    {
+      "id": "BUS002",
+      "number": "146",
+      "type": "간선",
+      "route": "강남-한남-용산",
+      "interval": "8-12분",
+      "major_stops": [
+        "강남역",
+        "신사역",
+        "한남동",
+        "이태원",
+        "용산역"
+      ]
+    }
+  ],
+  "future_plans": [
+    {
+      "id": "PLAN001",
+      "name": "GTX-A 노선",
+      "type": "광역급행철도",
+      "status": "2024년 개통 예정",
+      "route": "파주-서울역-성남",
+      "impact_areas": [
+        {
+          "station": "대곡역",
+          "expected_premium": "+15-20%"
+        },
+        {
+          "station": "연신내역",
+          "expected_premium": "+10-15%"
+        },
+        {
+          "station": "서울역",
+          "expected_premium": "+5-10%"
+        }
+      ],
+      "travel_time": {
+        "파주_서울역": "25분",
+        "서울역_성남": "15분"
+      }
+    },
+    {
+      "id": "PLAN002",
+      "name": "신분당선 연장",
+      "type": "지하철",
+      "status": "2028년 개통 예정",
+      "route": "신사-용산",
+      "new_stations": ["한남", "이태원", "녹사평", "용산"],
+      "expected_impact": "강남-용산 10분대 연결"
+    }
+  ],
+  "parking_info": [
+    {
+      "area": "강남역 일대",
+      "public_parking": {
+        "lots": 15,
+        "total_spaces": 3500,
+        "hourly_rate": "6,000원",
+        "daily_max": "60,000원"
+      },
+      "residential_parking": {
+        "availability": "매우 부족",
+        "monthly_rent": "20-40만원",
+        "household_ratio": "0.8대/세대"
+      }
+    },
+    {
+      "area": "판교",
+      "public_parking": {
+        "lots": 8,
+        "total_spaces": 5000,
+        "hourly_rate": "2,000원",
+        "daily_max": "20,000원"
+      },
+      "residential_parking": {
+        "availability": "양호",
+        "monthly_rent": "10-15만원",
+        "household_ratio": "1.3대/세대"
+      }
+    }
+  ],
+  "commute_patterns": [
+    {
+      "from": "일산",
+      "to": "강남",
+      "popular_methods": [
+        {
+          "method": "경의중앙선 + 2호선",
+          "time": "50분",
+          "cost": "2,050원",
+          "comfort": "혼잡"
+        },
+        {
+          "method": "광역버스",
+          "time": "60분",
+          "cost": "2,800원",
+          "comfort": "좌석"
+        },
+        {
+          "method": "자가용",
+          "time": "40-90분",
+          "cost": "15,000원(유료비+기름값)",
+          "note": "출퇴근 시간 정체"
+        }
+      ]
+    },
+    {
+      "from": "분당",
+      "to": "강남",
+      "popular_methods": [
+        {
+          "method": "분당선 직통",
+          "time": "25분",
+          "cost": "1,650원",
+          "comfort": "보통"
+        },
+        {
+          "method": "신분당선",
+          "time": "15분",
+          "cost": "2,750원",
+          "comfort": "쾌적"
+        }
+      ]
+    }
+  ]
+}

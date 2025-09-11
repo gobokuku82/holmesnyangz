@@ -5,6 +5,7 @@ import { WorkflowStatus } from '../types';
 interface ProgressFlowProps {
   status: WorkflowStatus;
   visible: boolean;
+  style?: React.CSSProperties;
 }
 
 const Container = styled.div<{ visible: boolean }>`
@@ -14,7 +15,8 @@ const Container = styled.div<{ visible: boolean }>`
   border-radius: 12px;
   margin: 10px 0;
   margin-left: 0;
-  max-width: 600px;
+  max-width: 800px;
+  width: 100%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 `;
 
@@ -23,6 +25,16 @@ const StagesContainer = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   margin-bottom: 15px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 `;
 
 const StageSection = styled.div<{ active: boolean; completed: boolean }>`
@@ -34,20 +46,40 @@ const StageSection = styled.div<{ active: boolean; completed: boolean }>`
 `;
 
 const SpinnerContainer = styled.div`
-  width: 80px;
-  height: 80px;
+  width: 5rem;
+  height: 5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  
+  @media (max-width: 768px) {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  @media (max-width: 480px) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 `;
 
 const SpinnerImage = styled.img<{ active: boolean }>`
-  width: 80px;
-  height: 80px;
+  width: 5rem;
+  height: 5rem;
   opacity: ${props => props.active ? 1 : 0.2};
   filter: ${props => !props.active ? 'grayscale(100%)' : 'none'};
   transition: all 0.3s ease;
+  
+  @media (max-width: 768px) {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  @media (max-width: 480px) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 `;
 
 const pulse = keyframes`
@@ -58,7 +90,7 @@ const pulse = keyframes`
 
 const StageLabel = styled.div<{ active: boolean; completed: boolean }>`
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: ${props => props.active ? 'bold' : 'normal'};
   color: ${props => 
     props.completed ? '#4CAF50' : 
@@ -68,6 +100,10 @@ const StageLabel = styled.div<{ active: boolean; completed: boolean }>`
   ${props => props.active && css`
     animation: ${pulse} 1.5s ease-in-out infinite;
   `}
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ProgressBar = styled.div`
@@ -94,23 +130,33 @@ const AgentsContainer = styled.div<{ visible: boolean }>`
   padding: 12px;
   background: rgba(255, 255, 255, 0.5);
   border-radius: 8px;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px;
+  }
 `;
 
 const AgentCard = styled.div<{ active: boolean; completed: boolean }>`
   padding: 8px;
   border-radius: 6px;
-  font-size: 12px;
   background: ${props => 
     props.completed ? 'linear-gradient(135deg, #4CAF50, #8BC34A)' :
     props.active ? 'linear-gradient(135deg, #FFC107, #FFD54F)' :
     'linear-gradient(135deg, #e0e0e0, #f5f5f5)'};
   color: ${props => props.completed || props.active ? 'white' : '#666'};
   text-align: center;
-  font-size: 14px;
+  font-size: 0.875rem;
   transition: all 0.3s ease;
   ${props => props.active && css`
     animation: ${pulse} 1s ease-in-out infinite;
   `}
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    padding: 6px;
+  }
 `;
 
 const CompletedIcon = styled.div`
@@ -126,7 +172,7 @@ const StatusMessage = styled.div`
   font-style: italic;
 `;
 
-const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible }) => {
+const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible, style }) => {
   const stages = [
     { 
       id: 'analyzing', 
@@ -171,7 +217,7 @@ const ProgressFlow: React.FC<ProgressFlowProps> = ({ status, visible }) => {
   const activeAgentIndex = getActiveAgent();
 
   return (
-    <Container visible={visible}>
+    <Container visible={visible} style={style}>
       <StagesContainer>
         {stages.map((stage, index) => {
           const isActive = stage.id === status.stage;

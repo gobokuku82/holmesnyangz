@@ -168,12 +168,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages, workflowStatus, isP
             <Avatar isUser={false}>
               <BotAvatarImg src="/character/img_main.png" alt="Bot" />
             </Avatar>
-            <div style={{ width: '100%' }}>
-              <ProgressFlow 
-                status={workflowStatus}
-                visible={true}
-              />
-            </div>
+            <ProgressFlow 
+              status={workflowStatus}
+              visible={true}
+              style={{ minWidth: '700px' }}
+            />
           </MessageContent>
         </MessageItem>
       )}

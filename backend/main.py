@@ -13,6 +13,7 @@ from typing import Dict
 from datetime import datetime
 
 from backend.api.routes import router as api_router
+from backend.api.data_routes import router as data_router
 from backend.api.models import WebSocketMessage
 from backend.core.workflow_engine import AsyncWorkflowEngine, WorkflowEngineFactory
 from backend.core.logging_config import setup_logging, get_logger
@@ -118,6 +119,7 @@ register_error_handlers(app)
 
 # API 라우터 포함
 app.include_router(api_router)
+app.include_router(data_router)
 
 
 # === WebSocket 엔드포인트 ===

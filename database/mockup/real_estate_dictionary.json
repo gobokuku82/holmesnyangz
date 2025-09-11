@@ -1,0 +1,197 @@
+{
+  "terms": [
+    {
+      "term": "LTV (Loan To Value)",
+      "category": "금융",
+      "definition": "주택담보대출비율. 담보가치 대비 대출금액의 비율",
+      "formula": "LTV = (대출금액 / 담보가치) × 100",
+      "example": "5억원 아파트에 LTV 70% 적용 시 최대 3.5억원 대출 가능",
+      "current_regulation": "투기지역 40%, 투기과열지구 50%, 조정대상지역 60%, 기타지역 70%",
+      "related_terms": ["DTI", "DSR", "총부채원리금상환비율"]
+    },
+    {
+      "term": "DTI (Debt To Income)",
+      "category": "금융",
+      "definition": "총부채상환비율. 연소득 대비 연간 대출원리금 상환액의 비율",
+      "formula": "DTI = (연간 대출원리금 상환액 / 연소득) × 100",
+      "example": "연소득 6천만원, DTI 40% 적용 시 연간 상환액 2,400만원까지 가능",
+      "current_regulation": "투기지역·투기과열지구 40%, 조정대상지역 50%, 기타지역 60%",
+      "related_terms": ["LTV", "DSR", "소득증빙"]
+    },
+    {
+      "term": "DSR (Debt Service Ratio)",
+      "category": "금융",
+      "definition": "총부채원리금상환비율. 연소득 대비 모든 대출의 연간 원리금 상환액 비율",
+      "formula": "DSR = (모든 대출의 연간 원리금 상환액 / 연소득) × 100",
+      "example": "신용대출, 자동차할부 등 모든 대출 포함하여 계산",
+      "current_regulation": "차주단위 DSR 40% (은행권 기준)",
+      "note": "DTI는 주택담보대출만, DSR은 모든 대출 포함",
+      "related_terms": ["LTV", "DTI", "스트레스 DSR"]
+    },
+    {
+      "term": "전용면적",
+      "category": "면적",
+      "definition": "아파트나 오피스텔에서 세대가 독립적으로 사용하는 면적",
+      "calculation": "방, 거실, 주방, 화장실 등 실제 거주공간",
+      "example": "84㎡ 아파트의 전용면적은 약 25.4평",
+      "conversion": "1평 = 3.3㎡",
+      "related_terms": ["공급면적", "계약면적", "서비스면적"]
+    },
+    {
+      "term": "공급면적",
+      "category": "면적",
+      "definition": "전용면적과 주거공용면적을 합한 면적",
+      "calculation": "전용면적 + 주거공용면적(계단, 복도, 엘리베이터 등)",
+      "example": "전용 84㎡ 아파트의 공급면적은 약 106㎡",
+      "note": "분양가는 공급면적 기준으로 산정",
+      "related_terms": ["전용면적", "계약면적", "주거공용면적"]
+    },
+    {
+      "term": "용적률",
+      "category": "건축",
+      "definition": "대지면적에 대한 건축물 연면적의 비율",
+      "formula": "용적률 = (건축물 연면적 / 대지면적) × 100",
+      "example": "용적률 200%는 100평 대지에 200평까지 건축 가능",
+      "regulation": "주거지역 100~500%, 상업지역 200~1500%",
+      "impact": "용적률이 높을수록 고층 건물 가능",
+      "related_terms": ["건폐율", "용도지역", "재건축"]
+    },
+    {
+      "term": "건폐율",
+      "category": "건축",
+      "definition": "대지면적에 대한 건축면적의 비율",
+      "formula": "건폐율 = (건축면적 / 대지면적) × 100",
+      "example": "건폐율 60%는 100평 대지에 60평까지 건축 가능",
+      "regulation": "주거지역 50~70%, 상업지역 60~90%",
+      "impact": "건폐율이 낮을수록 공지가 많아 쾌적",
+      "related_terms": ["용적률", "일조권", "조경면적"]
+    },
+    {
+      "term": "감정가",
+      "category": "평가",
+      "definition": "감정평가사가 평가한 부동산의 객관적 가치",
+      "usage": [
+        "담보대출 시 대출한도 산정 기준",
+        "경매 시 최저매각가격 산정",
+        "재산세 과세표준 결정"
+      ],
+      "types": {
+        "담보감정": "금융기관 대출용",
+        "경매감정": "법원 경매용",
+        "과세감정": "세금 부과용"
+      },
+      "related_terms": ["시가", "공시가격", "실거래가"]
+    },
+    {
+      "term": "프리미엄",
+      "category": "거래",
+      "definition": "임대차 계약 시 권리금 또는 웃돈",
+      "types": {
+        "분양권_프리미엄": "분양가와 실거래가의 차액",
+        "전세_프리미엄": "희소성 있는 매물의 추가금",
+        "상가_권리금": "영업권, 시설 등의 대가"
+      },
+      "legal_status": "주택 프리미엄은 불법, 상가 권리금은 합법",
+      "related_terms": ["권리금", "웃돈", "분양권"]
+    },
+    {
+      "term": "레버리지",
+      "category": "투자",
+      "definition": "대출을 활용한 부동산 투자 전략",
+      "mechanism": "적은 자기자본으로 큰 자산 매입",
+      "example": "자본 2억으로 대출 3억 받아 5억 아파트 매입",
+      "risk": "가격 하락 시 손실 확대",
+      "benefit": "가격 상승 시 수익률 극대화",
+      "related_terms": ["갭투자", "LTV", "투자수익률"]
+    },
+    {
+      "term": "갭투자",
+      "category": "투자",
+      "definition": "매매가와 전세가의 차액(갭)만으로 주택을 매입하는 투자",
+      "formula": "투자금액 = 매매가 - 전세가",
+      "example": "매매 5억, 전세 4억인 경우 1억으로 투자",
+      "risk": [
+        "전세가 하락 리스크",
+        "공실 리스크",
+        "금리 상승 리스크"
+      ],
+      "related_terms": ["전세가율", "레버리지", "역전세"]
+    },
+    {
+      "term": "전세가율",
+      "category": "시장지표",
+      "definition": "매매가 대비 전세가의 비율",
+      "formula": "전세가율 = (전세가 / 매매가) × 100",
+      "interpretation": {
+        "60%_이하": "매매 선호 (갭투자 활발)",
+        "60~70%": "정상 수준",
+        "70%_이상": "전세 선호 (매매시장 침체)"
+      },
+      "example": "매매 10억, 전세 7억 = 전세가율 70%",
+      "related_terms": ["갭투자", "매매전세지수", "역전세"]
+    },
+    {
+      "term": "분양권",
+      "category": "거래",
+      "definition": "아파트 등을 분양받을 수 있는 권리",
+      "transfer": "입주 전까지 전매 가능 (전매제한 없는 경우)",
+      "taxation": "양도소득세 과세 대상",
+      "restrictions": {
+        "투기과열지구": "소유권이전등기 시까지 전매 금지",
+        "조정대상지역": "일정 기간 전매 제한"
+      },
+      "related_terms": ["입주권", "전매", "프리미엄"]
+    },
+    {
+      "term": "재건축",
+      "category": "개발",
+      "definition": "노후·불량 주택을 철거하고 새로 건축",
+      "requirements": [
+        "준공 후 30년 경과 (서울 등 일부)",
+        "안전진단 D, E등급",
+        "조합원 3/4 이상 동의"
+      ],
+      "process": "안전진단 → 정비구역지정 → 조합설립 → 사업시행인가 → 착공",
+      "benefits": "용적률 상향으로 가구수 증가",
+      "related_terms": ["재개발", "리모델링", "안전진단"]
+    },
+    {
+      "term": "재개발",
+      "category": "개발",
+      "definition": "정비기반시설이 열악한 지역을 체계적으로 개발",
+      "difference": "재건축은 주택만, 재개발은 도로 등 기반시설 포함",
+      "types": {
+        "주택재개발": "노후 주거지역 정비",
+        "도시환경정비": "상업·공업지역 정비"
+      },
+      "compensation": "현금보상 또는 입주권 제공",
+      "related_terms": ["재건축", "정비사업", "토지수용"]
+    }
+  ],
+  "abbreviations": [
+    {
+      "abbr": "MBS",
+      "full": "Mortgage Backed Securities",
+      "korean": "주택저당증권",
+      "description": "주택담보대출을 기초로 발행한 증권"
+    },
+    {
+      "abbr": "REITs",
+      "full": "Real Estate Investment Trusts",
+      "korean": "부동산투자신탁",
+      "description": "부동산에 투자하여 수익을 배당하는 회사"
+    },
+    {
+      "abbr": "PF",
+      "full": "Project Financing",
+      "korean": "프로젝트 파이낸싱",
+      "description": "사업 자체의 수익성을 담보로 한 대출"
+    },
+    {
+      "abbr": "SPC",
+      "full": "Special Purpose Company",
+      "korean": "특수목적법인",
+      "description": "특정 사업만을 위해 설립된 법인"
+    }
+  ]
+}
