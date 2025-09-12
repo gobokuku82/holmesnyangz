@@ -358,43 +358,45 @@ class AsyncWorkflowEngine:
             # 스트리밍 이벤트 생성
             logger.info(f"[Engine] Starting astream_events with thread_id: {thread_id}")
             try:
-                async for event in graph.astream_events(initial_state, config, version="v1"):
-                    # 이벤트 타입별 처리
-                    if event["event"] == "on_chain_start":
-                        yield {
-                            "type": "chain_start",
-                            "name": event["name"],
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    elif event["event"] == "on_chain_end":
-                        yield {
-                            "type": "chain_end",
-                            "name": event["name"],
-                            "output": event.get("data", {}).get("output"),
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    elif event["event"] == "on_llm_stream":
-                        # LLM 스트리밍 토큰
-                        yield {
-                            "type": "token",
-                            "content": event.get("data", {}).get("chunk", ""),
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    elif event["event"] == "on_tool_start":
-                        yield {
-                            "type": "tool_start",
-                            "tool": event["name"],
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    elif event["event"] == "on_tool_end":
-                        yield {
-                            "type": "tool_end",
-                            "tool": event["name"],
-                            "output": event.get("data", {}).get("output"),
-                            "timestamp": datetime.now().isoformat()
-                        }
+                # 그래프 실행하고 최종 상태 가져오기
+                final_state = await graph.ainvoke(initial_state, config)
+                
+                # 최종 응답 추출
+                if final_state and "final_response" in final_state:
+                    response = final_state["final_response"]
+                elif final_state and "messages" in final_state:
+                    # 마지막 AI 메시지 추출
+                    ai_messages = [msg for msg in final_state["messages"] if hasattr(msg, 'content')]
+                    if ai_messages:
+                        response = ai_messages[-1].content
+                    else:
+                        response = "처리가 완료되었습니다."
+                else:
+                    response = "죄송합니다. 응답을 생성할 수 없습니다."
+                
+                # 응답을 토큰으로 스트리밍 (청크 단위로)
+                chunk_size = 50  # 한 번에 보낼 문자 수
+                for i in range(0, len(response), chunk_size):
+                    chunk = response[i:i+chunk_size]
+                    yield {
+                        "type": "token",
+                        "content": chunk,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    # 스트리밍 효과를 위한 작은 지연 (선택적)
+                    import asyncio
+                    await asyncio.sleep(0.05)
+                
+                # 완료 이벤트
+                yield {
+                    "type": "chain_end",
+                    "name": "workflow",
+                    "output": response,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
             except Exception as e:
-                logger.error(f"[Engine] Error in astream_events: {e}", exc_info=True)
+                logger.error(f"[Engine] Error in workflow execution: {e}", exc_info=True)
                 yield {
                     "type": "error",
                     "content": f"Workflow engine error: {str(e)}",
