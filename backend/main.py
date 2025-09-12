@@ -261,11 +261,15 @@ async def handle_websocket_query(
         logger.info(f"[WebSocket] Starting workflow engine for thread {thread_id}")
         event_stream = engine.stream_events(query, thread_id)
         
+        # 응답 수집
+        collected_response = ""
+        
         # 이벤트 스트리밍
         async for event in event_stream:
             # 이벤트 타입별 메시지 전송
             if event["type"] == "token":
                 # 토큰 스트리밍
+                collected_response += event.get("content", "")
                 await manager.send_message(
                     session_id,
                     WebSocketMessage(
@@ -278,6 +282,18 @@ async def handle_websocket_query(
             elif event["type"] in ["chain_start", "chain_end", "tool_start", "tool_end"]:
                 # 상태 업데이트는 tracker를 통해 처리
                 pass
+        
+        # 응답이 없는 경우 기본 메시지 전송
+        if not collected_response:
+            default_response = "죄송합니다. 응답을 생성하는데 문제가 발생했습니다. 다시 시도해주세요."
+            await manager.send_message(
+                session_id,
+                WebSocketMessage(
+                    type="response",
+                    content=default_response,
+                    metadata={"streaming": False}
+                )
+            )
         
         # 워크플로우 완료
         await tracker.complete_workflow("모든 작업이 완료되었습니다!")

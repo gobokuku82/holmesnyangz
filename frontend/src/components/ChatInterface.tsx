@@ -154,6 +154,11 @@ const ChatInterface: React.FC = () => {
         currentAgentIndex: event.currentAgentIndex,
         agentProgress: event.agentProgress,
       });
+      
+      // 워크플로우 완료 시 처리
+      if (event.stage === 'completed') {
+        setIsProcessing(false);
+      }
     }
   }, []);
 
@@ -166,6 +171,22 @@ const ChatInterface: React.FC = () => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMessage]);
+      
+      // 스트리밍이 아닌 경우 처리 완료
+      if (!message.metadata?.streaming) {
+        setIsProcessing(false);
+        // 워크플로우 상태를 completed로 변경
+        setWorkflowStatus(prev => ({
+          ...prev,
+          stage: 'completed',
+          progress: 100
+        }));
+        
+        // 2초 후 idle 상태로 리셋
+        setTimeout(() => {
+          setWorkflowStatus({ stage: 'idle', progress: 0, agentsSequence: [] });
+        }, 2000);
+      }
     }
   }, []);
 
