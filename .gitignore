@@ -5,7 +5,6 @@ __pycache__/
 *.so
 .Python
 venv/
-reports/
 env/
 ENV/
 build/
