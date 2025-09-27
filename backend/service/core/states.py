@@ -1,6 +1,7 @@
 """
 State Definitions for LangGraph 0.6.x
 Workflow data that changes during execution with reducer patterns
+FIXED VERSION: Added retry_count to SupervisorState
 """
 
 from typing import TypedDict, List, Dict, Any, Optional, Annotated
@@ -146,6 +147,7 @@ class SupervisorState(BaseState):
     """
     Supervisor State for Main Orchestrator
     Manages intent analysis → planning → execution → evaluation workflow
+    FIXED: Added retry_count and max_retries fields
     """
 
     # === Input (overwrite) ===
@@ -153,50 +155,23 @@ class SupervisorState(BaseState):
 
     # === Intent Analysis (overwrite) ===
     intent: Optional[Dict[str, Any]]  # Classified intent with extracted entities
-    # Example: {
-    #   "type": "search" | "analysis" | "comparison" | "recommendation",
-    #   "region": "서울특별시 강남구",
-    #   "property_type": "아파트",
-    #   "deal_type": "매매",
-    #   "price_range": {"min": 100000, "max": 150000},
-    #   "size_range": {"min": 30, "max": 40}
-    # }
 
     # === Planning (overwrite) ===
     execution_plan: Optional[Dict[str, Any]]  # Agent execution plan
-    # Example: {
-    #   "strategy": "sequential" | "parallel" | "dag" | "swarm",
-    #   "agents": [
-    #     {"name": "property_search", "order": 1, "params": {...}},
-    #     {"name": "market_analysis", "order": 2, "params": {...}}
-    #   ]
-    # }
 
     # === Agent Execution (merge) ===
     agent_results: Annotated[Dict[str, Any], merge_dicts]  # Results from executed agents
-    # Example: {
-    #   "property_search": {"status": "success", "data": [...]},
-    #   "market_analysis": {"status": "success", "insights": [...]}
-    # }
+
+    # === Retry Management (overwrite) - NEWLY ADDED ===
+    retry_count: int  # Current retry count (default: 0)
+    max_retries: int  # Maximum retry attempts (default: 2)
+    failed_agents: List[str]  # List of failed agents for retry
 
     # === Evaluation (overwrite) ===
     evaluation: Optional[Dict[str, Any]]  # Quality evaluation result
-    # Example: {
-    #   "quality_score": 0.85,
-    #   "completeness": True,
-    #   "needs_retry": False,
-    #   "retry_agents": [],
-    #   "feedback": "All data collected successfully"
-    # }
 
     # === Output (overwrite) ===
     final_output: Optional[Dict[str, Any]]  # Final formatted response
-    # Example: {
-    #   "answer": "강남구 아파트 매매 시세는...",
-    #   "listings": [...],
-    #   "insights": [...],
-    #   "metadata": {"total_listings": 10, "avg_price": 150000}
-    # }
 
 
 class DocumentState(BaseState):
@@ -290,6 +265,7 @@ def create_real_estate_initial_state(**kwargs) -> Dict[str, Any]:
 def create_supervisor_initial_state(**kwargs) -> Dict[str, Any]:
     """
     Create initial SupervisorState with defaults
+    FIXED: Added retry_count and max_retries initialization
 
     Args:
         **kwargs: Initial field values
@@ -315,6 +291,11 @@ def create_supervisor_initial_state(**kwargs) -> Dict[str, Any]:
 
         # Agent Execution
         "agent_results": {},
+
+        # Retry Management - NEWLY ADDED
+        "retry_count": 0,
+        "max_retries": kwargs.get("max_retries", 2),
+        "failed_agents": [],
 
         # Evaluation
         "evaluation": None,
@@ -360,6 +341,7 @@ def get_state_summary(state: Dict[str, Any]) -> Dict[str, Any]:
         "has_results": bool(state.get("final_report") or state.get("formatted_result")),
         "data_collected": bool(state.get("collected_data") or state.get("sql_result")),
         "insights_count": len(state.get("insights", [])),
+        "retry_count": state.get("retry_count", 0),
         "start_time": state.get("start_time"),
         "end_time": state.get("end_time")
     }
