@@ -142,6 +142,63 @@ class RealEstateState(BaseState):
     final_report: Optional[Dict[str, Any]]  # Complete analysis report
 
 
+class SupervisorState(BaseState):
+    """
+    Supervisor State for Main Orchestrator
+    Manages intent analysis → planning → execution → evaluation workflow
+    """
+
+    # === Input (overwrite) ===
+    query: str  # User query
+
+    # === Intent Analysis (overwrite) ===
+    intent: Optional[Dict[str, Any]]  # Classified intent with extracted entities
+    # Example: {
+    #   "type": "search" | "analysis" | "comparison" | "recommendation",
+    #   "region": "서울특별시 강남구",
+    #   "property_type": "아파트",
+    #   "deal_type": "매매",
+    #   "price_range": {"min": 100000, "max": 150000},
+    #   "size_range": {"min": 30, "max": 40}
+    # }
+
+    # === Planning (overwrite) ===
+    execution_plan: Optional[Dict[str, Any]]  # Agent execution plan
+    # Example: {
+    #   "strategy": "sequential" | "parallel" | "dag" | "swarm",
+    #   "agents": [
+    #     {"name": "property_search", "order": 1, "params": {...}},
+    #     {"name": "market_analysis", "order": 2, "params": {...}}
+    #   ]
+    # }
+
+    # === Agent Execution (merge) ===
+    agent_results: Annotated[Dict[str, Any], merge_dicts]  # Results from executed agents
+    # Example: {
+    #   "property_search": {"status": "success", "data": [...]},
+    #   "market_analysis": {"status": "success", "insights": [...]}
+    # }
+
+    # === Evaluation (overwrite) ===
+    evaluation: Optional[Dict[str, Any]]  # Quality evaluation result
+    # Example: {
+    #   "quality_score": 0.85,
+    #   "completeness": True,
+    #   "needs_retry": False,
+    #   "retry_agents": [],
+    #   "feedback": "All data collected successfully"
+    # }
+
+    # === Output (overwrite) ===
+    final_output: Optional[Dict[str, Any]]  # Final formatted response
+    # Example: {
+    #   "answer": "강남구 아파트 매매 시세는...",
+    #   "listings": [...],
+    #   "insights": [...],
+    #   "metadata": {"total_listings": 10, "avg_price": 150000}
+    # }
+
+
 class DocumentState(BaseState):
     """
     State for document generation workflows
@@ -226,6 +283,44 @@ def create_real_estate_initial_state(**kwargs) -> Dict[str, Any]:
         # Output
         "briefing": None,
         "final_report": None,
+        "end_time": None
+    }
+
+
+def create_supervisor_initial_state(**kwargs) -> Dict[str, Any]:
+    """
+    Create initial SupervisorState with defaults
+
+    Args:
+        **kwargs: Initial field values
+
+    Returns:
+        Initial state dictionary
+    """
+    return {
+        # Status
+        "status": "pending",
+        "execution_step": "initializing",
+        "errors": [],
+        "start_time": datetime.now().isoformat(),
+
+        # Input
+        "query": kwargs.get("query", ""),
+
+        # Intent Analysis
+        "intent": None,
+
+        # Planning
+        "execution_plan": None,
+
+        # Agent Execution
+        "agent_results": {},
+
+        # Evaluation
+        "evaluation": None,
+
+        # Output
+        "final_output": None,
         "end_time": None
     }
 
