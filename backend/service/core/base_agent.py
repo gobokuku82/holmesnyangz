@@ -97,12 +97,19 @@ class BaseAgent(ABC):
         Returns:
             Initial state dictionary with workflow fields only
         """
+        # Exclude context fields from state
+        excluded_fields = [
+            "chat_user_ref", "chat_session_id", "chat_thread_id",
+            "db_user_id", "db_session_id",
+            "api_keys", "request_id", "timestamp",
+            "language", "debug_mode", "trace_enabled"
+        ]
+
         # Basic state fields - subclasses should override to add specific fields
         return {
             "status": "pending",
             "execution_step": "starting",
-            **{k: v for k, v in input_data.items()
-               if k not in ["user_id", "session_id", "metadata", "original_query", "intent_result"]}  # Exclude context fields
+            **{k: v for k, v in input_data.items() if k not in excluded_fields}
         }
 
     def _create_context(self, input_data: Dict[str, Any]) -> AgentContext:
@@ -117,14 +124,17 @@ class BaseAgent(ABC):
             AgentContext instance
         """
         return create_agent_context(
-            user_id=input_data.get("user_id", "default"),
-            session_id=input_data.get("session_id", "default"),
-            context_type="agent",
-            agent_name=self.agent_name,
+            chat_user_ref=input_data.get("chat_user_ref"),
+            chat_session_id=input_data.get("chat_session_id"),
+            db_user_id=input_data.get("db_user_id"),
+            db_session_id=input_data.get("db_session_id"),
+            chat_thread_id=input_data.get("chat_thread_id"),
             original_query=input_data.get("original_query", ""),
-            intent_result=input_data.get("intent_result", {}),
-            metadata=input_data.get("metadata", {}),
-            request_id=input_data.get("request_id")
+            request_id=input_data.get("request_id"),
+            api_keys=input_data.get("api_keys", {}),
+            language=input_data.get("language", "ko"),
+            debug_mode=input_data.get("debug_mode", False),
+            trace_enabled=input_data.get("trace_enabled", False)
         )
 
     def _create_mock_runtime(self, state: Dict[str, Any]) -> object:
@@ -159,13 +169,23 @@ class BaseAgent(ABC):
             
             @property
             def user_id(self) -> str:
-                """Get user ID from context"""
-                return self.context.get("user_id", "system")
-            
+                """Get user ID from context (for backward compatibility)"""
+                return self.context.get("chat_user_ref", "system")
+
+            @property
+            def chat_user_ref(self) -> str:
+                """Get chatbot user reference from context"""
+                return self.context.get("chat_user_ref", "system")
+
             @property
             def session_id(self) -> str:
-                """Get session ID from context"""
-                return self.context.get("session_id", "default")
+                """Get session ID from context (for backward compatibility)"""
+                return self.context.get("chat_session_id", "default")
+
+            @property
+            def chat_session_id(self) -> str:
+                """Get chatbot session ID from context"""
+                return self.context.get("chat_session_id", "default")
             
             @property
             def request_id(self) -> str:
@@ -181,11 +201,13 @@ class BaseAgent(ABC):
         
         # Create mock context with defaults
         mock_context = {
-            "user_id": "system",
-            "session_id": f"mock_{self.agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "chat_user_ref": "system",
+            "chat_session_id": f"mock_{self.agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "chat_thread_id": f"thread_mock_{uuid.uuid4().hex[:8]}",
             "agent_name": self.agent_name,
             "request_id": f"mock_req_{uuid.uuid4().hex[:8]}",
             "debug_mode": True,
+            "trace_enabled": True,
             "is_mock": True,
             "timestamp": datetime.now().isoformat(),
             "environment": "development"
@@ -294,8 +316,8 @@ class BaseAgent(ABC):
             config.setdefault("recursion_limit", 25)
             config.setdefault("configurable", {})
 
-            # Use context's session_id for thread_id (context is a dict)
-            config["configurable"]["thread_id"] = context.get("session_id", "default")
+            # Use context's chat_thread_id or chat_session_id for thread_id
+            config["configurable"]["thread_id"] = context.get("chat_thread_id") or context.get("chat_session_id", "default")
 
             # Compile workflow with checkpointer
             if self.workflow is None:
@@ -335,8 +357,9 @@ class BaseAgent(ABC):
                         "data": result,
                         "agent": self.agent_name,
                         "context": {
-                            "user_id": context.get("user_id", "unknown"),
-                            "session_id": context.get("session_id", "unknown"),
+                            "chat_user_ref": context.get("chat_user_ref", "unknown"),
+                            "chat_session_id": context.get("chat_session_id", "unknown"),
+                            "chat_thread_id": context.get("chat_thread_id", "unknown"),
                             "request_id": context.get("request_id", "unknown")
                         }
                     }

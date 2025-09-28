@@ -205,14 +205,20 @@ class RealEstateSupervisor(BaseAgent):
         from core.states import create_supervisor_initial_state
 
         return create_supervisor_initial_state(
-            query=input_data.get("query", "")
+            chat_session_id=input_data.get("chat_session_id", "default_session"),
+            query=input_data.get("query", ""),
+            chat_thread_id=input_data.get("chat_thread_id"),
+            db_user_id=input_data.get("db_user_id"),
+            db_session_id=input_data.get("db_session_id")
         )
 
     async def process_query(
         self,
         query: str,
-        user_id: str = "default_user",
-        session_id: str = "default_session",
+        chat_user_ref: str = "default_user",
+        chat_session_id: str = "default_session",
+        db_user_id: int = None,
+        db_session_id: int = None,
         config: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
@@ -220,8 +226,10 @@ class RealEstateSupervisor(BaseAgent):
 
         Args:
             query: User query string
-            user_id: User identifier
-            session_id: Session identifier
+            chat_user_ref: Chatbot user reference
+            chat_session_id: Chatbot session ID
+            db_user_id: Database user ID (optional)
+            db_session_id: Database session ID (optional)
             config: Optional execution config
 
         Returns:
@@ -229,8 +237,10 @@ class RealEstateSupervisor(BaseAgent):
         """
         input_data = {
             "query": query,
-            "user_id": user_id,
-            "session_id": session_id
+            "chat_user_ref": chat_user_ref,
+            "chat_session_id": chat_session_id,
+            "db_user_id": db_user_id,
+            "db_session_id": db_session_id
         }
 
         result = await self.execute(input_data, config)

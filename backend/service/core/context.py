@@ -1,6 +1,7 @@
 """
 Context Definitions for LangGraph 0.6.x
 Runtime metadata passed through the context parameter
+Updated with improved naming conventions
 """
 
 from typing import TypedDict, Optional, Dict, List, Any
@@ -16,25 +17,36 @@ class AgentContext(TypedDict):
     Runtime context for agents
     Contains metadata and configuration passed at execution time
     This is READ-ONLY during execution
+
+    Naming Convention:
+    - chat_* : LangGraph/Chatbot system identifiers (string)
+    - db_* : Database reference IDs (integer)
+    - No prefix : Other runtime metadata
     """
 
-    # ========== Required Fields ==========
-    user_id: str                # User identifier
-    session_id: str             # Session identifier
+    # ========== LangGraph System Identifiers ==========
+    chat_user_ref: str              # Chatbot user reference (e.g., "user_abc123")
+    chat_session_id: str            # Chatbot session ID (e.g., "session_xyz789")
+    chat_thread_id: Optional[str]   # LangGraph thread ID for checkpointing
 
-    # ========== Optional Runtime Info ==========
-    request_id: Optional[str]   # Unique request ID
-    timestamp: Optional[str]    # Request timestamp
-    original_query: Optional[str]  # Original user input
+    # ========== Database References (when linked) ==========
+    db_user_id: Optional[int]       # Actual DB users.user_id (BIGINT)
+    db_session_id: Optional[int]    # Actual DB chat_sessions.session_id (BIGINT)
+
+    # ========== Runtime Info ==========
+    request_id: Optional[str]       # Unique request ID
+    timestamp: Optional[str]        # Request timestamp
+    original_query: Optional[str]   # Original user input
 
     # ========== Authentication ==========
     api_keys: Optional[Dict[str, str]]  # Service API keys (runtime injection)
 
     # ========== User Settings ==========
-    language: Optional[str]     # User language (ko, en, etc.)
+    language: Optional[str]         # User language (ko, en, etc.)
 
     # ========== Execution Control ==========
-    debug_mode: Optional[bool]  # Enable debug logging
+    debug_mode: Optional[bool]      # Enable debug logging
+    trace_enabled: Optional[bool]   # Enable detailed tracing
 
 
 class SubgraphContext(TypedDict):
@@ -44,8 +56,13 @@ class SubgraphContext(TypedDict):
     """
 
     # ========== Required (from parent) ==========
-    user_id: str
-    session_id: str
+    chat_user_ref: str
+    chat_session_id: str
+    chat_thread_id: Optional[str]
+
+    # ========== Database References ==========
+    db_user_id: Optional[int]
+    db_session_id: Optional[int]
 
     # ========== Optional (from parent) ==========
     request_id: Optional[str]
@@ -65,57 +82,85 @@ class SubgraphContext(TypedDict):
 # ============ Context Factory Functions ============
 
 def create_agent_context(
-    user_id: str,
-    session_id: str,
+    chat_user_ref: str = None,
+    chat_session_id: str = None,
+    db_user_id: int = None,
+    db_session_id: int = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
     Create AgentContext with required fields and optional values
 
     Args:
-        user_id: User identifier
-        session_id: Session identifier
+        chat_user_ref: Chatbot user reference (auto-generated if not provided)
+        chat_session_id: Chatbot session ID (auto-generated if not provided)
+        db_user_id: Database user ID (optional)
+        db_session_id: Database session ID (optional)
         **kwargs: Optional context fields
 
     Returns:
         Context dictionary ready for LangGraph
     """
+    # Auto-generate chatbot identifiers if not provided
+    if not chat_user_ref:
+        chat_user_ref = f"user_{uuid.uuid4().hex[:12]}"
+    if not chat_session_id:
+        chat_session_id = f"session_{uuid.uuid4().hex[:12]}"
+
     # Start with required fields
     context = {
-        "user_id": user_id,
-        "session_id": session_id,
+        # Chatbot system identifiers
+        "chat_user_ref": chat_user_ref,
+        "chat_session_id": chat_session_id,
+        "chat_thread_id": kwargs.get("chat_thread_id") or f"thread_{uuid.uuid4().hex[:8]}",
+
+        # Database references (optional)
+        "db_user_id": db_user_id,
+        "db_session_id": db_session_id,
+
+        # Runtime metadata
         "request_id": kwargs.get("request_id") or f"req_{uuid.uuid4().hex[:8]}",
         "timestamp": kwargs.get("timestamp") or datetime.now().isoformat(),
-    }
-
-    # Add optional fields with defaults
-    context.update({
         "original_query": kwargs.get("original_query"),
+
+        # Settings
         "api_keys": kwargs.get("api_keys", {}),
         "language": kwargs.get("language", "ko"),
         "debug_mode": kwargs.get("debug_mode", False),
-    })
+        "trace_enabled": kwargs.get("trace_enabled", False),
+    }
 
     # Remove None values for cleaner context
     return {k: v for k, v in context.items() if v is not None}
 
 
-def merge_with_config_defaults(
-    context: Dict[str, Any],
-    config: Any
+def create_agent_context_from_db_user(
+    db_user_id: int,
+    db_session_id: int = None,
+    **kwargs
 ) -> Dict[str, Any]:
     """
-    Merge context with config defaults
-    Context values take precedence
+    Create AgentContext starting from database user
 
     Args:
-        context: Runtime context
-        config: Config instance
+        db_user_id: Database user ID
+        db_session_id: Database session ID (optional, will create new if not provided)
+        **kwargs: Additional context fields
 
     Returns:
-        Merged context with defaults
+        Context with both chat and DB identifiers
     """
-    return context
+    # Generate chat identifiers linked to DB user
+    chat_user_ref = f"dbuser_{db_user_id}_{uuid.uuid4().hex[:8]}"
+    chat_session_id = f"dbsession_{db_session_id or 'new'}_{uuid.uuid4().hex[:8]}"
+
+    return create_agent_context(
+        chat_user_ref=chat_user_ref,
+        chat_session_id=chat_session_id,
+        db_user_id=db_user_id,
+        db_session_id=db_session_id,
+        **kwargs
+    )
 
 
 def create_subgraph_context(
@@ -137,9 +182,14 @@ def create_subgraph_context(
         Filtered context for subgraph
     """
     context = {
-        # Required fields from parent
-        "user_id": parent_context["user_id"],
-        "session_id": parent_context["session_id"],
+        # Chatbot identifiers from parent
+        "chat_user_ref": parent_context["chat_user_ref"],
+        "chat_session_id": parent_context["chat_session_id"],
+        "chat_thread_id": parent_context.get("chat_thread_id"),
+
+        # Database references from parent
+        "db_user_id": parent_context.get("db_user_id"),
+        "db_session_id": parent_context.get("db_session_id"),
 
         # Optional fields from parent
         "request_id": parent_context.get("request_id"),
@@ -182,3 +232,31 @@ def extract_api_keys_from_env() -> Dict[str, str]:
             api_keys[key.lower()] = value
 
     return api_keys
+
+
+def validate_context(context: Dict[str, Any]) -> bool:
+    """
+    Validate context has required fields
+
+    Args:
+        context: Context dictionary
+
+    Returns:
+        True if valid, raises ValueError if not
+    """
+    required_fields = ["chat_user_ref", "chat_session_id"]
+
+    for field in required_fields:
+        if field not in context:
+            raise ValueError(f"Missing required context field: {field}")
+
+    # Check type consistency
+    if "db_user_id" in context and context["db_user_id"] is not None:
+        if not isinstance(context["db_user_id"], int):
+            raise ValueError(f"db_user_id must be integer, got {type(context['db_user_id'])}")
+
+    if "db_session_id" in context and context["db_session_id"] is not None:
+        if not isinstance(context["db_session_id"], int):
+            raise ValueError(f"db_session_id must be integer, got {type(context['db_session_id'])}")
+
+    return True
