@@ -2,7 +2,7 @@
 State Definitions for LangGraph 0.6.x
 Workflow data that changes during execution with reducer patterns
 Updated with improved naming conventions and additional tracking fields
-""
+"""
 
 from typing import TypedDict, List, Dict, Any, Optional, Annotated
 from operator import add
@@ -182,7 +182,7 @@ class RealEstateState(BaseState):
 class SupervisorState(BaseState):
     """
     Supervisor State for Main Orchestrator
-    Manages intent analysis → planning → execution → evaluation workflow
+    Manages intent analysis -> planning -> execution -> evaluation workflow
     """
 
     # === Input (overwrite) ===

@@ -4,7 +4,14 @@ Tests the newly updated context and state structures
 """
 
 import sys
+import os
 from pathlib import Path
+
+# Set UTF-8 encoding for Windows console
+if sys.platform == "win32":
+    import codecs
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+
 sys.path.append(str(Path(__file__).parent))
 
 from service.core.context import (

@@ -1,0 +1,111 @@
+============================================================
+State and Context Validation Tests
+============================================================
+
+=== Testing Context Creation ===
+
+1. Basic context creation
+✓ Context created with keys: ['chat_user_ref', 'chat_session_id', 'chat_thread_id', 'request_id', 'timestamp', 'api_keys', 'language', 'debug_mode', 'trace_enabled']
+  - chat_user_ref: user_test123
+  - chat_session_id: session_test456
+  - chat_thread_id: thread_82d18192
+
+2. Context with database references
+✓ Context created with DB references
+  - db_user_id: 1001
+  - db_session_id: 2001
+
+3. Context from database user
+✓ Context created from DB user
+  - chat_user_ref: dbuser_1001_76881a03
+  - db_user_id: 1001
+
+4. Subgraph context creation
+✓ Subgraph context created
+  - parent_agent: RealEstateAgent
+  - subgraph_name: DataCollection
+
+5. Context validation
+✓ Context validation passed
+
+6. Invalid context validation
+✓ Correctly caught invalid context: Missing required context field: chat_session_id
+
+✓ All context tests passed!
+
+=== Testing State Creation ===
+
+1. Base state creation
+✓ Base state created with keys: ['chat_session_id', 'chat_thread_id', 'db_session_id', 'db_user_id', 'status', 'execution_step', 'agent_name', 'agent_path', 'errors', 'error_details', 'start_time', 'end_time', 'agent_timings']
+  - chat_session_id: session_test456
+  - db_user_id: 1001
+  - status: pending
+  - agent_path: []
+
+2. RealEstateState creation
+✓ RealEstateState created
+  - query: 강남역 근처 30평대 아파트 매매 시세
+  - property_type: 아파트
+  - Has risk_factors field: True
+
+3. SupervisorState creation
+✓ SupervisorState created
+  - query: 테스트 쿼리
+  - retry_count: 0
+  - max_retries: 3
+  - Has agent_metrics field: True
+
+4. State summary generation
+✓ State summary generated
+  Summary keys: ['chat_session_id', 'db_session_id', 'status', 'step', 'current_agent', 'agent_path', 'errors_count', 'has_results', 'data_collected', 'insights_count', 'quality_score', 'retry_count', 'start_time', 'end_time', 'execution_time']
+  - status: pending
+  - errors_count: 0
+
+✓ All state tests passed!
+
+=== Testing Field Compatibility ===
+
+1. Checking context field completeness
+  ✓ chat_user_ref
+  ✓ chat_session_id
+  ✓ chat_thread_id
+  ✓ request_id
+  ✓ timestamp
+  ✓ language
+  ✓ debug_mode
+
+2. Checking base state field completeness
+  ✓ chat_session_id
+  ✓ status
+  ✓ execution_step
+  ✓ agent_name
+  ✓ agent_path
+  ✓ errors
+  ✓ error_details
+  ✓ start_time
+  ✓ agent_timings
+
+3. Checking RealEstateState specific fields
+  ✓ agent_plan
+  ✓ agent_strategy
+  ✓ db_query_results
+  ✓ market_data
+  ✓ risk_factors
+  ✓ report_metadata
+
+4. Checking SupervisorState specific fields
+  ✓ chat_context
+  ✓ intent_confidence
+  ✓ agent_selection
+  ✓ agent_dependencies
+  ✓ agent_errors
+  ✓ agent_metrics
+  ✓ quality_score
+  ✓ retry_needed
+  ✓ response_format
+
+✓ All field compatibility tests passed!
+
+============================================================
+✓ ALL TESTS PASSED!
+============================================================
