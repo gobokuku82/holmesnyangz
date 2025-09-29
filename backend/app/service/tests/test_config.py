@@ -49,8 +49,7 @@ class TestConfig:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 
-    # Test Settings - Disable mock by default
-    USE_MOCK = os.getenv("USE_MOCK_LLM", "false").lower() == "true"  # For LLM only
+    # Test Settings
     USE_MOCK_TOOLS = os.getenv("USE_MOCK_TOOLS", "true").lower() == "true"  # Tools use mock data
     TEST_MODE = os.getenv("TEST_MODE", "true").lower() == "true"
     DEBUG_MODE = os.getenv("DEBUG_MODE", "true").lower() == "true"
@@ -91,20 +90,14 @@ class TestConfig:
             # Create default context
             cls._llm_context = create_default_llm_context()
 
-            # Check if we should use mock (only if explicitly requested)
-            if cls.USE_MOCK:
-                cls._llm_context.use_mock = True
-                cls._llm_context.provider = "mock"
-            else:
-                # Use real LLM provider
-                if not cls.OPENAI_API_KEY and cls.LLM_PROVIDER == "openai":
-                    raise ValueError(
-                        "OPENAI_API_KEY is required for OpenAI provider. "
-                        "Please set it in .env file or use USE_MOCK_LLM=true for mock mode."
-                    )
-                cls._llm_context.use_mock = False
-                cls._llm_context.provider = cls.LLM_PROVIDER
-                cls._llm_context.api_key = cls.OPENAI_API_KEY
+            # Use real LLM provider
+            if not cls.OPENAI_API_KEY and cls.LLM_PROVIDER == "openai":
+                raise ValueError(
+                    "OPENAI_API_KEY is required for OpenAI provider. "
+                    "Please set it in .env file."
+                )
+            cls._llm_context.provider = cls.LLM_PROVIDER
+            cls._llm_context.api_key = cls.OPENAI_API_KEY
 
         return cls._llm_context
 
@@ -112,14 +105,12 @@ class TestConfig:
     def get_llm_mode(cls) -> str:
         """Get current LLM mode"""
         context = cls.get_llm_context()
-        if context.use_mock:
-            return "Mock"
-        elif context.provider == "openai" and context.api_key:
+        if context.provider == "openai" and context.api_key:
             return "OpenAI"
         elif context.provider == "azure":
             return "Azure OpenAI"
         else:
-            return "Mock"
+            return "Unknown"
 
     @classmethod
     def set_llm_mode(cls, mode: str):

@@ -1,11 +1,10 @@
 """
-BaseAgent class with full LangGraph 0.6.x Context API support
-Following the official Context API manual and rules
-IMPROVED VERSION: Enhanced Runtime handling with MockRuntime support
+BaseAgent class with LangGraph 0.6.x support
+Simplified version without MockRuntime
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Type, Callable
+from typing import Dict, Any, Optional, Type, List
 from langgraph.graph import StateGraph
 from langgraph.runtime import Runtime
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -23,9 +22,8 @@ logger = logging.getLogger(__name__)
 
 class BaseAgent(ABC):
     """
-    Base class for all agents with full Context API support
-    Implements LangGraph 0.6.x patterns with Runtime
-    Enhanced with MockRuntime support for testing and development
+    Base class for all agents with LangGraph support
+    Simplified without MockRuntime complexity
     """
 
     def __init__(self, agent_name: str, checkpoint_dir: Optional[str] = None):
@@ -137,146 +135,7 @@ class BaseAgent(ABC):
             trace_enabled=input_data.get("trace_enabled", False)
         )
 
-    def _create_mock_runtime(self, state: Dict[str, Any]) -> object:
-        """
-        Create a MockRuntime for testing and development
-        Provides a Runtime-like interface when actual Runtime is not available
-        
-        Args:
-            state: Current state dictionary
-            
-        Returns:
-            MockRuntime object with Runtime-compatible interface
-        """
-        class MockRuntime:
-            """Mock Runtime for testing and development"""
-            
-            def __init__(self, context: Dict[str, Any], state: Dict[str, Any], agent_name: str):
-                self.context = context
-                self._state = state
-                self.agent_name = agent_name
-                self.logger = logging.getLogger(f"mock_runtime.{agent_name}")
-                self.is_mock = True  # Flag to identify mock runtime
-            
-            def get_context_value(self, key: str, default: Any = None) -> Any:
-                """Safely get value from context"""
-                return self.context.get(key, default)
-            
-            def log(self, message: str, level: str = "info"):
-                """Logging helper method"""
-                log_method = getattr(self.logger, level, self.logger.info)
-                log_method(message)
-            
-            @property
-            def user_id(self) -> str:
-                """Get user ID from context (for backward compatibility)"""
-                return self.context.get("chat_user_ref", "system")
 
-            @property
-            def chat_user_ref(self) -> str:
-                """Get chatbot user reference from context"""
-                return self.context.get("chat_user_ref", "system")
-
-            @property
-            def session_id(self) -> str:
-                """Get session ID from context (for backward compatibility)"""
-                return self.context.get("chat_session_id", "default")
-
-            @property
-            def chat_session_id(self) -> str:
-                """Get chatbot session ID from context"""
-                return self.context.get("chat_session_id", "default")
-            
-            @property
-            def request_id(self) -> str:
-                """Get request ID from context"""
-                return self.context.get("request_id", "unknown")
-            
-            def get_state_value(self, key: str, default: Any = None) -> Any:
-                """Safely get value from state"""
-                return self._state.get(key, default)
-            
-            def __repr__(self) -> str:
-                return f"MockRuntime(agent={self.agent_name}, user={self.user_id}, session={self.session_id})"
-        
-        # Create mock context with defaults
-        mock_context = {
-            "chat_user_ref": "system",
-            "chat_session_id": f"mock_{self.agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "chat_thread_id": f"thread_mock_{uuid.uuid4().hex[:8]}",
-            "agent_name": self.agent_name,
-            "request_id": f"mock_req_{uuid.uuid4().hex[:8]}",
-            "debug_mode": True,
-            "trace_enabled": True,
-            "is_mock": True,
-            "timestamp": datetime.now().isoformat(),
-            "environment": "development"
-        }
-        
-        # Merge with any context data from state if available
-        if "context" in state and isinstance(state["context"], dict):
-            mock_context.update(state["context"])
-        
-        return MockRuntime(mock_context, state, self.agent_name)
-
-    def _wrap_node_with_runtime(self, node_func: Callable) -> Callable:
-        """
-        Wrap a node function to properly handle Runtime parameter
-        Enhanced version with MockRuntime support for testing
-        
-        Args:
-            node_func: Original node function
-        
-        Returns:
-            Wrapped function that handles Runtime safely
-        """
-        async def wrapped(state: Dict[str, Any], runtime: Optional[Any] = None) -> Dict[str, Any]:
-            """Wrapped node function with Runtime handling"""
-            import inspect
-            
-            # Check if the node function expects runtime parameter
-            sig = inspect.signature(node_func)
-            
-            if "runtime" in sig.parameters:
-                # Node expects runtime
-                if runtime is None:
-                    # Create MockRuntime for testing/development
-                    self.logger.warning(
-                        f"Runtime not provided to {node_func.__name__}, creating MockRuntime for testing"
-                    )
-                    runtime = self._create_mock_runtime(state)
-                    self.logger.debug(f"MockRuntime created: {runtime}")
-                
-                # Check if it's a mock runtime and log appropriately
-                if hasattr(runtime, 'is_mock') and runtime.is_mock:
-                    self.logger.debug(
-                        f"Node {node_func.__name__} executing with MockRuntime "
-                        f"(user={runtime.user_id}, session={runtime.session_id})"
-                    )
-                
-                # Execute node with runtime (real or mock)
-                try:
-                    return await node_func(state, runtime)
-                except Exception as e:
-                    self.logger.error(
-                        f"Node {node_func.__name__} failed with runtime "
-                        f"(is_mock={getattr(runtime, 'is_mock', False)}): {e}"
-                    )
-                    raise
-            else:
-                # Legacy node without runtime support
-                self.logger.debug(
-                    f"Node {node_func.__name__} doesn't use Runtime parameter - "
-                    "consider updating for better context access"
-                )
-                return await node_func(state)
-        
-        # Preserve original function metadata
-        wrapped.__name__ = node_func.__name__
-        wrapped.__doc__ = node_func.__doc__
-        wrapped.__annotations__ = getattr(node_func, '__annotations__', {})
-        
-        return wrapped
 
     async def execute(
         self,
@@ -450,43 +309,6 @@ class BaseAgent(ABC):
         """
         return kwargs
     
-    # New helper methods for better testing and debugging
-    async def test_node(
-        self, 
-        node_name: str, 
-        test_state: Dict[str, Any],
-        test_context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Test a specific node with mock data
-        Useful for unit testing individual nodes
-        
-        Args:
-            node_name: Name of the node to test
-            test_state: Test state to pass to the node
-            test_context: Optional test context
-            
-        Returns:
-            Node execution result
-        """
-        # Get the node function
-        node_func = getattr(self, node_name, None)
-        if not node_func:
-            raise ValueError(f"Node {node_name} not found in agent")
-        
-        # Create mock runtime with test context
-        if test_context:
-            mock_runtime = self._create_mock_runtime(test_state)
-            mock_runtime.context.update(test_context)
-        else:
-            mock_runtime = self._create_mock_runtime(test_state)
-        
-        # Wrap and execute the node
-        wrapped_node = self._wrap_node_with_runtime(node_func)
-        result = await wrapped_node(test_state, mock_runtime)
-        
-        self.logger.info(f"Test execution of {node_name} completed")
-        return result
     
     def validate_state_schema(self, state: Dict[str, Any]) -> tuple[bool, List[str]]:
         """

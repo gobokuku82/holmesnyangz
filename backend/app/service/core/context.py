@@ -38,7 +38,6 @@ class LLMContext:
     session_id: Optional[str] = None
 
     # ========== Feature Flags ==========
-    use_mock: bool = False  # Force mock mode for testing
     enable_retry: bool = True
     enable_logging: bool = True
 
@@ -259,7 +258,6 @@ def create_default_llm_context() -> LLMContext:
         provider=os.getenv("LLM_PROVIDER", "openai"),
         api_key=os.getenv("OPENAI_API_KEY"),
         organization=os.getenv("OPENAI_ORG_ID"),
-        use_mock=os.getenv("USE_MOCK_LLM", "false").lower() == "true",
     )
 
 
