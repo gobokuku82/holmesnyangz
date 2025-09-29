@@ -19,10 +19,11 @@ class RealEstateSearchTool(BaseTool):
     - Regional statistics
     """
 
-    def __init__(self):
+    def __init__(self, use_mock_data: bool = True):
         super().__init__(
             name="real_estate_search",
-            description="부동산 정보 검색 - 매물, 시세, 거래 내역, 지역 통계"
+            description="부동산 정보 검색 - 매물, 시세, 거래 내역, 지역 통계",
+            use_mock_data=use_mock_data
         )
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -38,7 +39,7 @@ class RealEstateSearchTool(BaseTool):
         """
         # TODO: Implement real search when data source is available
         self.logger.warning("Real search not implemented, falling back to mock")
-        return await self.mock_search(query, params)
+        return await self.get_mock_data(query, params)
 
     def _parse_query_constraints(self, query: str) -> Dict[str, Any]:
         """
@@ -118,7 +119,7 @@ class RealEstateSearchTool(BaseTool):
 
         return constraints
 
-    async def mock_search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_mock_data(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Mock search returning sample real estate data
 

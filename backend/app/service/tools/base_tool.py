@@ -15,18 +15,19 @@ class BaseTool(ABC):
     Provides common interface and mock data capability
     """
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, use_mock_data: bool = True):
         """
         Initialize base tool
 
         Args:
             name: Tool name
             description: Tool description
+            use_mock_data: Whether to use mock data (default True since DB not available)
         """
         self.name = name
         self.description = description
         self.logger = logging.getLogger(f"tool.{name}")
-        self.use_mock = True  # Default to mock mode
+        self.use_mock_data = use_mock_data  # Renamed for clarity - only affects data, not LLM
 
     @abstractmethod
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -43,17 +44,18 @@ class BaseTool(ABC):
         pass
 
     @abstractmethod
-    async def mock_search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_mock_data(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Mock search method - returns mock data
+        Get mock data for testing - returns mock data when DB is not available
         Must be implemented by each tool with appropriate mock data
+        This is ONLY for data, not for LLM responses
 
         Args:
             query: Search query
             params: Additional search parameters
 
         Returns:
-            Mock search results
+            Mock search results (simulating DB response)
         """
         pass
 
@@ -71,15 +73,17 @@ class BaseTool(ABC):
         try:
             self.logger.info(f"Executing {self.name} with query: {query}")
 
-            if self.use_mock:
-                result = await self.mock_search(query, params)
+            if self.use_mock_data:
+                # Use mock data when DB is not available
+                result = await self.get_mock_data(query, params)
             else:
+                # Use real DB search when available
                 result = await self.search(query, params)
 
             # Add metadata
             result["tool_name"] = self.name
             result["timestamp"] = datetime.now().isoformat()
-            result["mode"] = "mock" if self.use_mock else "real"
+            result["data_source"] = "mock" if self.use_mock_data else "database"
 
             self.logger.info(f"{self.name} execution completed successfully")
             return result
@@ -93,15 +97,16 @@ class BaseTool(ABC):
                 "timestamp": datetime.now().isoformat()
             }
 
-    def set_mode(self, use_mock: bool = True):
+    def set_data_mode(self, use_mock_data: bool = True):
         """
-        Set tool mode (mock or real)
+        Set tool data mode (mock data or real database)
+        Note: This only affects data source, not LLM usage
 
         Args:
-            use_mock: If True, use mock data; if False, use real search
+            use_mock_data: If True, use mock data; if False, use real database
         """
-        self.use_mock = use_mock
-        self.logger.info(f"{self.name} mode set to: {'mock' if use_mock else 'real'}")
+        self.use_mock_data = use_mock_data
+        self.logger.info(f"{self.name} data mode set to: {'mock' if use_mock_data else 'database'}")
 
     def validate_params(self, params: Dict[str, Any], required_fields: List[str]) -> bool:
         """
@@ -154,6 +159,7 @@ class BaseTool(ABC):
 class ToolRegistry:
     """
     Registry for managing available tools
+    Controls whether tools use mock data or real database
     """
 
     _instance = None

@@ -48,33 +48,33 @@ class SearchAgentLLM:
         self._initialize_client()
 
     def _initialize_client(self):
-        """Initialize LLM client"""
-        # Check if forced to use mock
-        if self.context.use_mock:
-            logger.info("SearchAgent using mock LLM (forced by context)")
-            self.context.provider = "mock"
-            return
-
+        """Initialize LLM client - Always use real LLM"""
         # Get API key from context or config
         api_key = self.context.api_key or Config.LLM_DEFAULTS.get("api_key")
 
-        if self.context.provider == "openai" and api_key:
+        if self.context.provider == "openai":
+            if not api_key:
+                raise ValueError(
+                    "OpenAI API key is required. Please set OPENAI_API_KEY in .env file."
+                )
             try:
                 from openai import OpenAI
                 self.client = OpenAI(
                     api_key=api_key,
                     organization=self.context.organization
                 )
-                logger.info("SearchAgent OpenAI client initialized")
+                logger.info("SearchAgent OpenAI client initialized successfully")
             except ImportError:
-                logger.warning("OpenAI not available, using mock")
-                self.context.provider = "mock"
+                raise ImportError(
+                    "OpenAI library not installed. Please install with: pip install openai"
+                )
             except Exception as e:
-                logger.error(f"Failed to initialize OpenAI for SearchAgent: {e}")
-                self.context.provider = "mock"
+                raise RuntimeError(f"Failed to initialize OpenAI client: {e}")
         else:
-            logger.info("SearchAgent using mock LLM")
-            self.context.provider = "mock"
+            raise ValueError(
+                f"Unsupported LLM provider: {self.context.provider}. "
+                "Currently only 'openai' is supported."
+            )
 
     def get_model(self, purpose: str = "search") -> str:
         """Get model name for specific purpose"""
@@ -113,9 +113,6 @@ class SearchAgentLLM:
         Returns:
             Search plan with tools and parameters
         """
-        if self.context.provider == "mock":
-            return self._mock_search_plan(query, keywords)
-
         try:
             system_prompt = """당신은 부동산 정보 검색 전문가입니다.
 주어진 키워드를 바탕으로 적절한 검색 도구를 선택하고 검색 계획을 수립하세요.
@@ -155,7 +152,7 @@ JSON 형식으로 응답:
 
         except Exception as e:
             logger.error(f"LLM search plan failed: {e}")
-            return self._mock_search_plan(query, keywords)
+            raise RuntimeError(f"Failed to create search plan: {e}")
 
     async def decide_next_action(
         self,
@@ -172,9 +169,6 @@ JSON 형식으로 응답:
         Returns:
             Decision on next action
         """
-        if self.context.provider == "mock":
-            return self._mock_next_action(collected_data)
-
         try:
             system_prompt = """수집된 데이터를 분석하고 다음 행동을 결정하세요.
 
@@ -211,69 +205,8 @@ JSON 형식으로 응답:
 
         except Exception as e:
             logger.error(f"LLM next action decision failed: {e}")
-            return self._mock_next_action(collected_data)
+            raise RuntimeError(f"Failed to decide next action: {e}")
 
-    def _mock_search_plan(self, query: str, keywords: List[str]) -> Dict[str, Any]:
-        """Mock search plan creation"""
-        selected_tools = []
-        tool_parameters = {}
-
-        # Analyze keywords to select tools
-        keywords_str = " ".join(keywords).lower()
-
-        if any(word in keywords_str for word in ["법", "계약", "세금"]):
-            selected_tools.append("legal_search")
-            tool_parameters["legal_search"] = {"query": query}
-
-        if any(word in keywords_str for word in ["규정", "정책", "규제"]):
-            selected_tools.append("regulation_search")
-            tool_parameters["regulation_search"] = {"query": query}
-
-        if any(word in keywords_str for word in ["대출", "금리", "융자"]):
-            selected_tools.append("loan_search")
-            tool_parameters["loan_search"] = {"query": query}
-
-        if any(word in keywords_str for word in ["매물", "시세", "가격", "거래"]):
-            selected_tools.append("real_estate_search")
-            tool_parameters["real_estate_search"] = {"query": query}
-
-        # Default to real_estate_search if no tools selected
-        if not selected_tools:
-            selected_tools = ["real_estate_search"]
-            tool_parameters["real_estate_search"] = {"query": query}
-
-        return {
-            "selected_tools": selected_tools,
-            "tool_parameters": tool_parameters,
-            "search_strategy": f"{len(selected_tools)}개 도구를 사용한 통합 검색"
-        }
-
-    def _mock_next_action(self, collected_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Mock next action decision"""
-        if not collected_data:
-            return {
-                "next_action": "return_to_supervisor",
-                "reasoning": "데이터 수집 실패",
-                "summary": "검색 결과 없음"
-            }
-
-        data_count = sum(len(v) if isinstance(v, list) else 1 for v in collected_data.values())
-
-        if data_count > 10:
-            # Large amount of data - needs analysis
-            return {
-                "next_action": "pass_to_agent",
-                "target_agent": "analysis_agent",
-                "reasoning": "대량의 데이터 분석 필요",
-                "summary": f"{data_count}개의 결과 수집 완료"
-            }
-        else:
-            # Small amount of data - direct output
-            return {
-                "next_action": "direct_output",
-                "reasoning": "간단한 결과로 직접 응답 가능",
-                "summary": f"{data_count}개의 관련 정보 발견"
-            }
 
 
 class SearchAgent:

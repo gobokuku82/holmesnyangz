@@ -17,10 +17,11 @@ class RegulationSearchTool(BaseTool):
     - Development restrictions
     """
 
-    def __init__(self):
+    def __init__(self, use_mock_data: bool = True):
         super().__init__(
             name="regulation_search",
-            description="규정 및 정책 검색 - 정부 규제, 지역 정책, 건축 규정 등"
+            description="규정 및 정책 검색 - 정부 규제, 지역 정책, 건축 규정 등",
+            use_mock_data=use_mock_data
         )
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -36,9 +37,9 @@ class RegulationSearchTool(BaseTool):
         """
         # TODO: Implement real search when data source is available
         self.logger.warning("Real search not implemented, falling back to mock")
-        return await self.mock_search(query, params)
+        return await self.get_mock_data(query, params)
 
-    async def mock_search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_mock_data(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Mock search returning sample regulation data
 

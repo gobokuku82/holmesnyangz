@@ -17,10 +17,11 @@ class LegalSearchTool(BaseTool):
     - Tax regulations
     """
 
-    def __init__(self):
+    def __init__(self, use_mock_data: bool = True):
         super().__init__(
             name="legal_search",
-            description="법률 정보 검색 - 부동산 관련 법률, 계약서, 절차, 세금 등"
+            description="법률 정보 검색 - 부동산 관련 법률, 계약서, 절차, 세금 등",
+            use_mock_data=use_mock_data
         )
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -36,9 +37,9 @@ class LegalSearchTool(BaseTool):
         """
         # TODO: Implement real search when data source is available
         self.logger.warning("Real search not implemented, falling back to mock")
-        return await self.mock_search(query, params)
+        return await self.get_mock_data(query, params)
 
-    async def mock_search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_mock_data(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Mock search returning sample legal data
 

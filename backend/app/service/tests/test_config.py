@@ -44,13 +44,14 @@ from core.context import (
 class TestConfig:
     """Test configuration settings"""
 
-    # LLM Settings
-    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "mock")  # "openai", "azure", or "mock"
+    # LLM Settings - Default to OpenAI for real LLM testing
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # "openai" or "azure"
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 
-    # Test Settings
-    USE_MOCK = os.getenv("USE_MOCK_DATA", "true").lower() == "true"
+    # Test Settings - Disable mock by default
+    USE_MOCK = os.getenv("USE_MOCK_LLM", "false").lower() == "true"  # For LLM only
+    USE_MOCK_TOOLS = os.getenv("USE_MOCK_TOOLS", "true").lower() == "true"  # Tools use mock data
     TEST_MODE = os.getenv("TEST_MODE", "true").lower() == "true"
     DEBUG_MODE = os.getenv("DEBUG_MODE", "true").lower() == "true"
 
@@ -90,10 +91,17 @@ class TestConfig:
             # Create default context
             cls._llm_context = create_default_llm_context()
 
-            # Override based on test settings
-            if cls.LLM_PROVIDER == "mock" or not cls.OPENAI_API_KEY:
+            # Check if we should use mock (only if explicitly requested)
+            if cls.USE_MOCK:
                 cls._llm_context.use_mock = True
+                cls._llm_context.provider = "mock"
             else:
+                # Use real LLM provider
+                if not cls.OPENAI_API_KEY and cls.LLM_PROVIDER == "openai":
+                    raise ValueError(
+                        "OPENAI_API_KEY is required for OpenAI provider. "
+                        "Please set it in .env file or use USE_MOCK_LLM=true for mock mode."
+                    )
                 cls._llm_context.use_mock = False
                 cls._llm_context.provider = cls.LLM_PROVIDER
                 cls._llm_context.api_key = cls.OPENAI_API_KEY
@@ -120,6 +128,7 @@ class TestConfig:
             if not cls.OPENAI_API_KEY:
                 raise ValueError("OpenAI API key not found in .env")
             cls.LLM_PROVIDER = "openai"
+            cls.USE_MOCK = False
             cls._llm_context = create_llm_context_with_overrides(
                 provider="openai",
                 api_key=cls.OPENAI_API_KEY,
@@ -129,15 +138,20 @@ class TestConfig:
             if not cls.AZURE_ENDPOINT:
                 raise ValueError("Azure endpoint not found in .env")
             cls.LLM_PROVIDER = "azure"
+            cls.USE_MOCK = False
             cls._llm_context = create_llm_context_with_overrides(
                 provider="azure",
                 use_mock=False
             )
-        else:
+        elif mode.lower() == "mock":
             cls.LLM_PROVIDER = "mock"
+            cls.USE_MOCK = True
             cls._llm_context = create_llm_context_with_overrides(
+                provider="mock",
                 use_mock=True
             )
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Use 'openai', 'azure', or 'mock'")
 
     @classmethod
     def print_config(cls):
