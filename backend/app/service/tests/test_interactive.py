@@ -33,13 +33,29 @@ class InteractiveTester:
         print_section_header("INITIALIZING SYSTEM")
 
         try:
-            # Initialize supervisor
-            self.supervisor = RealEstateSupervisor()
-            print("[OK] Supervisor initialized")
+            # Get LLM context from TestConfig
+            llm_context = TestConfig.get_llm_context()
 
-            # Initialize search agent
-            self.search_agent = SearchAgent()
-            print("[OK] Search Agent initialized")
+            # Create agent context for testing
+            agent_context = TestConfig.create_test_agent_context(
+                chat_session_id=self.session_id
+            )
+
+            # Initialize supervisor with LLM context
+            self.supervisor = RealEstateSupervisor(
+                llm_context=llm_context
+            )
+            print("[OK] Supervisor initialized with LLMContext")
+
+            # Initialize search agent with LLM context
+            self.search_agent = SearchAgent(
+                llm_context=llm_context
+            )
+            print("[OK] Search Agent initialized with LLMContext")
+
+            # Store context for later use
+            self.agent_context = agent_context
+            self.llm_context = llm_context
 
             # Print current mode
             TestConfig.print_config()
@@ -48,6 +64,8 @@ class InteractiveTester:
 
         except Exception as e:
             print(f"[ERROR] Initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     async def test_query(self, query: str) -> Dict[str, Any]:
@@ -66,11 +84,12 @@ class InteractiveTester:
         start_time = time.time()
 
         try:
-            # Process query through supervisor
+            # Process query through supervisor with LLM context
             print("\n[PROCESSING] Processing through Supervisor...")
             result = await self.supervisor.process_query(
                 query=query,
-                session_id=self.session_id
+                session_id=self.session_id,
+                llm_context=self.llm_context  # Pass the LLM context
             )
 
             # Calculate execution time

@@ -32,6 +32,14 @@ if env_path.exists():
 else:
     print(f"[WARNING] No .env file found at: {env_path}")
 
+# Import context utilities after setting up paths
+from core.context import (
+    LLMContext,
+    create_default_llm_context,
+    create_llm_context_with_overrides,
+    create_agent_context
+)
+
 
 class TestConfig:
     """Test configuration settings"""
@@ -49,6 +57,9 @@ class TestConfig:
     # Logging Settings
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    # LLM Context for tests
+    _llm_context: Optional[LLMContext] = None
 
     @classmethod
     def setup_logging(cls, verbose: bool = False):
@@ -73,11 +84,31 @@ class TestConfig:
         return logging.getLogger("test")
 
     @classmethod
+    def get_llm_context(cls) -> LLMContext:
+        """Get or create LLM context for testing"""
+        if cls._llm_context is None:
+            # Create default context
+            cls._llm_context = create_default_llm_context()
+
+            # Override based on test settings
+            if cls.LLM_PROVIDER == "mock" or not cls.OPENAI_API_KEY:
+                cls._llm_context.use_mock = True
+            else:
+                cls._llm_context.use_mock = False
+                cls._llm_context.provider = cls.LLM_PROVIDER
+                cls._llm_context.api_key = cls.OPENAI_API_KEY
+
+        return cls._llm_context
+
+    @classmethod
     def get_llm_mode(cls) -> str:
         """Get current LLM mode"""
-        if cls.OPENAI_API_KEY and cls.LLM_PROVIDER == "openai":
+        context = cls.get_llm_context()
+        if context.use_mock:
+            return "Mock"
+        elif context.provider == "openai" and context.api_key:
             return "OpenAI"
-        elif cls.AZURE_ENDPOINT and cls.LLM_PROVIDER == "azure":
+        elif context.provider == "azure":
             return "Azure OpenAI"
         else:
             return "Mock"
@@ -88,29 +119,58 @@ class TestConfig:
         if mode.lower() == "openai":
             if not cls.OPENAI_API_KEY:
                 raise ValueError("OpenAI API key not found in .env")
-            os.environ["LLM_PROVIDER"] = "openai"
             cls.LLM_PROVIDER = "openai"
+            cls._llm_context = create_llm_context_with_overrides(
+                provider="openai",
+                api_key=cls.OPENAI_API_KEY,
+                use_mock=False
+            )
         elif mode.lower() == "azure":
             if not cls.AZURE_ENDPOINT:
                 raise ValueError("Azure endpoint not found in .env")
-            os.environ["LLM_PROVIDER"] = "azure"
             cls.LLM_PROVIDER = "azure"
+            cls._llm_context = create_llm_context_with_overrides(
+                provider="azure",
+                use_mock=False
+            )
         else:
-            os.environ["LLM_PROVIDER"] = "mock"
             cls.LLM_PROVIDER = "mock"
+            cls._llm_context = create_llm_context_with_overrides(
+                use_mock=True
+            )
 
     @classmethod
     def print_config(cls):
         """Print current configuration"""
+        context = cls.get_llm_context()
         print("\n" + "="*50)
         print("TEST CONFIGURATION")
         print("="*50)
         print(f"LLM Mode: {cls.get_llm_mode()}")
-        print(f"API Key Available: {'YES' if cls.OPENAI_API_KEY else 'NO'}")
-        print(f"Use Mock Data: {cls.USE_MOCK}")
+        print(f"Provider: {context.provider}")
+        print(f"API Key Available: {'YES' if context.api_key else 'NO'}")
+        print(f"Use Mock: {context.use_mock}")
         print(f"Debug Mode: {cls.DEBUG_MODE}")
         print(f"Log Level: {cls.LOG_LEVEL}")
         print("="*50 + "\n")
+
+    @classmethod
+    def create_test_agent_context(cls, **kwargs) -> Dict[str, Any]:
+        """Create agent context for testing with LLMContext"""
+        llm_context = cls.get_llm_context()
+
+        # Extract specific kwargs to avoid duplicates
+        chat_user_ref = kwargs.pop("chat_user_ref", "test_user")
+        chat_session_id = kwargs.pop("chat_session_id", "test_session")
+
+        # Create agent context with test defaults
+        return create_agent_context(
+            chat_user_ref=chat_user_ref,
+            chat_session_id=chat_session_id,
+            llm_context=llm_context,
+            debug_mode=cls.DEBUG_MODE,
+            **kwargs  # Pass remaining kwargs
+        )
 
 
 def format_result(result: Dict[str, Any], indent: int = 0) -> str:

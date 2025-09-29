@@ -45,18 +45,24 @@ class LLMManager:
     def __init__(self, context: LLMContext = None):
         self.context = context or create_default_llm_context()
         self.client = None
+        self._effective_provider = None  # Track what provider is actually being used
+        self._connection_error = None    # Track connection errors
         self._initialize_client()
 
     def _initialize_client(self):
         """Initialize the appropriate LLM client"""
         # Check if forced to use mock
         if self.context.use_mock:
-            logger.info("Using mock LLM (forced by context)")
-            self.context.provider = "mock"
+            logger.info("테스트 모드로 실행중입니다 (use_mock=True)")
+            self._effective_provider = "mock"
             return
 
-        # Get API key from context or config
-        api_key = self.context.api_key or Config.LLM_DEFAULTS.get("api_key")
+        # Get API key from context first, only fallback to config if context.api_key is None
+        # Empty string means explicitly no API key
+        if self.context.api_key == "":
+            api_key = ""  # Explicitly empty
+        else:
+            api_key = self.context.api_key or Config.LLM_DEFAULTS.get("api_key")
 
         if self.context.provider == "openai" and api_key:
             try:
@@ -66,23 +72,27 @@ class LLMManager:
                     organization=self.context.organization
                 )
                 logger.info("OpenAI client initialized successfully")
+                self._effective_provider = "openai"
             except ImportError:
                 logger.error("OpenAI library not installed. Install with: pip install openai")
-                logger.warning("Falling back to mock mode")
-                self.context.provider = "mock"
+                self._connection_error = "OpenAI 라이브러리가 설치되지 않았습니다."
+                self._effective_provider = None
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI: {e}")
-                logger.warning("Falling back to mock mode")
-                self.context.provider = "mock"
+                self._connection_error = f"OpenAI 연결 실패: {str(e)}"
+                self._effective_provider = None
         elif self.context.provider == "azure":
             # Azure OpenAI support can be added here
-            logger.info("Azure OpenAI not yet implemented, using mock")
-            self.context.provider = "mock"
+            logger.info("Azure OpenAI not yet implemented")
+            self._connection_error = "Azure OpenAI는 아직 지원되지 않습니다."
+            self._effective_provider = None
         else:
             if self.context.provider == "openai" and not api_key:
                 logger.warning("OPENAI_API_KEY not found")
-            logger.info("Using mock LLM")
-            self.context.provider = "mock"
+                self._connection_error = "API 키가 설정되지 않았습니다."
+            else:
+                self._connection_error = "LLM 공급자가 설정되지 않았습니다."
+            self._effective_provider = None
 
     def get_model(self, purpose: str) -> str:
         """Get model name for specific purpose"""
@@ -116,7 +126,18 @@ class LLMManager:
         Returns:
             Intent analysis with entities and confidence
         """
-        if self.context.provider == "mock":
+        # Check for connection errors
+        if self._effective_provider is None and self._connection_error:
+            return {
+                "error": True,
+                "intent": "error",
+                "message": "시스템 연결 오류가 발생했습니다.",
+                "details": self._connection_error,
+                "suggestion": "잠시 후 다시 시도해주세요."
+            }
+
+        # Use mock for testing
+        if self._effective_provider == "mock":
             return self._mock_analyze_intent(query)
 
         try:
@@ -151,7 +172,18 @@ JSON 형식으로 응답하세요."""
 
         except Exception as e:
             logger.error(f"LLM intent analysis failed: {e}")
-            return self._mock_analyze_intent(query)
+            # Return unclear intent instead of falling back to mock
+            return {
+                "intent": "unclear",
+                "message": "질문을 이해하지 못했습니다. 다음과 같은 형식으로 질문해주세요:",
+                "examples": [
+                    "강남구 아파트 시세 알려줘",
+                    "서초구 30평대 전세 매물 찾아줘",
+                    "부동산 계약시 주의사항은?",
+                    "주택담보대출 금리 비교해줘"
+                ],
+                "original_query": query
+            }
 
     async def create_execution_plan(
         self,
@@ -168,7 +200,17 @@ JSON 형식으로 응답하세요."""
         Returns:
             Execution plan with agents and keywords
         """
-        if self.context.provider == "mock":
+        # Check for connection errors
+        if self._effective_provider is None and self._connection_error:
+            return {
+                "error": True,
+                "message": "시스템 연결 오류로 실행 계획을 생성할 수 없습니다.",
+                "details": self._connection_error,
+                "agents": []  # No agents to execute
+            }
+
+        # Use mock for testing
+        if self._effective_provider == "mock":
             return self._mock_create_plan(query, intent)
 
         try:
@@ -207,7 +249,13 @@ JSON 형식으로 응답하세요:
 
         except Exception as e:
             logger.error(f"LLM planning failed: {e}")
-            return self._mock_create_plan(query, intent)
+            # Return error instead of falling back to mock
+            return {
+                "error": True,
+                "message": "실행 계획 생성 중 오류가 발생했습니다.",
+                "details": str(e),
+                "agents": []  # No agents to execute
+            }
 
     def _mock_analyze_intent(self, query: str) -> Dict[str, Any]:
         """Mock intent analysis"""
@@ -339,6 +387,31 @@ class RealEstateSupervisor:
 
         intent = await self.llm_manager.analyze_intent(query)
 
+        # Check for errors or unclear intent
+        if intent.get("error"):
+            return {
+                "intent": intent,
+                "intent_type": "error",
+                "final_response": {
+                    "type": "error",
+                    "message": intent.get("message"),
+                    "details": intent.get("details"),
+                    "suggestion": intent.get("suggestion", "다시 시도해주세요.")
+                }
+            }
+
+        if intent.get("intent") == "unclear":
+            return {
+                "intent": intent,
+                "intent_type": "unclear",
+                "final_response": {
+                    "type": "help",
+                    "message": intent.get("message"),
+                    "examples": intent.get("examples", []),
+                    "original_query": query
+                }
+            }
+
         return {
             "intent": intent,
             "intent_type": intent.get("intent_type", "general"),
@@ -355,12 +428,28 @@ class RealEstateSupervisor:
         Returns:
             Updated state with execution plan
         """
+        # Skip if we already have an error or unclear intent
+        if state.get("intent_type") in ["error", "unclear"]:
+            return state
+
         query = state["query"]
         intent = state["intent"]
 
         logger.info(f"Creating execution plan for intent: {intent.get('intent_type')}")
 
         plan = await self.llm_manager.create_execution_plan(query, intent)
+
+        # Check for plan creation errors
+        if plan.get("error"):
+            return {
+                "execution_plan": plan,
+                "final_response": {
+                    "type": "error",
+                    "message": plan.get("message"),
+                    "details": plan.get("details")
+                },
+                "selected_agents": []  # No agents to execute
+            }
 
         return {
             "execution_plan": plan,
@@ -378,6 +467,14 @@ class RealEstateSupervisor:
         Returns:
             Updated state with agent results
         """
+        # Skip if we have an error or unclear intent
+        if state.get("intent_type") in ["error", "unclear"]:
+            return state
+
+        # Skip if we already have a final response (from error handling)
+        if state.get("final_response"):
+            return state
+
         selected_agents = state.get("selected_agents", [])
         logger.info(f"Executing agents: {selected_agents}")
 
@@ -424,6 +521,10 @@ class RealEstateSupervisor:
         Returns:
             Updated state with final response
         """
+        # Skip if we already have a final response (from error/unclear handling)
+        if state.get("final_response"):
+            return state
+
         logger.info("Generating final response")
 
         agent_results = state.get("agent_results", {})

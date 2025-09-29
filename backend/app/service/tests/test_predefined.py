@@ -175,11 +175,24 @@ class PredefinedTester:
     async def initialize(self):
         """Initialize the supervisor and agents"""
         try:
-            self.supervisor = RealEstateSupervisor()
-            print("[OK] System initialized")
+            # Get LLM context from TestConfig
+            self.llm_context = TestConfig.get_llm_context()
+
+            # Create agent context for testing
+            self.agent_context = TestConfig.create_test_agent_context(
+                chat_session_id=self.session_id
+            )
+
+            # Initialize supervisor with LLM context
+            self.supervisor = RealEstateSupervisor(
+                llm_context=self.llm_context
+            )
+            print("[OK] System initialized with LLMContext")
             return True
         except Exception as e:
             print(f"[ERROR] Initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     async def run_test_case(self, test_case: TestCase) -> Dict[str, Any]:
@@ -204,10 +217,11 @@ class PredefinedTester:
         }
 
         try:
-            # Process query
+            # Process query with LLM context
             response = await self.supervisor.process_query(
                 query=test_case.query,
-                session_id=self.session_id
+                session_id=self.session_id,
+                llm_context=self.llm_context  # Pass the LLM context
             )
 
             execution_time = time.time() - start_time
