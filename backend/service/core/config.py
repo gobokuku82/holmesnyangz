@@ -36,15 +36,41 @@ class Config:
         "user_data": DB_DIR / "user" / "data.db",                            # User data DB
     }
 
-    # ============ Model Settings (Active) ============
+    # ============ LLM Settings (Active) ============
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # openai, azure_openai, mock
+
+    # API Keys (from environment)
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    AZURE_OPENAI_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+    AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+    # Model configurations by task type
     DEFAULT_MODELS = {
         "intent": "gpt-4o-mini",      # Fast for intent analysis
         "planning": "gpt-4o",          # Accurate for planning
+        "execution": "gpt-4o-mini",    # For agent execution
+        "evaluation": "gpt-4o",        # For result evaluation
+        "general": "gpt-4o-mini",      # General purpose
     }
 
     DEFAULT_MODEL_PARAMS = {
-        "intent": {"temperature": 0.3, "max_tokens": 500},
-        "planning": {"temperature": 0.3, "max_tokens": 2000},
+        "intent": {"temperature": 0.3, "max_tokens": 500, "json_mode": True},
+        "planning": {"temperature": 0.3, "max_tokens": 2000, "json_mode": True},
+        "execution": {"temperature": 0.5, "max_tokens": 1500, "json_mode": False},
+        "evaluation": {"temperature": 0.3, "max_tokens": 1000, "json_mode": True},
+        "general": {"temperature": 0.7, "max_tokens": 1000, "json_mode": False},
+    }
+
+    # LLM Provider settings
+    LLM_SETTINGS = {
+        "timeout": 30,
+        "retry_count": 3,
+        "retry_delay": 1,
+        "enable_streaming": False,
+        "enable_function_calling": True,
+        "enable_json_mode": True,
+        "fallback_to_mock": True,  # Use mock if API fails
     }
 
     # ============ System Timeouts (Active) ============
@@ -101,6 +127,26 @@ class Config:
         return {
             "model": cls.DEFAULT_MODELS.get(model_type, "gpt-4o-mini"),
             **cls.DEFAULT_MODEL_PARAMS.get(model_type, {})
+        }
+
+    @classmethod
+    def get_llm_config(cls, task_type: str = "general") -> Dict[str, Any]:
+        """
+        Get complete LLM configuration for a task
+
+        Args:
+            task_type: Type of task (intent, planning, execution, evaluation, general)
+
+        Returns:
+            Complete LLM configuration dict
+        """
+        return {
+            "provider": cls.LLM_PROVIDER,
+            "api_key": cls.OPENAI_API_KEY if cls.LLM_PROVIDER == "openai" else cls.AZURE_OPENAI_KEY,
+            "model": cls.DEFAULT_MODELS.get(task_type, cls.DEFAULT_MODELS["general"]),
+            "params": cls.DEFAULT_MODEL_PARAMS.get(task_type, cls.DEFAULT_MODEL_PARAMS["general"]),
+            "settings": cls.LLM_SETTINGS,
+            "azure_endpoint": cls.AZURE_OPENAI_ENDPOINT if cls.LLM_PROVIDER == "azure_openai" else None,
         }
 
     @classmethod

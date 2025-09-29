@@ -41,6 +41,10 @@ class AgentContext(TypedDict):
     # ========== Authentication ==========
     api_keys: Optional[Dict[str, str]]  # Service API keys (runtime injection)
 
+    # ========== LLM Configuration ==========
+    llm_provider: Optional[str]     # LLM provider (openai, azure_openai, mock)
+    llm_model: Optional[str]        # Current LLM model for this context
+
     # ========== User Settings ==========
     language: Optional[str]         # User language (ko, en, etc.)
 
@@ -125,6 +129,8 @@ def create_agent_context(
 
         # Settings
         "api_keys": kwargs.get("api_keys", {}),
+        "llm_provider": kwargs.get("llm_provider"),  # Will be set from Config if not provided
+        "llm_model": kwargs.get("llm_model"),  # Will be set from Config if not provided
         "language": kwargs.get("language", "ko"),
         "debug_mode": kwargs.get("debug_mode", False),
         "trace_enabled": kwargs.get("trace_enabled", False),
