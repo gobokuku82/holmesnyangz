@@ -119,30 +119,19 @@ class TestConfig:
             if not cls.OPENAI_API_KEY:
                 raise ValueError("OpenAI API key not found in .env")
             cls.LLM_PROVIDER = "openai"
-            cls.USE_MOCK = False
             cls._llm_context = create_llm_context_with_overrides(
                 provider="openai",
-                api_key=cls.OPENAI_API_KEY,
-                use_mock=False
+                api_key=cls.OPENAI_API_KEY
             )
         elif mode.lower() == "azure":
             if not cls.AZURE_ENDPOINT:
                 raise ValueError("Azure endpoint not found in .env")
             cls.LLM_PROVIDER = "azure"
-            cls.USE_MOCK = False
             cls._llm_context = create_llm_context_with_overrides(
-                provider="azure",
-                use_mock=False
-            )
-        elif mode.lower() == "mock":
-            cls.LLM_PROVIDER = "mock"
-            cls.USE_MOCK = True
-            cls._llm_context = create_llm_context_with_overrides(
-                provider="mock",
-                use_mock=True
+                provider="azure"
             )
         else:
-            raise ValueError(f"Invalid mode: {mode}. Use 'openai', 'azure', or 'mock'")
+            raise ValueError(f"Invalid mode: {mode}. Use 'openai' or 'azure'")
 
     @classmethod
     def print_config(cls):
@@ -154,7 +143,6 @@ class TestConfig:
         print(f"LLM Mode: {cls.get_llm_mode()}")
         print(f"Provider: {context.provider}")
         print(f"API Key Available: {'YES' if context.api_key else 'NO'}")
-        print(f"Use Mock: {context.use_mock}")
         print(f"Debug Mode: {cls.DEBUG_MODE}")
         print(f"Log Level: {cls.LOG_LEVEL}")
         print("="*50 + "\n")

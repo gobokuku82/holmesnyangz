@@ -17,7 +17,7 @@ TestConfig.setup_logging(verbose=False)
 
 # Now import supervisor and search agent after paths are configured
 from supervisor.supervisor import RealEstateSupervisor
-from subgraphs.search_agent import SearchAgent
+from agents.search_agent import SearchAgent
 
 
 @dataclass

@@ -15,8 +15,8 @@ from pathlib import Path
 
 # Add parent directories to path for imports
 current_file = Path(__file__)
-subgraphs_dir = current_file.parent  # subgraphs
-service_dir = subgraphs_dir.parent   # service
+agents_dir = current_file.parent     # agents
+service_dir = agents_dir.parent      # service
 app_dir = service_dir.parent         # app
 backend_dir = app_dir.parent         # backend
 
@@ -27,6 +27,9 @@ if str(app_dir) not in sys.path:
     sys.path.insert(0, str(app_dir))
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
+
+# Also add app.service to path for absolute imports
+sys.path.insert(0, str(backend_dir / "app" / "service"))
 
 from core.states import SearchAgentState
 from core.context import LLMContext, create_default_llm_context

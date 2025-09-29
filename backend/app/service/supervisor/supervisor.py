@@ -399,7 +399,7 @@ class RealEstateSupervisor:
         for agent_name in selected_agents:
             if agent_name == "search_agent":
                 # Import and execute search agent
-                from subgraphs.search_agent import SearchAgent
+                from agents.search_agent import SearchAgent
 
                 agent = SearchAgent(llm_context=self.llm_context)
                 input_data = {

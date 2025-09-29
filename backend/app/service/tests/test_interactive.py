@@ -16,7 +16,7 @@ TestConfig.setup_logging(verbose=True)
 
 # Now import supervisor and search agent after paths are configured
 from supervisor.supervisor import RealEstateSupervisor
-from subgraphs.search_agent import SearchAgent
+from agents.search_agent import SearchAgent
 
 
 class InteractiveTester:
@@ -186,7 +186,7 @@ class InteractiveTester:
         print("="*60)
         print("\nCommands:")
         print("  'quit' or 'exit' - Exit the test")
-        print("  'mode <mock/openai>' - Switch LLM mode")
+        print("  'mode <openai/azure>' - Switch LLM mode")
         print("  'history' - Show query history")
         print("  'clear' - Clear screen")
         print("="*60)
