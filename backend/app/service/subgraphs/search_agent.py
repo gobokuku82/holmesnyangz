@@ -1,5 +1,6 @@
 """
 Search Agent Subgraph
+Updated for LangGraph 0.6+ with LLMContext support
 Handles data collection and routing decisions
 Uses LLM to determine next actions
 """
@@ -28,6 +29,8 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from core.states import SearchAgentState
+from core.context import LLMContext, create_default_llm_context
+from core.config import Config
 from tools import tool_registry
 
 logger = logging.getLogger(__name__)
@@ -36,26 +39,64 @@ logger = logging.getLogger(__name__)
 class SearchAgentLLM:
     """
     LLM client for search agent decision making
+    Updated for LangGraph 0.6+ with LLMContext support
     """
 
-    def __init__(self):
-        self.provider = os.getenv("LLM_PROVIDER", "mock")
-        self.api_key = os.getenv("OPENAI_API_KEY")
+    def __init__(self, context: LLMContext = None):
+        self.context = context or create_default_llm_context()
         self.client = None
         self._initialize_client()
 
     def _initialize_client(self):
         """Initialize LLM client"""
-        if self.provider == "openai" and self.api_key:
+        # Check if forced to use mock
+        if self.context.use_mock:
+            logger.info("SearchAgent using mock LLM (forced by context)")
+            self.context.provider = "mock"
+            return
+
+        # Get API key from context or config
+        api_key = self.context.api_key or Config.LLM_DEFAULTS.get("api_key")
+
+        if self.context.provider == "openai" and api_key:
             try:
                 from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key)
+                self.client = OpenAI(
+                    api_key=api_key,
+                    organization=self.context.organization
+                )
                 logger.info("SearchAgent OpenAI client initialized")
             except ImportError:
                 logger.warning("OpenAI not available, using mock")
-                self.provider = "mock"
+                self.context.provider = "mock"
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI for SearchAgent: {e}")
+                self.context.provider = "mock"
         else:
             logger.info("SearchAgent using mock LLM")
+            self.context.provider = "mock"
+
+    def get_model(self, purpose: str = "search") -> str:
+        """Get model name for specific purpose"""
+        # Check context overrides first
+        if self.context.model_overrides and purpose in self.context.model_overrides:
+            return self.context.model_overrides[purpose]
+        # Use defaults from config
+        return Config.LLM_DEFAULTS["models"].get(purpose, "gpt-4o-mini")
+
+    def get_params(self) -> Dict[str, Any]:
+        """Get LLM parameters with context overrides"""
+        params = Config.LLM_DEFAULTS["default_params"].copy()
+
+        # Apply context overrides if present
+        if self.context.temperature is not None:
+            params["temperature"] = self.context.temperature
+        if self.context.max_tokens is not None:
+            params["max_tokens"] = self.context.max_tokens
+        if self.context.response_format is not None:
+            params["response_format"] = self.context.response_format
+
+        return params
 
     async def create_search_plan(
         self,
@@ -72,7 +113,7 @@ class SearchAgentLLM:
         Returns:
             Search plan with tools and parameters
         """
-        if self.provider == "mock":
+        if self.context.provider == "mock":
             return self._mock_search_plan(query, keywords)
 
         try:
@@ -98,14 +139,16 @@ JSON 형식으로 응답:
             user_prompt = f"""사용자 질의: {query}
 수집 키워드: {', '.join(keywords)}"""
 
+            model = self.get_model("search")
+            params = self.get_params()
+
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.3,
-                response_format={"type": "json_object"}
+                **params
             )
 
             return json.loads(response.choices[0].message.content)
@@ -129,7 +172,7 @@ JSON 형식으로 응답:
         Returns:
             Decision on next action
         """
-        if self.provider == "mock":
+        if self.context.provider == "mock":
             return self._mock_next_action(collected_data)
 
         try:
@@ -152,14 +195,16 @@ JSON 형식으로 응답:
 수집된 데이터 개수: {len(collected_data)}
 데이터 카테고리: {list(collected_data.keys())}"""
 
+            model = self.get_model("search")
+            params = self.get_params()
+
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.3,
-                response_format={"type": "json_object"}
+                **params
             )
 
             return json.loads(response.choices[0].message.content)
@@ -234,10 +279,12 @@ JSON 형식으로 응답:
 class SearchAgent:
     """
     Search Agent for data collection
+    Updated for LangGraph 0.6+ with LLMContext support
     """
 
-    def __init__(self):
-        self.llm_client = SearchAgentLLM()
+    def __init__(self, llm_context: LLMContext = None):
+        self.llm_context = llm_context or create_default_llm_context()
+        self.llm_client = SearchAgentLLM(self.llm_context)
         self.workflow = None
         self._build_graph()
 
@@ -484,7 +531,15 @@ if __name__ == "__main__":
     import asyncio
 
     async def main():
-        search_agent = SearchAgent()
+        # Create LLM context
+        llm_context = LLMContext(
+            provider="openai",  # or "mock" for testing
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.3
+        )
+
+        # Create search agent with context
+        search_agent = SearchAgent(llm_context)
 
         # Test input
         test_input = {

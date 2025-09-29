@@ -81,6 +81,28 @@ class Config:
         "enable_llm_planning": True,  # LLM planning enabled
     }
 
+    # ============ LLM Configuration (LangGraph 0.6+) ============
+    LLM_DEFAULTS = {
+        "provider": os.getenv("LLM_PROVIDER", "openai"),
+        "api_key": os.getenv("OPENAI_API_KEY"),
+        "organization": os.getenv("OPENAI_ORG_ID"),
+        "models": {
+            "intent": "gpt-4o-mini",      # Intent analysis
+            "planning": "gpt-4o-mini",     # Execution planning
+            "search": "gpt-4o-mini",       # Search planning
+            "analysis": "gpt-4o"           # Data analysis
+        },
+        "default_params": {
+            "temperature": 0.3,
+            "max_tokens": 1000,
+            "response_format": {"type": "json_object"}
+        },
+        "retry": {
+            "max_attempts": 3,
+            "backoff_seconds": 1.0
+        }
+    }
+
     # ============ Helper Methods ============
 
     @classmethod

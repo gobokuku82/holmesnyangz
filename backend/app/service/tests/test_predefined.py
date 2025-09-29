@@ -279,10 +279,12 @@ class PredefinedTester:
 
         # Check for data content
         if isinstance(response, dict):
+            # Check in final_response if it exists
+            final_resp = response.get("final_response", response)
             has_content = bool(
-                response.get("content") or
-                response.get("data") or
-                response.get("summary")
+                final_resp.get("content") if isinstance(final_resp, dict) else False or
+                final_resp.get("data") if isinstance(final_resp, dict) else False or
+                final_resp.get("summary") if isinstance(final_resp, dict) else False
             )
             validations["has_content"] = has_content
 
@@ -364,7 +366,7 @@ class PredefinedTester:
             avg_time = sum(valid_times) / len(valid_times)
             min_time = min(valid_times)
             max_time = max(valid_times)
-            print(f"\n⏱️ Timing Statistics:")
+            print(f"\nTiming Statistics:")
             print(f"   Average: {avg_time:.2f}s")
             print(f"   Min: {min_time:.2f}s")
             print(f"   Max: {max_time:.2f}s")

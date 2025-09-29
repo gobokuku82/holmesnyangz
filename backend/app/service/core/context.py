@@ -5,6 +5,7 @@ Updated with improved naming conventions
 """
 
 from typing import TypedDict, Optional, Dict, List, Any
+from dataclasses import dataclass, field
 import os
 from datetime import datetime
 import uuid
@@ -12,11 +13,41 @@ import uuid
 
 # ============ Context Types ============
 
+@dataclass
+class LLMContext:
+    """
+    LLM configuration for runtime context
+    Used with LangGraph 0.6+ Runtime object for typed access
+    """
+    # ========== Provider Settings ==========
+    provider: str = "openai"  # openai, azure, mock
+    api_key: Optional[str] = None
+    organization: Optional[str] = None
+
+    # ========== Model Overrides ==========
+    model_overrides: Optional[Dict[str, str]] = field(default_factory=dict)
+    # Example: {"intent": "gpt-4", "planning": "gpt-4o"}
+
+    # ========== Parameter Overrides ==========
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    response_format: Optional[Dict[str, Any]] = None
+
+    # ========== User Context ==========
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+    # ========== Feature Flags ==========
+    use_mock: bool = False  # Force mock mode for testing
+    enable_retry: bool = True
+    enable_logging: bool = True
+
 class AgentContext(TypedDict):
     """
     Runtime context for agents
     Contains metadata and configuration passed at execution time
     This is READ-ONLY during execution
+    Updated for LangGraph 0.6+ with LLMContext
 
     Naming Convention:
     - chat_* : LangGraph/Chatbot system identifiers (string)
@@ -47,6 +78,9 @@ class AgentContext(TypedDict):
     # ========== Execution Control ==========
     debug_mode: Optional[bool]      # Enable debug logging
     trace_enabled: Optional[bool]   # Enable detailed tracing
+
+    # ========== LLM Configuration (LangGraph 0.6+) ==========
+    llm_context: Optional[LLMContext]  # LLM runtime configuration
 
 
 class SubgraphContext(TypedDict):
@@ -86,6 +120,7 @@ def create_agent_context(
     chat_session_id: str = None,
     db_user_id: int = None,
     db_session_id: int = None,
+    llm_context: LLMContext = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
@@ -128,6 +163,9 @@ def create_agent_context(
         "language": kwargs.get("language", "ko"),
         "debug_mode": kwargs.get("debug_mode", False),
         "trace_enabled": kwargs.get("trace_enabled", False),
+
+        # LLM Configuration
+        "llm_context": llm_context or create_default_llm_context(),
     }
 
     # Remove None values for cleaner context
@@ -208,6 +246,45 @@ def create_subgraph_context(
 
     # Remove None values for cleaner context
     return {k: v for k, v in context.items() if v is not None}
+
+
+def create_default_llm_context() -> LLMContext:
+    """
+    Create default LLM context from environment variables
+
+    Returns:
+        LLMContext with default settings
+    """
+    return LLMContext(
+        provider=os.getenv("LLM_PROVIDER", "openai"),
+        api_key=os.getenv("OPENAI_API_KEY"),
+        organization=os.getenv("OPENAI_ORG_ID"),
+        use_mock=os.getenv("USE_MOCK_LLM", "false").lower() == "true",
+    )
+
+
+def create_llm_context_with_overrides(
+    base_context: LLMContext = None,
+    **overrides
+) -> LLMContext:
+    """
+    Create LLM context with overrides
+
+    Args:
+        base_context: Base context to start from (optional)
+        **overrides: Field overrides
+
+    Returns:
+        New LLMContext with overrides applied
+    """
+    base = base_context or create_default_llm_context()
+
+    # Apply overrides
+    for key, value in overrides.items():
+        if hasattr(base, key):
+            setattr(base, key, value)
+
+    return base
 
 
 def extract_api_keys_from_env() -> Dict[str, str]:

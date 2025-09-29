@@ -3,9 +3,10 @@ Real Estate Search Tool
 Searches for real estate properties, prices, and market information
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple, Optional
 from .base_tool import BaseTool
 import random
+import re
 from datetime import datetime, timedelta
 
 
@@ -39,6 +40,84 @@ class RealEstateSearchTool(BaseTool):
         self.logger.warning("Real search not implemented, falling back to mock")
         return await self.mock_search(query, params)
 
+    def _parse_query_constraints(self, query: str) -> Dict[str, Any]:
+        """
+        Parse constraints from the query string
+
+        Args:
+            query: Query string
+
+        Returns:
+            Parsed constraints
+        """
+        constraints = {}
+        query_lower = query.lower() if query else ""
+
+        # Parse price constraints (e.g., "30억미만", "10억이상", "5-10억")
+        price_patterns = [
+            (r'(\d+)억\s*미만', lambda m: {'price_max': int(m.group(1)) * 100000000}),
+            (r'(\d+)억\s*이하', lambda m: {'price_max': int(m.group(1)) * 100000000}),
+            (r'(\d+)억\s*이상', lambda m: {'price_min': int(m.group(1)) * 100000000}),
+            (r'(\d+)억\s*초과', lambda m: {'price_min': int(m.group(1)) * 100000000}),
+            (r'(\d+)\s*-\s*(\d+)억', lambda m: {
+                'price_min': int(m.group(1)) * 100000000,
+                'price_max': int(m.group(2)) * 100000000
+            })
+        ]
+
+        for pattern, extractor in price_patterns:
+            match = re.search(pattern, query)
+            if match:
+                constraints.update(extractor(match))
+                break
+
+        # Parse size constraints (e.g., "50평이상", "30평대", "30-40평")
+        size_patterns = [
+            (r'(\d+)평\s*이상', lambda m: {'size_min': int(m.group(1))}),
+            (r'(\d+)평\s*초과', lambda m: {'size_min': int(m.group(1)) + 1}),
+            (r'(\d+)평\s*이하', lambda m: {'size_max': int(m.group(1))}),
+            (r'(\d+)평\s*미만', lambda m: {'size_max': int(m.group(1)) - 1}),
+            (r'(\d+)평대', lambda m: {
+                'size_min': int(m.group(1)),
+                'size_max': int(m.group(1)) + 9
+            }),
+            (r'(\d+)\s*-\s*(\d+)평', lambda m: {
+                'size_min': int(m.group(1)),
+                'size_max': int(m.group(2))
+            })
+        ]
+
+        for pattern, extractor in size_patterns:
+            match = re.search(pattern, query)
+            if match:
+                constraints.update(extractor(match))
+                break
+
+        # Parse region
+        regions = ['강남구', '서초구', '송파구', '용산구', '마포구', '성동구']
+        for region in regions:
+            if region in query:
+                constraints['region'] = region
+                break
+
+        # Parse property type
+        if '아파트' in query:
+            constraints['property_type'] = '아파트'
+        elif '빌라' in query or '연립' in query:
+            constraints['property_type'] = '빌라'
+        elif '오피스텔' in query:
+            constraints['property_type'] = '오피스텔'
+
+        # Parse transaction type
+        if '매매' in query or '매물' in query:
+            constraints['transaction_type'] = '매매'
+        elif '전세' in query:
+            constraints['transaction_type'] = '전세'
+        elif '월세' in query:
+            constraints['transaction_type'] = '월세'
+
+        return constraints
+
     async def mock_search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Mock search returning sample real estate data
@@ -52,13 +131,21 @@ class RealEstateSearchTool(BaseTool):
         """
         query_lower = query.lower() if query else ""
 
-        # Extract parameters
-        region = params.get("region", "강남구") if params else "강남구"
-        property_type = params.get("property_type", "아파트") if params else "아파트"
-        transaction_type = params.get("transaction_type", "매매") if params else "매매"
-        price_min = params.get("price_min", 500000000) if params else 500000000
-        price_max = params.get("price_max", 1000000000) if params else 1000000000
-        size = params.get("size", 30) if params else 30  # 평수
+        # Parse constraints from query
+        parsed_constraints = self._parse_query_constraints(query)
+
+        # Merge with params if provided
+        if params:
+            parsed_constraints.update(params)
+
+        # Extract parameters with defaults
+        region = parsed_constraints.get("region", "강남구")
+        property_type = parsed_constraints.get("property_type", "아파트")
+        transaction_type = parsed_constraints.get("transaction_type", "매매")
+        price_min = parsed_constraints.get("price_min", 500000000)
+        price_max = parsed_constraints.get("price_max", 5000000000)  # Default 50억
+        size_min = parsed_constraints.get("size_min", 20)
+        size_max = parsed_constraints.get("size_max", 100)
 
         mock_data = []
 
@@ -70,12 +157,37 @@ class RealEstateSearchTool(BaseTool):
                 {"name": "아크로리버파크", "built_year": 2016, "total_units": 814},
                 {"name": "반포자이", "built_year": 2008, "total_units": 2444},
                 {"name": "래미안블레스티지", "built_year": 2019, "total_units": 449},
-                {"name": "헬리오시티", "built_year": 2018, "total_units": 9510}
+                {"name": "헬리오시티", "built_year": 2018, "total_units": 9510},
+                {"name": "타워팰리스", "built_year": 2002, "total_units": 2310},
+                {"name": "갤러리아포레", "built_year": 2020, "total_units": 408}
             ]
 
-            for i, complex_info in enumerate(complexes[:3]):
-                # Generate price based on parameters
-                base_price = random.randint(price_min, price_max)
+            # Generate varied properties - some matching criteria, some not
+            for i, complex_info in enumerate(complexes):
+                # Generate varied sizes - ensure some match the criteria
+                if i < 3 and size_min > 40:  # If looking for large properties
+                    property_size = random.randint(max(size_min, 50), min(size_max, 80))
+                else:
+                    property_size = random.randint(25, 65)  # General range
+
+                # Generate price based on size and constraints
+                price_per_pyeong = random.randint(25000000, 45000000)
+                base_price = property_size * price_per_pyeong
+
+                # Skip if doesn't match basic criteria
+                if base_price > price_max or base_price < price_min:
+                    if i < 2:  # Force first 2 to match criteria
+                        base_price = random.randint(price_min, min(price_max, price_min * 2))
+                        property_size = base_price // price_per_pyeong
+                    elif random.random() > 0.3:  # 30% chance to include anyway
+                        continue
+
+                if property_size < size_min or property_size > size_max:
+                    if i < 2:  # Force first 2 to match criteria
+                        property_size = random.randint(size_min, size_max)
+                        base_price = property_size * price_per_pyeong
+                    elif random.random() > 0.3:  # 30% chance to include anyway
+                        continue
 
                 listing = {
                     "type": "property_listing",
@@ -85,14 +197,14 @@ class RealEstateSearchTool(BaseTool):
                     "property_type": property_type,
                     "transaction_type": transaction_type,
                     "size": {
-                        "pyeong": size + random.randint(-5, 5),
-                        "sqm": (size + random.randint(-5, 5)) * 3.3
+                        "pyeong": property_size,
+                        "sqm": property_size * 3.3
                     },
                     "floor": f"{random.randint(5, 20)}층/{random.randint(25, 35)}층",
                     "direction": random.choice(["남향", "남동향", "동향", "서향"]),
                     "price": {
                         "amount": base_price,
-                        "per_pyeong": base_price // size,
+                        "per_pyeong": price_per_pyeong,
                         "negotiable": random.choice([True, False])
                     },
                     "built_year": complex_info["built_year"],
@@ -105,22 +217,31 @@ class RealEstateSearchTool(BaseTool):
                         "agency": f"{region} 공인중개사",
                         "phone": f"02-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
                     },
-                    "listing_date": (datetime.now() - timedelta(days=random.randint(1, 30))).strftime("%Y-%m-%d")
+                    "listing_date": (datetime.now() - timedelta(days=random.randint(1, 30))).strftime("%Y-%m-%d"),
+                    "matches_criteria": (
+                        base_price >= price_min and base_price <= price_max and
+                        property_size >= size_min and property_size <= size_max
+                    )
                 }
 
                 mock_data.append(listing)
 
         # Market price information
         if "시세" in query_lower or "price" in query_lower:
+            # Calculate average based on query constraints
+            avg_price = (price_min + price_max) // 2 if price_max < 5000000000 else 850000000
+            avg_size = (size_min + size_max) // 2 if size_max < 100 else 35
+
             mock_data.append({
                 "type": "market_price",
                 "region": region,
                 "property_type": property_type,
                 "reference_date": datetime.now().strftime("%Y-%m-%d"),
+                "size_range": f"{size_min}-{size_max}평" if size_max < 100 else "전체",
                 "price_statistics": {
                     "average_price": {
-                        "total": 850000000,
-                        "per_pyeong": 28000000,
+                        "total": avg_price,
+                        "per_pyeong": avg_price // avg_size,
                         "mom_change": "+1.2%",  # Month-over-month
                         "yoy_change": "+5.3%"   # Year-over-year
                     },
@@ -294,13 +415,18 @@ class RealEstateSearchTool(BaseTool):
                 }
             ]
 
-        # Add metadata
+        # Add metadata and calculate relevance
         for item in mock_data:
-            item["relevance_score"] = random.uniform(0.7, 1.0)
+            # Higher score for items matching criteria
+            base_score = random.uniform(0.5, 0.8)
+            if item.get("type") == "property_listing":
+                if item.get("matches_criteria"):
+                    base_score = random.uniform(0.85, 1.0)
+            item["relevance_score"] = base_score
             item["data_source"] = "Real Estate Database (Mock)"
 
-        # Sort by relevance
-        mock_data.sort(key=lambda x: x["relevance_score"], reverse=True)
+        # Sort by relevance (matching criteria first)
+        mock_data.sort(key=lambda x: (x.get("matches_criteria", False), x["relevance_score"]), reverse=True)
 
         return self.format_results(
             data=mock_data[:5],  # Return top 5 results
