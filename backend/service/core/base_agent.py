@@ -98,6 +98,7 @@ class BaseAgent(ABC):
             Initial state dictionary with workflow fields only
         """
         # Exclude context fields from state
+        # Note: chat_thread_id is kept in context only, not in state (per LangGraph design)
         excluded_fields = [
             "chat_user_ref", "chat_session_id", "chat_thread_id",
             "db_user_id", "db_session_id",
@@ -316,7 +317,10 @@ class BaseAgent(ABC):
             config.setdefault("recursion_limit", 25)
             config.setdefault("configurable", {})
 
-            # Use context's chat_thread_id or chat_session_id for thread_id
+            # IMPORTANT: thread_id is a config parameter for checkpointer, not a state field
+            # LangGraph design: thread_id identifies the conversation/workflow instance
+            # Use chat_thread_id from context if available, fallback to chat_session_id
+            # This ensures state persistence across graph executions
             config["configurable"]["thread_id"] = context.get("chat_thread_id") or context.get("chat_session_id", "default")
 
             # Compile workflow with checkpointer

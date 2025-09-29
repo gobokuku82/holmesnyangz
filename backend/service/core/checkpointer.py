@@ -1,5 +1,11 @@
 """
 Checkpointer utilities for state management
+
+IMPORTANT: thread_id Usage in LangGraph
+- thread_id is a configuration parameter, NOT a state field
+- It's passed via config["configurable"]["thread_id"] when invoking graphs
+- Use context.chat_thread_id or context.chat_session_id as the thread_id value
+- This ensures proper state persistence across graph executions
 """
 
 from typing import Optional

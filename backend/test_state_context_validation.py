@@ -121,7 +121,6 @@ def test_state_creation():
     print("\n1. Base state creation")
     base_state = create_base_state(
         chat_session_id="session_test456",
-        chat_thread_id="thread_test789",
         db_user_id=1001,
         db_session_id=2001
     )

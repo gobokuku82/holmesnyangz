@@ -48,7 +48,6 @@ class BaseState(TypedDict):
 
     # ========== Session Identifiers ==========
     chat_session_id: str              # Chatbot session ID
-    chat_thread_id: Optional[str]     # LangGraph thread ID
     db_session_id: Optional[int]      # Database session reference
     db_user_id: Optional[int]         # Database user reference
 
@@ -77,7 +76,6 @@ class DataCollectionState(TypedDict):
 
     # ========== Identifiers ==========
     chat_session_id: str
-    chat_thread_id: Optional[str]
     db_session_id: Optional[int]
 
     # ========== Input Parameters ==========
@@ -104,7 +102,6 @@ class AnalysisState(TypedDict):
 
     # ========== Identifiers ==========
     chat_session_id: str
-    chat_thread_id: Optional[str]
 
     # ========== Input Data ==========
     performance_data: List[Dict[str, Any]]
@@ -265,7 +262,6 @@ class DocumentState(BaseState):
 
 def create_base_state(
     chat_session_id: str,
-    chat_thread_id: str = None,
     db_session_id: int = None,
     db_user_id: int = None,
     **kwargs
@@ -275,7 +271,6 @@ def create_base_state(
 
     Args:
         chat_session_id: Chatbot session ID
-        chat_thread_id: LangGraph thread ID
         db_session_id: Database session ID
         db_user_id: Database user ID
         **kwargs: Additional state fields
@@ -286,7 +281,6 @@ def create_base_state(
     return {
         # Identifiers
         "chat_session_id": chat_session_id,
-        "chat_thread_id": chat_thread_id,
         "db_session_id": db_session_id,
         "db_user_id": db_user_id,
 
@@ -328,7 +322,6 @@ def create_real_estate_initial_state(
     """
     base_state = create_base_state(
         chat_session_id=chat_session_id,
-        chat_thread_id=kwargs.get("chat_thread_id"),
         db_session_id=kwargs.get("db_session_id"),
         db_user_id=kwargs.get("db_user_id")
     )
@@ -397,7 +390,6 @@ def create_supervisor_initial_state(
     """
     base_state = create_base_state(
         chat_session_id=chat_session_id,
-        chat_thread_id=kwargs.get("chat_thread_id"),
         db_session_id=kwargs.get("db_session_id"),
         db_user_id=kwargs.get("db_user_id")
     )
