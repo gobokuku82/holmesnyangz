@@ -300,8 +300,10 @@ class RealEstateSupervisor:
         """
         query = state["query"]
         logger.info(f"Analyzing intent for query: {query}")
+        logger.debug(f"[NODE] analyze_intent_node - Input state keys: {list(state.keys())}")
 
         intent = await self.llm_manager.analyze_intent(query)
+        logger.debug(f"[LLM] analyze_intent result: intent_type={intent.get('intent_type')}, confidence={intent.get('confidence')}")
 
         # Check for errors or unclear intent
         if intent.get("error"):
@@ -328,11 +330,13 @@ class RealEstateSupervisor:
                 }
             }
 
-        return {
+        result = {
             "intent": intent,
             "intent_type": intent.get("intent_type", "general"),
             "intent_confidence": intent.get("confidence", 0.0)
         }
+        logger.debug(f"[NODE] analyze_intent_node - Output state changes: {list(result.keys())}")
+        return result
 
     async def create_plan_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -367,11 +371,13 @@ class RealEstateSupervisor:
                 "selected_agents": []
             }
 
-        return {
+        result = {
             "execution_plan": plan,
             "collection_keywords": plan.get("collection_keywords", []),
             "selected_agents": plan.get("agents", [])
         }
+        logger.debug(f"[NODE] create_plan_node - Output agents: {result['selected_agents']}, keywords: {result['collection_keywords']}")
+        return result
 
     async def execute_agents_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -393,10 +399,12 @@ class RealEstateSupervisor:
 
         selected_agents = state.get("selected_agents", [])
         logger.info(f"Executing agents: {selected_agents}")
+        logger.debug(f"[NODE] execute_agents_node - Starting with {len(selected_agents)} agents")
 
         agent_results = {}
 
         for agent_name in selected_agents:
+            logger.debug(f"[AGENT] Executing agent: {agent_name}")
             if agent_name == "search_agent":
                 # Import and execute search agent
                 from agents.search_agent import SearchAgent
@@ -411,6 +419,7 @@ class RealEstateSupervisor:
 
                 # SearchAgent uses app.ainvoke instead of run
                 result = await agent.app.ainvoke(input_data)
+                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, collected_data_keys={list(result.get('collected_data', {}).keys())}")
                 agent_results[agent_name] = result
 
             elif agent_name == "analysis_agent":
@@ -424,10 +433,12 @@ class RealEstateSupervisor:
             else:
                 logger.warning(f"Unknown agent: {agent_name}")
 
-        return {
+        result = {
             "agent_results": agent_results,
             "status": "agents_executed"
         }
+        logger.debug(f"[NODE] execute_agents_node - Completed. Agents executed: {list(agent_results.keys())}")
+        return result
 
     async def generate_response_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -472,10 +483,12 @@ class RealEstateSupervisor:
             "summary": summary
         }
 
-        return {
+        result = {
             "final_response": final_response,
             "response_type": "processed"
         }
+        logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}")
+        return result
 
     async def process_query(
         self,
