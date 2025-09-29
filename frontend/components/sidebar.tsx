@@ -1,0 +1,125 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight } from "lucide-react"
+import type { PageType } from "@/app/page"
+
+interface SidebarProps {
+  currentPage: PageType
+  onPageChange: (page: PageType) => void
+}
+
+export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const menuItems = [
+    { id: "chat" as PageType, label: "메인 챗봇", icon: MessageCircle },
+    { id: "map" as PageType, label: "지도 검색", icon: Map },
+    { id: "analysis" as PageType, label: "분석 에이전트", icon: FileText },
+    { id: "verification" as PageType, label: "검증 에이전트", icon: Shield },
+    { id: "consultation" as PageType, label: "상담 에이전트", icon: Users },
+  ]
+
+  return (
+    <div
+      className={`${isCollapsed ? "w-16" : "w-64 lg:w-64 md:w-56"} bg-sidebar border-r border-sidebar-border flex flex-col h-screen transition-all duration-300`}
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between">
+          <div className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : ""}`}>
+            <Home className="h-6 w-6 text-sidebar-primary" />
+            {!isCollapsed && (
+              <div>
+                <h1 className="font-bold text-lg text-sidebar-foreground">도와줘 홈즈냥즈</h1>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
+        {!isCollapsed && <p className="text-sm text-sidebar-foreground/70 mt-1">AI 부동산 가디언</p>}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4">
+        <div className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = currentPage === item.id
+
+            return (
+              <Button
+                key={item.id}
+                variant={isActive ? "default" : "ghost"}
+                className={`w-full ${isCollapsed ? "justify-center px-2" : "justify-start gap-3"} ${
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                }`}
+                onClick={() => onPageChange(item.id)}
+                title={isCollapsed ? item.label : undefined}
+              >
+                <Icon className="h-4 w-4" />
+                {!isCollapsed && <span className="text-sm">{item.label}</span>}
+              </Button>
+            )
+          })}
+        </div>
+
+        {/* Agent Quick Actions */}
+        {!isCollapsed && (
+          <div className="mt-8">
+            <h3 className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider mb-3">
+              빠른 실행
+            </h3>
+            <div className="space-y-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                onClick={() => onPageChange("analysis")}
+              >
+                계약서 분석
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                onClick={() => onPageChange("verification")}
+              >
+                허위매물 검증
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                onClick={() => onPageChange("consultation")}
+              >
+                매물 추천
+              </Button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Footer */}
+      {!isCollapsed && (
+        <div className="p-4 border-t border-sidebar-border">
+          <p className="text-xs text-sidebar-foreground/50 text-center">
+            안전한 부동산 거래를 위한
+            <br />
+            AI 파트너
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
