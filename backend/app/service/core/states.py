@@ -261,6 +261,93 @@ class DocumentState(BaseState):
     export_format: Optional[str]  # Export format
 
 
+# ============ New Real Estate Main Orchestrator State ============
+
+class RealEstateMainState(TypedDict):
+    """
+    Main State for Real Estate Chatbot Supervisor
+    Manages the overall workflow and agent communication
+    """
+
+    # === Session Identifiers ===
+    chat_session_id: str
+    chat_thread_id: Optional[str]
+    db_session_id: Optional[int]
+    db_user_id: Optional[int]
+
+    # === Input ===
+    query: str  # User query
+    chat_context: Optional[Dict[str, Any]]  # Previous conversation context
+
+    # === Intent Analysis ===
+    intent: Optional[Dict[str, Any]]  # Analyzed intent with entities
+    intent_confidence: Optional[float]  # Confidence score
+    intent_type: Optional[str]  # search, analysis, recommendation, etc.
+
+    # === Planning ===
+    execution_plan: Optional[Dict[str, Any]]  # Overall execution plan
+    collection_keywords: Optional[List[str]]  # Keywords for data collection
+    selected_agents: Optional[List[str]]  # Agents to execute
+
+    # === Agent Communication ===
+    agent_results: Annotated[Dict[str, Any], merge_dicts]  # Results from agents
+    shared_context: Annotated[Dict[str, Any], merge_dicts]  # Shared data between agents
+    current_agent: Optional[str]  # Currently executing agent
+    agent_sequence: Optional[List[str]]  # Execution sequence
+
+    # === Status Tracking ===
+    status: str  # pending, processing, completed, failed
+    execution_step: str  # Current step in workflow
+    errors: Annotated[List[str], add]  # Error messages
+
+    # === Output ===
+    final_response: Optional[Dict[str, Any]]  # Final formatted response
+    response_type: Optional[str]  # direct, delegated, processed
+    response_metadata: Optional[Dict[str, Any]]  # Response metadata
+
+
+class SearchAgentState(TypedDict):
+    """
+    State for Search Agent Subgraph
+    Manages data collection and routing decisions
+    """
+
+    # === Input from Supervisor ===
+    original_query: str  # Original user query
+    collection_keywords: List[str]  # Keywords to search for
+    shared_context: Dict[str, Any]  # Shared context from supervisor
+    chat_session_id: str  # Session identifier
+
+    # === Search Planning ===
+    search_plan: Optional[Dict[str, Any]]  # LLM-generated search plan
+    selected_tools: Optional[List[str]]  # Tools to use for searching
+    tool_parameters: Optional[Dict[str, Any]]  # Parameters for each tool
+
+    # === Tool Execution ===
+    tool_results: Annotated[Dict[str, Any], merge_dicts]  # Results from tools
+    successful_tools: Annotated[List[str], append_unique]  # Successfully executed tools
+    failed_tools: Annotated[List[str], append_unique]  # Failed tools
+
+    # === Data Processing ===
+    collected_data: Annotated[Dict[str, Any], merge_dicts]  # Aggregated data
+    data_summary: Optional[str]  # Summary of collected data
+    data_quality_score: Optional[float]  # Quality assessment
+
+    # === Routing Decision ===
+    next_action: Optional[str]  # return_to_supervisor, pass_to_agent, direct_output
+    target_agent: Optional[str]  # Target agent if passing data
+    routing_reason: Optional[str]  # Reason for routing decision
+
+    # === Status ===
+    status: str  # pending, searching, processing, completed
+    execution_step: str  # Current step
+    errors: Annotated[List[str], add]  # Error messages
+
+    # === Output ===
+    search_summary: Optional[str]  # Summary for supervisor
+    output_data: Optional[Dict[str, Any]]  # Structured output
+
+
 # ============ State Factory Functions ============
 
 def create_base_state(
