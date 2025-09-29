@@ -1,23 +1,31 @@
 """
-Real Estate Supervisor - Production Version
-실제 LLM (OpenAI)만 사용하는 프로덕션 버전
-Mock 로직은 supervisor_mock.py에 분리됨
+Real Estate Chatbot Supervisor
+Updated for LangGraph 0.6+ with Runtime and Context support
+Manages intent analysis, planning, and agent orchestration
 """
 
-import json
+from typing import Dict, Any, Optional, List, Literal
+from langgraph.graph import StateGraph, START, END
+from dataclasses import dataclass
 import logging
-from typing import Dict, Any, Optional, List
-from langgraph.graph import StateGraph
+import json
+import os
+from datetime import datetime
 import sys
 from pathlib import Path
 
-# Add parent directories to path
-current_dir = Path(__file__).parent
-service_dir = current_dir.parent
-app_dir = service_dir.parent
-backend_dir = app_dir.parent
+# Add parent directories to path for imports
+current_file = Path(__file__)
+supervisor_dir = current_file.parent  # supervisor
+service_dir = supervisor_dir.parent   # service
+app_dir = service_dir.parent         # app
+backend_dir = app_dir.parent         # backend
 
-# Add paths in correct order - most specific first
+# Add multiple paths to ensure imports work
+if str(service_dir) not in sys.path:
+    sys.path.insert(0, str(service_dir))
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
@@ -32,17 +40,23 @@ class LLMManager:
     """
     Centralized LLM Manager for all LLM operations
     Uses LLMContext for configuration (LangGraph 0.6+)
-    Production version - OpenAI only
     """
 
     def __init__(self, context: LLMContext = None):
         self.context = context or create_default_llm_context()
         self.client = None
-        self._connection_error = None
+        self._effective_provider = None  # Track what provider is actually being used
+        self._connection_error = None    # Track connection errors
         self._initialize_client()
 
     def _initialize_client(self):
-        """Initialize OpenAI client"""
+        """Initialize the appropriate LLM client"""
+        # Check if forced to use mock
+        if self.context.use_mock:
+            logger.info("테스트 모드로 실행중입니다 (use_mock=True)")
+            self._effective_provider = "mock"
+            return
+
         # Get API key from context first, only fallback to config if context.api_key is None
         # Empty string means explicitly no API key
         if self.context.api_key == "":
@@ -58,22 +72,27 @@ class LLMManager:
                     organization=self.context.organization
                 )
                 logger.info("OpenAI client initialized successfully")
+                self._effective_provider = "openai"
             except ImportError:
                 logger.error("OpenAI library not installed. Install with: pip install openai")
                 self._connection_error = "OpenAI 라이브러리가 설치되지 않았습니다."
+                self._effective_provider = None
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI: {e}")
                 self._connection_error = f"OpenAI 연결 실패: {str(e)}"
+                self._effective_provider = None
         elif self.context.provider == "azure":
             # Azure OpenAI support can be added here
             logger.info("Azure OpenAI not yet implemented")
             self._connection_error = "Azure OpenAI는 아직 지원되지 않습니다."
+            self._effective_provider = None
         else:
             if self.context.provider == "openai" and not api_key:
                 logger.warning("OPENAI_API_KEY not found")
                 self._connection_error = "API 키가 설정되지 않았습니다."
             else:
                 self._connection_error = "LLM 공급자가 설정되지 않았습니다."
+            self._effective_provider = None
 
     def get_model(self, purpose: str) -> str:
         """Get model name for specific purpose"""
@@ -108,7 +127,7 @@ class LLMManager:
             Intent analysis with entities and confidence
         """
         # Check for connection errors
-        if self._connection_error:
+        if self._effective_provider is None and self._connection_error:
             return {
                 "error": True,
                 "intent": "error",
@@ -117,14 +136,9 @@ class LLMManager:
                 "suggestion": "잠시 후 다시 시도해주세요."
             }
 
-        if not self.client:
-            return {
-                "error": True,
-                "intent": "error",
-                "message": "LLM 클라이언트가 초기화되지 않았습니다.",
-                "details": "OpenAI 연결에 실패했습니다.",
-                "suggestion": "시스템 관리자에게 문의하세요."
-            }
+        # Use mock for testing
+        if self._effective_provider == "mock":
+            return self._mock_analyze_intent(query)
 
         try:
             system_prompt = """당신은 부동산 전문 챗봇의 의도 분석기입니다.
@@ -134,21 +148,11 @@ class LLMManager:
 - search: 매물/시세 검색
 - analysis: 시장 분석
 - recommendation: 추천 요청
-- legal: 법률/규정 관련
-- loan: 대출 관련
-- general: 일반 문의
+- legal: 법률/규정 문의
+- loan: 대출 상담
+- general: 일반 질문
 
-JSON 형식으로 응답하세요:
-{
-    "intent_type": "의도 타입",
-    "entities": {
-        "region": "지역명",
-        "property_type": "부동산 유형",
-        "transaction_type": "거래 유형"
-    },
-    "keywords": ["핵심 키워드"],
-    "confidence": 0.0-1.0
-}"""
+JSON 형식으로 응답하세요."""
 
             user_prompt = f"사용자 질의: {query}"
 
@@ -168,7 +172,7 @@ JSON 형식으로 응답하세요:
 
         except Exception as e:
             logger.error(f"LLM intent analysis failed: {e}")
-            # Return unclear intent instead of error
+            # Return unclear intent instead of falling back to mock
             return {
                 "intent": "unclear",
                 "message": "질문을 이해하지 못했습니다. 다음과 같은 형식으로 질문해주세요:",
@@ -197,21 +201,17 @@ JSON 형식으로 응답하세요:
             Execution plan with agents and keywords
         """
         # Check for connection errors
-        if self._connection_error:
+        if self._effective_provider is None and self._connection_error:
             return {
                 "error": True,
                 "message": "시스템 연결 오류로 실행 계획을 생성할 수 없습니다.",
                 "details": self._connection_error,
-                "agents": []
+                "agents": []  # No agents to execute
             }
 
-        if not self.client:
-            return {
-                "error": True,
-                "message": "LLM 클라이언트가 초기화되지 않았습니다.",
-                "details": "OpenAI 연결에 실패했습니다.",
-                "agents": []
-            }
+        # Use mock for testing
+        if self._effective_provider == "mock":
+            return self._mock_create_plan(query, intent)
 
         try:
             system_prompt = """당신은 부동산 챗봇의 실행 계획 수립 전문가입니다.
@@ -249,19 +249,96 @@ JSON 형식으로 응답하세요:
 
         except Exception as e:
             logger.error(f"LLM planning failed: {e}")
-            # Return error instead of falling back
+            # Return error instead of falling back to mock
             return {
                 "error": True,
                 "message": "실행 계획 생성 중 오류가 발생했습니다.",
                 "details": str(e),
-                "agents": []
+                "agents": []  # No agents to execute
             }
+
+    def _mock_analyze_intent(self, query: str) -> Dict[str, Any]:
+        """Mock intent analysis"""
+        query_lower = query.lower()
+
+        # Determine intent type
+        if any(word in query_lower for word in ["매물", "시세", "가격", "찾아"]):
+            intent_type = "search"
+        elif any(word in query_lower for word in ["법", "계약", "세금"]):
+            intent_type = "legal"
+        elif any(word in query_lower for word in ["대출", "금리", "융자"]):
+            intent_type = "loan"
+        elif any(word in query_lower for word in ["분석", "동향", "전망"]):
+            intent_type = "analysis"
+        elif any(word in query_lower for word in ["추천", "어떤", "좋은"]):
+            intent_type = "recommendation"
+        else:
+            intent_type = "general"
+
+        # Extract entities
+        entities = {}
+        regions = ["강남구", "서초구", "송파구", "용산구"]
+        for region in regions:
+            if region in query:
+                entities["region"] = region
+                break
+
+        if "아파트" in query:
+            entities["property_type"] = "아파트"
+
+        if "매매" in query_lower:
+            entities["transaction_type"] = "매매"
+        elif "전세" in query_lower:
+            entities["transaction_type"] = "전세"
+
+        return {
+            "intent_type": intent_type,
+            "entities": entities,
+            "confidence": 0.85,
+            "keywords": [word for word in query.split() if len(word) > 1]
+        }
+
+    def _mock_create_plan(
+        self,
+        query: str,
+        intent: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Mock execution plan creation"""
+        intent_type = intent.get("intent_type", "general")
+
+        # Determine agents and keywords based on intent
+        if intent_type == "search":
+            agents = ["search_agent"]
+            keywords = ["매물", "시세", "가격", "거래"]
+        elif intent_type == "legal":
+            agents = ["search_agent"]
+            keywords = ["법률", "계약", "세금", "규정"]
+        elif intent_type == "loan":
+            agents = ["search_agent"]
+            keywords = ["대출", "금리", "LTV", "DTI"]
+        elif intent_type == "analysis":
+            agents = ["search_agent", "analysis_agent"]
+            keywords = ["시장", "동향", "통계", "전망"]
+        else:
+            agents = ["search_agent"]
+            keywords = ["부동산", "정보", "일반"]
+
+        # Add region-specific keywords if present
+        if "region" in intent.get("entities", {}):
+            keywords.append(intent["entities"]["region"])
+
+        return {
+            "agents": agents,
+            "collection_keywords": keywords,
+            "execution_order": "sequential" if len(agents) > 1 else "parallel",
+            "reasoning": f"{intent_type} 의도에 따른 계획 수립"
+        }
 
 
 class RealEstateSupervisor:
     """
     Main Supervisor for Real Estate Chatbot
-    Production version - OpenAI only
+    Updated for LangGraph 0.6+ with Runtime and Context support
     """
 
     def __init__(self, llm_context: LLMContext = None):
@@ -271,8 +348,12 @@ class RealEstateSupervisor:
         self._build_graph()
 
     def _build_graph(self):
-        """Build the workflow graph"""
-        self.workflow = StateGraph(state_schema=RealEstateMainState)
+        """Build the workflow graph with context_schema"""
+        # Create StateGraph with context_schema for LangGraph 0.6+
+        self.workflow = StateGraph(
+            state_schema=RealEstateMainState,
+            # context_schema=LLMContext  # This would be used with Runtime
+        )
 
         # Add nodes
         self.workflow.add_node("analyze_intent", self.analyze_intent_node)
@@ -281,11 +362,14 @@ class RealEstateSupervisor:
         self.workflow.add_node("generate_response", self.generate_response_node)
 
         # Add edges
-        self.workflow.set_entry_point("analyze_intent")
+        self.workflow.add_edge(START, "analyze_intent")
         self.workflow.add_edge("analyze_intent", "create_plan")
         self.workflow.add_edge("create_plan", "execute_agents")
         self.workflow.add_edge("execute_agents", "generate_response")
+        self.workflow.add_edge("generate_response", END)
 
+        # Compile the graph
+        self.app = self.workflow.compile()
         logger.info("Supervisor workflow graph built successfully")
 
     async def analyze_intent_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -364,7 +448,7 @@ class RealEstateSupervisor:
                     "message": plan.get("message"),
                     "details": plan.get("details")
                 },
-                "selected_agents": []
+                "selected_agents": []  # No agents to execute
             }
 
         return {
@@ -409,20 +493,18 @@ class RealEstateSupervisor:
                     "chat_session_id": state.get("chat_session_id", "")
                 }
 
-                # SearchAgent uses app.ainvoke instead of run
-                result = await agent.app.ainvoke(input_data)
+                result = await agent.execute(input_data)
                 agent_results[agent_name] = result
 
-            elif agent_name == "analysis_agent":
-                # Analysis agent can be implemented here
-                logger.info(f"Analysis agent not yet implemented")
+                # Update shared context
+                if "shared_context" in result:
+                    state["shared_context"] = result["shared_context"]
+            else:
+                # Placeholder for other agents
                 agent_results[agent_name] = {
                     "status": "not_implemented",
-                    "message": "Analysis agent coming soon"
+                    "message": f"{agent_name} not yet implemented"
                 }
-
-            else:
-                logger.warning(f"Unknown agent: {agent_name}")
 
         return {
             "agent_results": agent_results,
@@ -449,32 +531,31 @@ class RealEstateSupervisor:
 
         # Check if search_agent returned direct output
         search_result = agent_results.get("search_agent", {})
-        if search_result.get("direct_output"):
-            return {
-                "final_response": search_result["direct_output"],
-                "response_type": "direct"
+        if search_result.get("next_action") == "direct_output":
+            final_response = {
+                "type": "direct",
+                "content": search_result.get("output_data", {}),
+                "summary": search_result.get("search_summary", "")
             }
-
-        # Process all agent results
-        all_data = {}
-        for agent_name, result in agent_results.items():
-            if result.get("status") == "success":
-                all_data[agent_name] = result.get("data", {})
-
-        # Create summary
-        summary = "데이터 수집 완료"
-        if all_data:
-            summary = f"{len(all_data)}개의 에이전트에서 데이터 수집 완료"
-
-        final_response = {
-            "type": "processed",
-            "data": all_data,
-            "summary": summary
-        }
+        else:
+            # Generate response based on collected data
+            final_response = {
+                "type": "processed",
+                "data": search_result.get("collected_data", {}),
+                "summary": "데이터 처리 완료"
+            }
 
         return {
             "final_response": final_response,
-            "response_type": "processed"
+            "response_type": final_response["type"],
+            "response_metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "intent_type": state.get("intent_type"),
+                "agents_used": list(agent_results.keys()),
+                "keywords": state.get("collection_keywords", [])
+            },
+            "status": "completed",
+            "execution_step": "done"
         }
 
     async def process_query(
@@ -484,7 +565,7 @@ class RealEstateSupervisor:
         llm_context: LLMContext = None
     ) -> Dict[str, Any]:
         """
-        Process user query through the workflow
+        Process user query through the supervisor workflow
 
         Args:
             query: User query
@@ -492,55 +573,88 @@ class RealEstateSupervisor:
             llm_context: Optional LLM context override
 
         Returns:
-            Complete state with final response
+            Complete state with results
         """
-        logger.info(f"Processing query: {query}")
-
-        # Use override context if provided
+        # Update LLM context if provided
         if llm_context:
             self.llm_context = llm_context
             self.llm_manager = LLMManager(llm_context)
 
-        # Initialize state
+        # Prepare initial state
         initial_state = {
+            # Session identifiers
+            "chat_session_id": session_id or f"session_{datetime.now().timestamp()}",
+            "chat_thread_id": None,
+            "db_session_id": None,
+            "db_user_id": None,
+
+            # Query and intent
             "query": query,
-            "chat_session_id": session_id or "default_session",
+            "intent": None,
+            "intent_confidence": 0.0,
+            "intent_type": None,
+
+            # Planning
+            "execution_plan": None,
+            "collection_keywords": [],
+            "selected_agents": [],
+
+            # Results
+            "agent_results": {},
             "shared_context": {},
-            "messages": []
+
+            # Control
+            "current_agent": None,
+            "agent_sequence": None,
+            "status": "pending",
+            "execution_step": "starting",
+            "errors": [],
+
+            # Response
+            "final_response": None,
+            "response_type": None,
+            "response_metadata": None
         }
 
-        # Compile and run workflow
-        app = self.workflow.compile()
-        final_state = await app.ainvoke(initial_state)
+        try:
+            # Run the workflow
+            result = await self.app.ainvoke(initial_state)
+            return result  # Return complete state
 
-        logger.info("Query processing completed")
-        return final_state
-
-
-# For backwards compatibility
-def create_supervisor(llm_context: LLMContext = None) -> RealEstateSupervisor:
-    """
-    Factory function to create supervisor
-
-    Args:
-        llm_context: Optional LLM context
-
-    Returns:
-        Configured RealEstateSupervisor instance
-    """
-    return RealEstateSupervisor(llm_context=llm_context)
+        except Exception as e:
+            logger.error(f"Supervisor execution failed: {e}")
+            return {
+                **initial_state,
+                "status": "error",
+                "errors": [str(e)],
+                "final_response": {
+                    "type": "error",
+                    "message": "처리 중 오류가 발생했습니다.",
+                    "error": str(e)
+                }
+            }
 
 
+# Example usage
 if __name__ == "__main__":
     import asyncio
 
-    async def test_supervisor():
-        # Example usage
-        supervisor = RealEstateSupervisor()
-        result = await supervisor.process_query(
-            query="강남구 아파트 시세 알려줘",
-            session_id="test_session"
+    async def main():
+        # Create LLM context
+        llm_context = LLMContext(
+            provider="openai",  # or "mock" for testing
+            api_key=os.getenv("OPENAI_API_KEY"),
+            model_overrides={"intent": "gpt-4o-mini"},
+            temperature=0.3
         )
-        print(json.dumps(result, ensure_ascii=False, indent=2))
 
-    asyncio.run(test_supervisor())
+        # Create supervisor with context
+        supervisor = RealEstateSupervisor(llm_context)
+
+        # Test query
+        query = "강남구 아파트 매매 시세 알려줘"
+        result = await supervisor.process_query(query, "test_session")
+
+        print(f"Result: {json.dumps(result, ensure_ascii=False, indent=2)}")
+
+    asyncio.run(main())
