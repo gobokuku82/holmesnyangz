@@ -259,8 +259,10 @@ class SearchAgent:
         keywords = state["collection_keywords"]
 
         logger.info(f"Creating search plan for keywords: {keywords}")
+        logger.debug(f"[NODE] create_search_plan_node - Input keywords: {keywords}, query: {query[:50]}...")
 
         plan = await self.llm_client.create_search_plan(query, keywords)
+        logger.debug(f"[LLM] search plan created - selected_tools: {plan.get('selected_tools')}, strategy: {plan.get('search_strategy', 'N/A')[:100]}")
 
         return {
             "search_plan": plan,
@@ -284,6 +286,7 @@ class SearchAgent:
         tool_parameters = state.get("tool_parameters", {})
 
         logger.info(f"Executing tools: {selected_tools}")
+        logger.debug(f"[NODE] execute_tools_node - Starting {len(selected_tools)} tools")
 
         tool_results = {}
         successful_tools = []
@@ -304,6 +307,7 @@ class SearchAgent:
                     successful_tools.append(tool_name)
 
                     logger.info(f"Tool {tool_name} executed successfully")
+                    logger.debug(f"[TOOL] {tool_name} result - status: {result.get('status')}, data items: {len(result.get('data', []))}")
 
                 except Exception as e:
                     logger.error(f"Tool {tool_name} failed: {e}")
@@ -337,6 +341,7 @@ class SearchAgent:
         tool_results = state.get("tool_results", {})
 
         logger.info("Processing tool results")
+        logger.debug(f"[NODE] process_results_node - Processing {len(tool_results)} tool results")
 
         collected_data = {}
         total_count = 0
@@ -382,8 +387,10 @@ class SearchAgent:
         query = state["original_query"]
 
         logger.info("Deciding next action")
+        logger.debug(f"[NODE] decide_next_action_node - Collected data keys: {list(collected_data.keys())}")
 
         decision = await self.llm_client.decide_next_action(collected_data, query)
+        logger.debug(f"[LLM] next action decision - action: {decision.get('next_action')}, target: {decision.get('target_agent', 'N/A')}")
 
         # Prepare output based on decision
         if decision["next_action"] == "direct_output":
