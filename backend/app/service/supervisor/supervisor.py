@@ -20,6 +20,9 @@ backend_dir = app_dir.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+# Also add app.service to path for direct imports
+sys.path.insert(0, str(backend_dir / "app" / "service"))
+
 from core.states import RealEstateMainState
 from core.context import LLMContext, create_default_llm_context
 from core.config import Config

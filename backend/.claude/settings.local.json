@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python:*)",
       "WebSearch",
-      "Bash(del appserviceagentsanalysis_tools.py)"
+      "Bash(del appserviceagentsanalysis_tools.py)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
