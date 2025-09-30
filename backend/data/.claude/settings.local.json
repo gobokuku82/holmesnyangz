@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(xxd:*)",
+      "Bash(for dir in */)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

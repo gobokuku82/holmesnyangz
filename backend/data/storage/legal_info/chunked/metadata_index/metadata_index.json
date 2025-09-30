@@ -1,0 +1,873 @@
+{
+  "version": "1.0",
+  "created_date": "2025-09-30 20:03:07",
+  "total_documents": 28,
+  "total_chunks": 1700,
+  "categories": {
+    "1_공통 매매_임대차": {
+      "name": "공통 매매·임대차",
+      "description": "부동산 거래 및 중개에 관한 공통 법률",
+      "documents": 9,
+      "chunks": 621,
+      "avg_chunks_per_doc": 69.0
+    },
+    "2_임대차_전세_월세": {
+      "name": "임대차·전세·월세",
+      "description": "주택 임대차 보호 및 민간임대주택 관련 법률",
+      "documents": 5,
+      "chunks": 301,
+      "avg_chunks_per_doc": 60.2
+    },
+    "3_공급_및_관리_매매_분양": {
+      "name": "공급 및 관리·매매·분양",
+      "description": "주택 공급, 공동주택 관리 및 건축물 분양 관련 법률",
+      "documents": 8,
+      "chunks": 518,
+      "avg_chunks_per_doc": 64.8
+    },
+    "4_기타": {
+      "name": "기타",
+      "description": "부동산 가격공시, 분양가격 산정 및 용어 정의",
+      "documents": 6,
+      "chunks": 260,
+      "avg_chunks_per_doc": 43.3
+    }
+  },
+  "documents": [
+    {
+      "file_name": "공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1349",
+      "title": "공인중개사법 시행규칙",
+      "doc_number": "제1349호",
+      "chunks": 33,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2024. 7. 10.",
+      "hierarchy": {
+        "chapters": 7,
+        "sections": 0,
+        "articles": 33
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_references",
+        "deletion_date",
+        "enforcement_date",
+        "form_references",
+        "is_deleted",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "1_공통 매매_임대차\\공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked.json"
+    },
+    {
+      "file_name": "공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_34401",
+      "title": "공인중개사법 시행령",
+      "doc_number": "제34401호",
+      "chunks": 58,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2024. 7. 10.",
+      "hierarchy": {
+        "chapters": 8,
+        "sections": 0,
+        "articles": 56
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_number",
+        "decree_title",
+        "deletion_date",
+        "enforcement_date",
+        "has_ministry_rule_reference",
+        "is_deleted",
+        "law_references",
+        "table_references"
+      ],
+      "file_path": "1_공통 매매_임대차\\공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked.json"
+    },
+    {
+      "file_name": "공인중개사법(법률)(제19841호)(20241227)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_19841",
+      "title": "공인중개사법",
+      "doc_number": "제19841호",
+      "chunks": 73,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2024. 12. 27.",
+      "hierarchy": {
+        "chapters": 8,
+        "sections": 0,
+        "articles": 70
+      },
+      "metadata_fields": [
+        "amendment_count",
+        "article_number",
+        "article_title",
+        "chapter",
+        "deletion_date",
+        "enforcement_date",
+        "has_amendments",
+        "is_deleted",
+        "law_number",
+        "law_title",
+        "newly_established",
+        "special_enforcement_date"
+      ],
+      "file_path": "1_공통 매매_임대차\\공인중개사법(법률)(제19841호)(20241227)_chunked.json"
+    },
+    {
+      "file_name": "공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_3067",
+      "title": "공인중개사의 매수신청대리인 등록 등에 관한 규칙",
+      "doc_number": "제3067호",
+      "chunks": 27,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2023. 1. 1.",
+      "hierarchy": {
+        "chapters": 5,
+        "sections": 0,
+        "articles": 25
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "civil_execution_references",
+        "enforcement_date",
+        "is_court_rule",
+        "is_deleted",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "1_공통 매매_임대차\\공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked.json"
+    },
+    {
+      "file_name": "부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1294",
+      "title": "부동산 거래신고 등에 관한 법률 시행규칙 ( 약칭: 부동산거래신고법 시행규칙",
+      "doc_number": "제1294호",
+      "chunks": 33,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2024. 1. 1.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 30
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "deletion_date",
+        "enforcement_date",
+        "in_appendix",
+        "is_deleted",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "1_공통 매매_임대차\\부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked.json"
+    },
+    {
+      "file_name": "부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_35485",
+      "title": "부동산 거래신고 등에 관한 법률 시행령 ( 약칭: 부동산거래신고법 시행령",
+      "doc_number": "제35485호",
+      "chunks": 29,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2025. 4. 29.",
+      "hierarchy": {
+        "chapters": 7,
+        "sections": 0,
+        "articles": 26
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_number",
+        "decree_title",
+        "enforcement_date"
+      ],
+      "file_path": "1_공통 매매_임대차\\부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked.json"
+    },
+    {
+      "file_name": "부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_20194",
+      "title": "부동산 거래신고 등에 관한 법률",
+      "doc_number": "제20194호",
+      "chunks": 38,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2024. 5. 17.",
+      "hierarchy": {
+        "chapters": 9,
+        "sections": 0,
+        "articles": 36
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "chapter",
+        "enforcement_date",
+        "is_deleted",
+        "law_number",
+        "law_title"
+      ],
+      "file_path": "1_공통 매매_임대차\\부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked.json"
+    },
+    {
+      "file_name": "부동산등기규칙(대법원규칙)(제03169호)(20250801)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_3169",
+      "title": "부동산등기규칙",
+      "doc_number": "제3169호",
+      "chunks": 198,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2025. 8. 1.",
+      "hierarchy": {
+        "chapters": 8,
+        "sections": 13,
+        "articles": 189
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "chapter",
+        "enforcement_date",
+        "in_appendix",
+        "rule_number",
+        "rule_title",
+        "section"
+      ],
+      "file_path": "1_공통 매매_임대차\\부동산등기규칙(대법원규칙)(제03169호)(20250801)_chunked.json"
+    },
+    {
+      "file_name": "부동산등기법(법률)(제20435호)(20250131)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_20435",
+      "title": "부동산등기법",
+      "doc_number": "제20435호",
+      "chunks": 132,
+      "category": "1_공통 매매_임대차",
+      "category_id": "common_transaction",
+      "enforcement_date": "2025. 1. 31.",
+      "hierarchy": {
+        "chapters": 7,
+        "sections": 4,
+        "articles": 121
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "chapter",
+        "deletion_date",
+        "enforcement_date",
+        "in_appendix",
+        "is_deleted",
+        "is_pilot_program",
+        "law_number",
+        "law_title",
+        "section"
+      ],
+      "file_path": "1_공통 매매_임대차\\부동산등기법(법률)(제20435호)(20250131)_chunked.json"
+    },
+    {
+      "file_name": "민간임대주택에 관한 특별법 시행규칙(국토교통부령)(제01491호)(20250604)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1491",
+      "title": "민간임대주택에 관한 특별법 시행규칙 ( 약칭: 민간임대주택법 시행규칙",
+      "doc_number": "제1491호",
+      "chunks": 51,
+      "category": "2_임대차_전세_월세",
+      "category_id": "rental_lease",
+      "enforcement_date": "2025. 6. 4.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 51
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "enforcement_date",
+        "form_references",
+        "is_deleted",
+        "is_moved",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "2_임대차_전세_월세\\민간임대주택에 관한 특별법 시행규칙(국토교통부령)(제01491호)(20250604)_chunked.json"
+    },
+    {
+      "file_name": "민간임대주택에 관한 특별법 시행령(대통령령)(제35581호)(20250604)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_35581",
+      "title": "민간임대주택에 관한 특별법 시행령 ( 약칭: 민간임대주택법 시행령",
+      "doc_number": "제35581호",
+      "chunks": 80,
+      "category": "2_임대차_전세_월세",
+      "category_id": "rental_lease",
+      "enforcement_date": "2025. 6. 4.",
+      "hierarchy": {
+        "chapters": 7,
+        "sections": 0,
+        "articles": 79
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_number",
+        "decree_title",
+        "deletion_date",
+        "enforcement_date",
+        "is_deleted",
+        "table_references"
+      ],
+      "file_path": "2_임대차_전세_월세\\민간임대주택에 관한 특별법 시행령(대통령령)(제35581호)(20250604)_chunked.json"
+    },
+    {
+      "file_name": "민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_20661",
+      "title": "민간임대주택에 관한 특별법",
+      "doc_number": "제20661호",
+      "chunks": 91,
+      "category": "2_임대차_전세_월세",
+      "category_id": "rental_lease",
+      "enforcement_date": "2025. 6. 4.",
+      "hierarchy": {
+        "chapters": 8,
+        "sections": 0,
+        "articles": 89
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "chapter",
+        "enforcement_date",
+        "in_appendix",
+        "is_deleted",
+        "law_number",
+        "law_title"
+      ],
+      "file_path": "2_임대차_전세_월세\\민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked.json"
+    },
+    {
+      "file_name": "주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_35161",
+      "title": "주택임대차보호법 시행령",
+      "doc_number": "제35161호",
+      "chunks": 37,
+      "category": "2_임대차_전세_월세",
+      "category_id": "rental_lease",
+      "enforcement_date": "2025. 3. 1.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 35
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "decree_number",
+        "decree_title",
+        "enforcement_date",
+        "in_appendix",
+        "is_deleted",
+        "is_mediation_related",
+        "table_references"
+      ],
+      "file_path": "2_임대차_전세_월세\\주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked.json"
+    },
+    {
+      "file_name": "주택임대차보호법(법률)(제19356호)(20230719)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_19356",
+      "title": "주택임대차보호법",
+      "doc_number": "제19356호",
+      "chunks": 42,
+      "category": "2_임대차_전세_월세",
+      "category_id": "rental_lease",
+      "enforcement_date": "2023. 7. 19.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 42
+      },
+      "metadata_fields": [
+        "abbreviation",
+        "article_number",
+        "article_title",
+        "deletion_date",
+        "enforcement_date",
+        "is_deleted",
+        "is_penalty_related",
+        "is_series_article",
+        "is_tenant_protection",
+        "law_number",
+        "law_title",
+        "series_group"
+      ],
+      "file_path": "2_임대차_전세_월세\\주택임대차보호법(법률)(제19356호)(20230719)_chunked.json"
+    },
+    {
+      "file_name": "건축물의 분양에 관한 법률 시행규칙(국토교통부령)(제00909호)(20211102)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_909",
+      "title": "건축물의 분양에 관한 법률 시행규칙 ( 약칭: 건축물분양법 시행규칙",
+      "doc_number": "제909호",
+      "chunks": 10,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2021. 11. 2.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 10
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "decree_references",
+        "enforcement_date",
+        "form_references",
+        "is_regulatory_review",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\건축물의 분양에 관한 법률 시행규칙(국토교통부령)(제00909호)(20211102)_chunked.json"
+    },
+    {
+      "file_name": "건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_34007",
+      "title": "건축물의 분양에 관한 법률 시행령 ( 약칭: 건축물분양법 시행령",
+      "doc_number": "제34007호",
+      "chunks": 19,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2023. 12. 19.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 17
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "decree_number",
+        "decree_title",
+        "enforcement_date",
+        "in_appendix",
+        "law_references"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked.json"
+    },
+    {
+      "file_name": "건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_17007",
+      "title": "건축물의 분양에 관한 법률",
+      "doc_number": "제17007호",
+      "chunks": 20,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2021. 1. 1.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 17
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "enforcement_date",
+        "has_penalty",
+        "in_appendix",
+        "is_delegation",
+        "law_number",
+        "law_title",
+        "other_law_references"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked.json"
+    },
+    {
+      "file_name": "공동주택관리법 시행규칙(국토교통부령)(제01482호)(20250415)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1482",
+      "title": "공동주택관리법 시행규칙",
+      "doc_number": "제1482호",
+      "chunks": 48,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2025. 4. 15.",
+      "hierarchy": {
+        "chapters": 8,
+        "sections": 2,
+        "articles": 48
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "chapter_title",
+        "decree_references",
+        "enforcement_date",
+        "form_references",
+        "is_regulatory_review",
+        "law_references",
+        "rule_number",
+        "rule_title",
+        "section",
+        "section_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\공동주택관리법 시행규칙(국토교통부령)(제01482호)(20250415)_chunked.json"
+    },
+    {
+      "file_name": "공동주택관리법 시행령(대통령령)(제35451호)(20250415)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_35451",
+      "title": "공동주택관리법 시행령",
+      "doc_number": "제35451호",
+      "chunks": 124,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2025. 4. 15.",
+      "hierarchy": {
+        "chapters": 11,
+        "sections": 2,
+        "articles": 124
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "chapter_title",
+        "decree_number",
+        "decree_title",
+        "enforcement_date",
+        "is_delegation",
+        "law_references",
+        "section",
+        "section_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\공동주택관리법 시행령(대통령령)(제35451호)(20250415)_chunked.json"
+    },
+    {
+      "file_name": "공동주택관리법(법률)(제20385호)(20250101)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_20385",
+      "title": "공동주택관리법",
+      "doc_number": "제20385호",
+      "chunks": 106,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2025. 1. 1.",
+      "hierarchy": {
+        "chapters": 11,
+        "sections": 3,
+        "articles": 104
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "chapter",
+        "chapter_title",
+        "enforcement_date",
+        "has_penalty",
+        "in_appendix",
+        "is_delegation",
+        "law_number",
+        "law_title",
+        "other_law_references",
+        "section",
+        "section_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\공동주택관리법(법률)(제20385호)(20250101)_chunked.json"
+    },
+    {
+      "file_name": "주택법 시행규칙(국토교통부령)(제01373호)(20250203)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1373",
+      "title": "주택법 시행규칙",
+      "doc_number": "제1373호",
+      "chunks": 61,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2025. 2. 3.",
+      "hierarchy": {
+        "chapters": 5,
+        "sections": 5,
+        "articles": 61
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "chapter_title",
+        "decree_references",
+        "enforcement_date",
+        "form_references",
+        "is_regulatory_review",
+        "law_references",
+        "rule_number",
+        "rule_title",
+        "section",
+        "section_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\주택법 시행규칙(국토교통부령)(제01373호)(20250203)_chunked.json"
+    },
+    {
+      "file_name": "주택법(법률)(제20048호)(20240717)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_20048",
+      "title": "주택법",
+      "doc_number": "제20048호",
+      "chunks": 130,
+      "category": "3_공급_및_관리_매매_분양",
+      "category_id": "supply_management",
+      "enforcement_date": "2024. 7. 17.",
+      "hierarchy": {
+        "chapters": 6,
+        "sections": 6,
+        "articles": 125
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "chapter",
+        "chapter_title",
+        "enforcement_date",
+        "has_penalty",
+        "in_appendix",
+        "is_delegation",
+        "law_number",
+        "law_title",
+        "other_law_references",
+        "section",
+        "section_title"
+      ],
+      "file_path": "3_공급_및_관리_매매_분양\\주택법(법률)(제20048호)(20240717)_chunked.json"
+    },
+    {
+      "file_name": "공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1135",
+      "title": "공동주택 분양가격의 산정 등에 관한 규칙 ( 약칭: 공동주택분양가규칙",
+      "doc_number": "제1135호",
+      "chunks": 20,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "2022. 7. 15.",
+      "hierarchy": {
+        "chapters": 4,
+        "sections": 0,
+        "articles": 17
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "appendix_references",
+        "article_number",
+        "article_title",
+        "chapter",
+        "enforcement_date",
+        "has_formula",
+        "in_appendix",
+        "is_pricing_related",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "4_기타\\공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked.json"
+    },
+    {
+      "file_name": "공동주택 층간소음의 범위와 기준에 관한 규칙(국토교통부령)(제01185호)(20230102)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1185",
+      "title": "공동주택 층간소음의 범위와 기준에 관한 규칙 ( 약칭: 공동주택층간소음규칙",
+      "doc_number": "제1185호",
+      "chunks": 3,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "2023. 1. 2.",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 0,
+        "articles": 3
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "enforcement_date",
+        "env_rule_number",
+        "has_appendix_reference",
+        "is_noise_related",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "4_기타\\공동주택 층간소음의 범위와 기준에 관한 규칙(국토교통부령)(제01185호)(20230102)_chunked.json"
+    },
+    {
+      "file_name": "부동산 가격공시에 관한 법률 시행규칙(국토교통부령)(제01118호)(20220330)_chunked.json",
+      "doc_type": "시행규칙",
+      "doc_id": "시행규칙_1118",
+      "title": "부동산 가격공시에 관한 법률 시행규칙 ( 약칭: 부동산공시법 시행규칙",
+      "doc_number": "제1118호",
+      "chunks": 32,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "2022. 3. 30.",
+      "hierarchy": {
+        "chapters": 4,
+        "sections": 0,
+        "articles": 32
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_references",
+        "enforcement_date",
+        "form_references",
+        "is_form_related",
+        "is_price_disclosure_related",
+        "law_article_references",
+        "law_references",
+        "rule_number",
+        "rule_title"
+      ],
+      "file_path": "4_기타\\부동산 가격공시에 관한 법률 시행규칙(국토교통부령)(제01118호)(20220330)_chunked.json"
+    },
+    {
+      "file_name": "부동산 가격공시에 관한 법률 시행령(대통령령)(제35058호)(20241210)_chunked.json",
+      "doc_type": "시행령",
+      "doc_id": "시행령_35058",
+      "title": "부동산 가격공시에 관한 법률 시행령 ( 약칭: 부동산공시법 시행령",
+      "doc_number": "제35058호",
+      "chunks": 79,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "2024. 12. 10.",
+      "hierarchy": {
+        "chapters": 6,
+        "sections": 0,
+        "articles": 79
+      },
+      "metadata_fields": [
+        "article_number",
+        "article_title",
+        "chapter",
+        "decree_number",
+        "decree_title",
+        "enforcement_date",
+        "has_rule_reference",
+        "is_appraisal_related",
+        "is_committee_related",
+        "is_price_disclosure_related",
+        "law_article_references",
+        "law_references"
+      ],
+      "file_path": "4_기타\\부동산 가격공시에 관한 법률 시행령(대통령령)(제35058호)(20241210)_chunked.json"
+    },
+    {
+      "file_name": "부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked.json",
+      "doc_type": "법률",
+      "doc_id": "법률_17459",
+      "title": "부동산 가격공시에 관한 법률",
+      "doc_number": "제17459호",
+      "chunks": 34,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "2020. 12. 10.",
+      "hierarchy": {
+        "chapters": 6,
+        "sections": 0,
+        "articles": 32
+      },
+      "metadata_fields": [
+        "appendix_info",
+        "article_number",
+        "article_title",
+        "article_type",
+        "chapter",
+        "enforcement_date",
+        "has_decree_reference",
+        "has_key_terms",
+        "has_rule_reference",
+        "in_appendix",
+        "item_count",
+        "law_number",
+        "law_references",
+        "law_title",
+        "price_disclosure_target"
+      ],
+      "file_path": "4_기타\\부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked.json"
+    },
+    {
+      "file_name": "부동산_용어_95가지_chunked.json",
+      "doc_type": "용어집",
+      "doc_id": "용어집_N/A",
+      "title": "부동산 용어 95가지",
+      "doc_number": "N/A",
+      "chunks": 92,
+      "category": "4_기타",
+      "category_id": "others",
+      "enforcement_date": "",
+      "hierarchy": {
+        "chapters": 0,
+        "sections": 8,
+        "articles": 0
+      },
+      "metadata_fields": [
+        "definition_length",
+        "document_type",
+        "glossary_title",
+        "is_abbreviation",
+        "is_financial",
+        "is_legal_term",
+        "is_tax_related",
+        "section",
+        "term_category",
+        "term_name",
+        "term_number"
+      ],
+      "file_path": "4_기타\\부동산_용어_95가지_chunked.json"
+    }
+  ]
+}
