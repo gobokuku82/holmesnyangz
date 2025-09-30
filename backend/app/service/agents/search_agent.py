@@ -34,6 +34,9 @@ sys.path.insert(0, str(backend_dir / "app" / "service"))
 from core.states import SearchAgentState
 from core.context import LLMContext, create_default_llm_context
 from core.config import Config
+from core.todo_types import (
+    create_todo_dict, update_todo_status, find_todo, get_todo_summary
+)
 from tools import tool_registry
 
 logger = logging.getLogger(__name__)
@@ -257,9 +260,47 @@ class SearchAgent:
         """
         query = state["original_query"]
         keywords = state["collection_keywords"]
+        todos = state.get("todos", [])
+        todo_counter = state.get("todo_counter", 0)
+        parent_todo_id = state.get("parent_todo_id")
 
         logger.info(f"Creating search plan for keywords: {keywords}")
         logger.debug(f"[NODE] create_search_plan_node - Input keywords: {keywords}, query: {query[:50]}...")
+
+        # Find parent TODO and add subtodos
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo:
+                # Create subtodos for this agent's workflow
+                subtodos = [
+                    create_todo_dict(
+                        f"sub_{todo_counter}",
+                        "agent",
+                        "Create search plan",
+                        "completed"  # This step is done
+                    ),
+                    create_todo_dict(
+                        f"sub_{todo_counter + 1}",
+                        "agent",
+                        "Execute tools",
+                        "pending"
+                    ),
+                    create_todo_dict(
+                        f"sub_{todo_counter + 2}",
+                        "agent",
+                        "Process results",
+                        "pending"
+                    ),
+                    create_todo_dict(
+                        f"sub_{todo_counter + 3}",
+                        "agent",
+                        "Decide next action",
+                        "pending"
+                    )
+                ]
+                parent_todo["subtodos"] = subtodos
+                todo_counter += 4
+                logger.debug(f"[TODO] Added {len(subtodos)} subtodos to {parent_todo_id}")
 
         plan = await self.llm_client.create_search_plan(query, keywords)
         logger.debug(f"[LLM] search plan created - selected_tools: {plan.get('selected_tools')}, strategy: {plan.get('search_strategy', 'N/A')[:100]}")
@@ -269,7 +310,9 @@ class SearchAgent:
             "selected_tools": plan.get("selected_tools", []),
             "tool_parameters": plan.get("tool_parameters", {}),
             "status": "searching",
-            "execution_step": "executing_tools"
+            "execution_step": "executing_tools",
+            "todos": todos,
+            "todo_counter": todo_counter
         }
 
     async def execute_tools_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -284,9 +327,38 @@ class SearchAgent:
         """
         selected_tools = state.get("selected_tools", [])
         tool_parameters = state.get("tool_parameters", {})
+        todos = state.get("todos", [])
+        todo_counter = state.get("todo_counter", 0)
+        parent_todo_id = state.get("parent_todo_id")
 
         logger.info(f"Executing tools: {selected_tools}")
         logger.debug(f"[NODE] execute_tools_node - Starting {len(selected_tools)} tools")
+
+        # Update subtodo status
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                # Find "Execute tools" subtodo and update
+                for subtodo in parent_todo["subtodos"]:
+                    if "Execute tools" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "in_progress")
+
+                        # Add tool_todos for each tool
+                        tool_todos = []
+                        for tool_name in selected_tools:
+                            tool_todo = create_todo_dict(
+                                f"tool_{todo_counter}",
+                                "tool",
+                                f"Execute {tool_name}",
+                                "pending",
+                                tool=tool_name
+                            )
+                            tool_todos.append(tool_todo)
+                            todo_counter += 1
+
+                        subtodo["tool_todos"] = tool_todos
+                        logger.debug(f"[TODO] Added {len(tool_todos)} tool TODOs")
+                        break
 
         tool_results = {}
         successful_tools = []
@@ -294,6 +366,17 @@ class SearchAgent:
 
         for tool_name in selected_tools:
             tool = tool_registry.get(tool_name)
+
+            # Update tool TODO status if exists
+            if parent_todo_id:
+                parent_todo = find_todo(todos, todo_id=parent_todo_id)
+                if parent_todo and "subtodos" in parent_todo:
+                    for subtodo in parent_todo["subtodos"]:
+                        if "tool_todos" in subtodo:
+                            for tool_todo in subtodo["tool_todos"]:
+                                if tool_todo.get("tool") == tool_name:
+                                    todos = update_todo_status(todos, tool_todo["id"], "in_progress")
+                                    break
 
             if tool:
                 try:
@@ -305,6 +388,17 @@ class SearchAgent:
 
                     tool_results[tool_name] = result
                     successful_tools.append(tool_name)
+
+                    # Update tool TODO as completed
+                    if parent_todo_id:
+                        parent_todo = find_todo(todos, todo_id=parent_todo_id)
+                        if parent_todo and "subtodos" in parent_todo:
+                            for subtodo in parent_todo["subtodos"]:
+                                if "tool_todos" in subtodo:
+                                    for tool_todo in subtodo["tool_todos"]:
+                                        if tool_todo.get("tool") == tool_name:
+                                            todos = update_todo_status(todos, tool_todo["id"], "completed")
+                                            break
 
                     logger.info(f"Tool {tool_name} executed successfully")
                     logger.debug(f"[TOOL] {tool_name} result - status: {result.get('status')}, data items: {len(result.get('data', []))}")
@@ -320,12 +414,23 @@ class SearchAgent:
                 logger.warning(f"Tool {tool_name} not found")
                 failed_tools.append(tool_name)
 
+        # Update subtodo as completed
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                for subtodo in parent_todo["subtodos"]:
+                    if "Execute tools" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "completed")
+                        break
+
         return {
             "tool_results": tool_results,
             "successful_tools": successful_tools,
             "failed_tools": failed_tools,
             "status": "processing",
-            "execution_step": "processing_results"
+            "execution_step": "processing_results",
+            "todos": todos,
+            "todo_counter": todo_counter
         }
 
     async def process_results_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -339,9 +444,20 @@ class SearchAgent:
             Updated state with processed results
         """
         tool_results = state.get("tool_results", {})
+        todos = state.get("todos", [])
+        parent_todo_id = state.get("parent_todo_id")
 
         logger.info("Processing tool results")
         logger.debug(f"[NODE] process_results_node - Processing {len(tool_results)} tool results")
+
+        # Update subtodo status
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                for subtodo in parent_todo["subtodos"]:
+                    if "Process results" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "in_progress")
+                        break
 
         collected_data = {}
         total_count = 0
@@ -365,12 +481,22 @@ class SearchAgent:
         # Calculate quality score
         quality_score = len(collected_data) / len(tool_results) if tool_results else 0.0
 
+        # Update subtodo as completed
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                for subtodo in parent_todo["subtodos"]:
+                    if "Process results" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "completed")
+                        break
+
         return {
             "collected_data": collected_data,
             "data_summary": data_summary,
             "data_quality_score": quality_score,
             "status": "processed",
-            "execution_step": "deciding_next_action"
+            "execution_step": "deciding_next_action",
+            "todos": todos
         }
 
     async def decide_next_action_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -385,9 +511,20 @@ class SearchAgent:
         """
         collected_data = state.get("collected_data", {})
         query = state["original_query"]
+        todos = state.get("todos", [])
+        parent_todo_id = state.get("parent_todo_id")
 
         logger.info("Deciding next action")
         logger.debug(f"[NODE] decide_next_action_node - Collected data keys: {list(collected_data.keys())}")
+
+        # Update subtodo status
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                for subtodo in parent_todo["subtodos"]:
+                    if "Decide next action" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "in_progress")
+                        break
 
         decision = await self.llm_client.decide_next_action(collected_data, query)
         logger.debug(f"[LLM] next action decision - action: {decision.get('next_action')}, target: {decision.get('target_agent', 'N/A')}")
@@ -410,6 +547,15 @@ class SearchAgent:
         shared_context = state.get("shared_context", {})
         shared_context.update(collected_data)
 
+        # Update subtodo as completed
+        if parent_todo_id:
+            parent_todo = find_todo(todos, todo_id=parent_todo_id)
+            if parent_todo and "subtodos" in parent_todo:
+                for subtodo in parent_todo["subtodos"]:
+                    if "Decide next action" in subtodo.get("task", ""):
+                        todos = update_todo_status(todos, subtodo["id"], "completed")
+                        break
+
         return {
             "next_action": decision.get("next_action", "return_to_supervisor"),
             "target_agent": decision.get("target_agent"),
@@ -418,7 +564,8 @@ class SearchAgent:
             "output_data": output_data,
             "shared_context": shared_context,
             "status": "completed",
-            "execution_step": "done"
+            "execution_step": "done",
+            "todos": todos
         }
 
     async def execute(self, input_data: Dict[str, Any]) -> Dict[str, Any]:

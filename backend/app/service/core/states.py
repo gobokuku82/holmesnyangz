@@ -11,6 +11,14 @@ from datetime import datetime
 
 # ============ Custom Reducer Functions (Used Only) ============
 
+# Import TODO merger from todo_types
+try:
+    from .todo_types import merge_todos
+except ImportError:
+    # Fallback if todo_types not available
+    def merge_todos(existing, new):
+        return new if new else existing
+
 def merge_dicts(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
     """Merge dictionaries, b overwrites a"""
     if not a:
@@ -267,6 +275,7 @@ class RealEstateMainState(TypedDict):
     """
     Main State for Real Estate Chatbot Supervisor
     Manages the overall workflow and agent communication
+    Enhanced with hierarchical TODO management
     """
 
     # === Session Identifiers ===
@@ -277,6 +286,11 @@ class RealEstateMainState(TypedDict):
 
     # === Input ===
     query: str  # User query
+
+    # === Unified TODO Management ===
+    todos: Annotated[List[Dict[str, Any]], merge_todos]  # 계층적 TODO 리스트 (전체)
+    todo_counter: int  # TODO ID 생성용 카운터
+    current_phase: Optional[str]  # 현재 단계 (planning, executing, evaluating)
     chat_context: Optional[Dict[str, Any]]  # Previous conversation context
 
     # === Intent Analysis ===
@@ -310,6 +324,7 @@ class SearchAgentState(TypedDict):
     """
     State for Search Agent Subgraph
     Manages data collection and routing decisions
+    Enhanced with Agent-level TODO management
     """
 
     # === Input from Supervisor ===
@@ -317,6 +332,11 @@ class SearchAgentState(TypedDict):
     collection_keywords: List[str]  # Keywords to search for
     shared_context: Dict[str, Any]  # Shared context from supervisor
     chat_session_id: str  # Session identifier
+
+    # === TODO Reference (Agent accesses parent todos) ===
+    # Agent는 parent state의 todos를 참조하고 업데이트함
+    parent_todo_id: Optional[str]  # 부모 TODO ID (supervisor에서 할당)
+    current_task: Optional[str]  # 현재 작업 중인 노드/도구
 
     # === Search Planning ===
     search_plan: Optional[Dict[str, Any]]  # LLM-generated search plan

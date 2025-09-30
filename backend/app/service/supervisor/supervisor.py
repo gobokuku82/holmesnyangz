@@ -1,13 +1,12 @@
 """
-Real Estate Supervisor - Production Version
-실제 LLM (OpenAI)만 사용하는 프로덕션 버전
-Mock 로직은 supervisor_mock.py에 분리됨
+Real Estate Supervisor - OpenAI Version
+LLM = OpenAI
 """
 
 import json
 import logging
 from typing import Dict, Any, Optional, List
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, START, END
 import sys
 from pathlib import Path
 
@@ -24,6 +23,9 @@ if str(backend_dir) not in sys.path:
 from core.states import RealEstateMainState
 from core.context import LLMContext, create_default_llm_context
 from core.config import Config
+from core.todo_types import (
+    create_todo_dict, update_todo_status, find_todo, get_todo_summary
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class LLMManager:
     """
     Centralized LLM Manager for all LLM operations
     Uses LLMContext for configuration (LangGraph 0.6+)
-    Production version - OpenAI only
+    OpenAI version
     """
 
     def __init__(self, context: LLMContext = None):
@@ -97,9 +99,124 @@ class LLMManager:
 
         return params
 
+    async def classify_service_relevance(self, query: str) -> Dict[str, Any]:
+        """
+        Stage 1: Classify if query is relevant to our service
+        Uses description-based classification
+
+        Args:
+            query: User query
+
+        Returns:
+            Classification result with reasoning
+        """
+        if not self.client:
+            return {"is_relevant": False, "reasoning": "시스템 오류"}
+
+        try:
+            system_prompt = """당신은 부동산 전문 챗봇 서비스의 관련성 분류기입니다.
+
+이 챗봇의 서비스 범위:
+1. 부동산 매매/전세/월세 정보 제공
+2. 부동산 시세 및 시장 분석
+3. 부동산 관련 법률 및 계약 안내
+4. 부동산 대출 및 금융 정보
+5. 부동산 투자 및 개발 정보
+6. 건축 규제 및 인허가 정보
+7. 부동산 세금 및 공과금 안내
+
+서비스 범위에 포함되지 않는 것:
+- 일반적인 인사, 감정 표현, 욕설
+- 부동산과 무관한 일반 지식 질문
+- 다른 산업이나 주제에 대한 질의
+- 의미없는 텍스트나 무작위 단어
+
+질의가 부동산 서비스와 관련이 있는지 판단하세요.
+경계선에 있는 경우(예: 일반 금융이지만 부동산 대출일 수도 있는 경우) true로 분류하세요.
+
+JSON 형식으로 응답:
+{
+    "is_relevant": true/false,
+    "confidence": 0.0-1.0,
+    "reasoning": "판단 근거"
+}"""
+
+            user_prompt = f"사용자 질의: {query}"
+
+            model = self.get_model("intent")
+            params = self.get_params()
+            params["temperature"] = 0.1  # Lower temperature for consistent classification
+
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                **params
+            )
+
+            return json.loads(response.choices[0].message.content)
+
+        except Exception as e:
+            logger.error(f"Service relevance classification failed: {e}")
+            return {"is_relevant": True, "reasoning": "분류 실패, 기본 처리"}  # Default to true on error
+
+    async def extract_keywords_for_validation(self, query: str) -> Dict[str, Any]:
+        """
+        Stage 2: Extract and score keywords for validation
+
+        Args:
+            query: User query
+
+        Returns:
+            Keywords and relevance score
+        """
+        if not self.client:
+            return {"keywords": [], "score": 0.5}
+
+        try:
+            system_prompt = """부동산 관련 키워드를 추출하고 점수를 매기세요.
+
+부동산 관련 키워드 예시:
+- 거래: 매매, 전세, 월세, 임대, 분양
+- 부동산 유형: 아파트, 빌라, 오피스텔, 주택, 상가, 토지
+- 지역: 강남구, 서초구 등 구체적 지역명
+- 금융: 대출, 담보, 금리, LTV, DTI
+- 법률: 계약, 등기, 세금, 양도세, 취득세
+- 시장: 시세, 가격, 평형, 평수, 매물
+
+JSON 형식으로 응답:
+{
+    "keywords": ["추출된 키워드"],
+    "real_estate_keywords": ["부동산 관련 키워드만"],
+    "score": 0.0-1.0 (부동산 관련도 점수)
+}"""
+
+            user_prompt = f"질의: {query}"
+
+            model = self.get_model("intent")
+            params = self.get_params()
+            params["temperature"] = 0.1
+
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                **params
+            )
+
+            return json.loads(response.choices[0].message.content)
+
+        except Exception as e:
+            logger.error(f"Keyword extraction failed: {e}")
+            return {"keywords": [], "score": 0.5}
+
     async def analyze_intent(self, query: str) -> Dict[str, Any]:
         """
-        Analyze user intent from query
+        Analyze user intent from query with two-stage validation
 
         Args:
             query: User query string
@@ -127,8 +244,47 @@ class LLMManager:
             }
 
         try:
+            # Stage 1: Service relevance classification
+            logger.debug(f"Stage 1: Classifying service relevance for: {query}")
+            relevance = await self.classify_service_relevance(query)
+
+            # Stage 2: Keyword validation (if needed)
+            if relevance.get("confidence", 0) < 0.8:  # Need additional validation
+                logger.debug(f"Stage 2: Low confidence ({relevance.get('confidence')}), extracting keywords")
+                keywords = await self.extract_keywords_for_validation(query)
+
+                # Combine both stages for final decision
+                if not relevance.get("is_relevant") and keywords.get("score", 0) < 0.3:
+                    # Both indicate irrelevant
+                    logger.info(f"Query classified as irrelevant (Stage1: {relevance.get('is_relevant')}, Stage2 score: {keywords.get('score')})")
+                    return {
+                        "intent_type": "irrelevant",
+                        "is_real_estate_related": False,
+                        "confidence": min(relevance.get("confidence", 0), 1 - keywords.get("score", 0.5)),
+                        "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
+                        "reasoning": f"서비스 관련성: {relevance.get('reasoning', 'N/A')}, 키워드 점수: {keywords.get('score', 0):.2f}"
+                    }
+                elif relevance.get("is_relevant") and keywords.get("score", 0) > 0.5:
+                    # Both indicate relevant - continue to detailed analysis
+                    pass
+                else:
+                    # Mixed signals - be conservative and continue
+                    logger.debug(f"Mixed signals - Stage1: {relevance.get('is_relevant')}, Stage2: {keywords.get('score')}")
+            else:
+                # High confidence from Stage 1
+                if not relevance.get("is_relevant"):
+                    logger.info(f"Query classified as irrelevant with high confidence: {relevance.get('confidence')}")
+                    return {
+                        "intent_type": "irrelevant",
+                        "is_real_estate_related": False,
+                        "confidence": relevance.get("confidence", 0.9),
+                        "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
+                        "reasoning": relevance.get("reasoning", "서비스 범위 외")
+                    }
+
+            # Stage 3: Detailed intent analysis (for relevant queries)
             system_prompt = """당신은 부동산 전문 챗봇의 의도 분석기입니다.
-사용자 질의를 분석하여 의도와 핵심 정보를 추출하세요.
+사용자 질의를 분석하여 구체적인 의도와 핵심 정보를 추출하세요.
 
 의도 타입:
 - search: 매물/시세 검색
@@ -137,6 +293,7 @@ class LLMManager:
 - legal: 법률/규정 관련
 - loan: 대출 관련
 - general: 일반 문의
+- unclear: 의도가 불명확
 
 JSON 형식으로 응답하세요:
 {
@@ -164,13 +321,17 @@ JSON 형식으로 응답하세요:
                 **params
             )
 
-            return json.loads(response.choices[0].message.content)
+            result = json.loads(response.choices[0].message.content)
+            result["is_real_estate_related"] = True  # Already validated in stages 1-2
+
+            return result
 
         except Exception as e:
             logger.error(f"LLM intent analysis failed: {e}")
             # Return unclear intent instead of error
             return {
-                "intent": "unclear",
+                "intent_type": "unclear",
+                "is_real_estate_related": True,  # Give benefit of doubt on error
                 "message": "질문을 이해하지 못했습니다. 다음과 같은 형식으로 질문해주세요:",
                 "examples": [
                     "강남구 아파트 시세 알려줘",
@@ -215,19 +376,101 @@ JSON 형식으로 응답하세요:
 
         try:
             system_prompt = """당신은 부동산 챗봇의 실행 계획 수립 전문가입니다.
-사용자 의도에 따라 필요한 에이전트와 수집할 데이터를 결정하세요.
+사용자 의도에 따라 가장 적합한 에이전트를 선택하고 실행 계획을 수립하세요.
 
-사용 가능한 에이전트:
-- search_agent: 데이터 검색 및 수집 (법률, 규정, 대출, 부동산 정보)
-- analysis_agent: 데이터 분석 및 인사이트 도출
-- recommendation_agent: 맞춤 추천 제공
+## 에이전트 상세 명세
+
+### 1. search_agent (검색 에이전트) - [구현 완료]
+- **목적**: 부동산 관련 데이터를 검색하고 수집하는 전문 Agent
+- **기능(Capabilities)**:
+  • 부동산 매물 정보 검색
+  • 시세 정보 조회
+  • 법률 및 규정 검색
+  • 대출 상품 정보 수집
+  • 여러 데이터 소스 병렬 검색
+  • 검색 결과 구조화 및 요약
+- **한계(Limitations)**:
+  • 데이터 분석이나 인사이트 도출 불가
+  • 추천 로직 수행 불가
+  • 복잡한 계산이나 예측 불가
+- **사용 가능한 도구**:
+  • legal_search: 부동산 법률 정보 검색
+  • regulation_search: 부동산 규정 및 정책 검색
+  • loan_search: 부동산 대출 상품 검색
+  • real_estate_search: 부동산 매물 및 시세 검색
+- **적합한 사용 케이스**:
+  • 부동산 매물 정보가 필요한 경우
+  • 시세 조회가 필요한 경우
+  • 법률/규정 정보 검색이 필요한 경우
+  • 대출 정보 수집이 필요한 경우
+  • 여러 종류의 정보를 동시에 수집해야 하는 경우
+- **부적합한 케이스**:
+  • 복잡한 데이터 분석이 필요한 경우
+  • 투자 추천이 필요한 경우
+  • 미래 가격 예측이 필요한 경우
+
+### 2. analysis_agent (분석 에이전트) - [개발 예정]
+- **목적**: 수집된 부동산 데이터를 분석하여 인사이트를 도출하는 전문 Agent
+- **기능(Capabilities)**:
+  • 시장 트렌드 분석
+  • 가격 동향 파악
+  • 지역별 비교 분석
+  • 투자 가치 평가
+  • 데이터 시각화
+- **한계(Limitations)**:
+  • 직접적인 데이터 수집 불가 (search_agent 필요)
+  • 법적 조언 제공 불가
+  • 개인 맞춤 추천 불가
+- **적합한 사용 케이스**:
+  • 시장 분석이 필요한 경우
+  • 지역 비교가 필요한 경우
+  • 투자 가치 평가가 필요한 경우
+- **부적합한 케이스**:
+  • 단순 정보 검색만 필요한 경우
+  • 법률 자문이 필요한 경우
+
+### 3. recommendation_agent (추천 에이전트) - [개발 예정]
+- **목적**: 사용자 요구사항에 맞는 부동산 추천을 제공하는 전문 Agent
+- **기능(Capabilities)**:
+  • 사용자 선호도 분석
+  • 맞춤형 매물 추천
+  • 투자 포트폴리오 제안
+  • 대안 제시
+- **한계(Limitations)**:
+  • 직접적인 데이터 수집 불가
+  • 법적 구속력 있는 조언 불가
+- **적합한 사용 케이스**:
+  • 맞춤 매물 추천이 필요한 경우
+  • 투자 조언이 필요한 경우
+- **부적합한 케이스**:
+  • 단순 정보 조회만 필요한 경우
+
+## 에이전트 선택 기준
+
+1. **검색/수집이 필요한 경우** → search_agent 선택
+   - 키워드: 검색, 조회, 찾기, 알려줘, 정보, 시세, 매물, 법률, 대출
+
+2. **분석이 필요한 경우** → analysis_agent 선택 (미구현 시 search_agent 사용)
+   - 키워드: 분석, 비교, 평가, 트렌드, 동향, 전망
+
+3. **추천이 필요한 경우** → recommendation_agent 선택 (미구현 시 search_agent 사용)
+   - 키워드: 추천, 제안, 어떤게 좋을까, 적합한, 맞춤
+
+## 실행 계획 수립 지침
+
+1. 사용자 의도를 정확히 파악
+2. 필요한 작업을 단계별로 분해
+3. 각 단계에 적합한 에이전트 선택
+4. 에이전트 간 데이터 흐름 고려
+5. 현재 구현된 에이전트만 선택 (search_agent만 사용 가능)
 
 JSON 형식으로 응답하세요:
 {
     "agents": ["선택된 에이전트 목록"],
     "collection_keywords": ["수집할 키워드"],
     "execution_order": "sequential 또는 parallel",
-    "reasoning": "계획 수립 근거"
+    "reasoning": "계획 수립 근거",
+    "agent_capabilities_used": ["사용할 에이전트 기능 목록"]
 }"""
 
             user_prompt = f"""사용자 질의: {query}
@@ -261,7 +504,7 @@ JSON 형식으로 응답하세요:
 class RealEstateSupervisor:
     """
     Main Supervisor for Real Estate Chatbot
-    Production version - OpenAI only
+    OpenAI version
     """
 
     def __init__(self, llm_context: LLMContext = None):
@@ -281,7 +524,7 @@ class RealEstateSupervisor:
         self.workflow.add_node("generate_response", self.generate_response_node)
 
         # Add edges
-        self.workflow.set_entry_point("analyze_intent")
+        self.workflow.add_edge(START,"analyze_intent")
         self.workflow.add_edge("analyze_intent", "create_plan")
         self.workflow.add_edge("create_plan", "execute_agents")
         self.workflow.add_edge("execute_agents", "generate_response")
@@ -304,6 +547,38 @@ class RealEstateSupervisor:
 
         intent = await self.llm_manager.analyze_intent(query)
         logger.debug(f"[LLM] analyze_intent result: intent_type={intent.get('intent_type')}, confidence={intent.get('confidence')}")
+
+        # Check if query is not related to real estate
+        if not intent.get("is_real_estate_related", True) or intent.get("intent_type") == "irrelevant":
+            logger.info(f"Query is irrelevant to real estate: {query}")
+            return {
+                "intent": intent,
+                "intent_type": "irrelevant",
+                "final_response": {
+                    "type": "irrelevant",
+                    "message": intent.get("message", "죄송합니다. 부동산 관련 질문만 답변 가능합니다."),
+                    "suggestion": "부동산 매매, 전세, 시세, 대출 등에 대해 질문해주세요.",
+                    "examples": [
+                        "강남구 아파트 시세 알려줘",
+                        "주택담보대출 금리는?",
+                        "전세 계약시 주의사항은?"
+                    ]
+                }
+            }
+
+        # Check for low confidence
+        if intent.get("confidence", 0) < 0.3:
+            logger.info(f"Low confidence query: {query} (confidence={intent.get('confidence')})")
+            return {
+                "intent": intent,
+                "intent_type": "unclear",
+                "final_response": {
+                    "type": "unclear",
+                    "message": "질문의 의도를 정확히 이해하지 못했습니다.",
+                    "suggestion": "좀 더 구체적으로 질문해주세요.",
+                    "original_query": query
+                }
+            }
 
         # Check for errors or unclear intent
         if intent.get("error"):
@@ -348,8 +623,9 @@ class RealEstateSupervisor:
         Returns:
             Updated state with execution plan
         """
-        # Skip if we already have an error or unclear intent
-        if state.get("intent_type") in ["error", "unclear"]:
+        # Skip if we already have an error, unclear, or irrelevant intent
+        if state.get("intent_type") in ["error", "unclear", "irrelevant"]:
+            logger.debug(f"[NODE] create_plan_node - Skipping due to intent_type: {state.get('intent_type')}")
             return state
 
         query = state["query"]
@@ -371,12 +647,35 @@ class RealEstateSupervisor:
                 "selected_agents": []
             }
 
+        # Create TODOs for selected agents
+        todos = state.get("todos", [])
+        todo_counter = state.get("todo_counter", 0)
+        selected_agents = plan.get("agents", [])
+
+        # Create main TODO for each selected agent
+        for agent_name in selected_agents:
+            todo_id = f"main_{todo_counter}"
+            todo = create_todo_dict(
+                todo_id=todo_id,
+                level="supervisor",
+                task=f"Execute {agent_name}",
+                agent=agent_name,
+                purpose=plan.get("reasoning", ""),
+                subtodos=[]  # Agent will fill this
+            )
+            todos.append(todo)
+            todo_counter += 1
+            logger.debug(f"[TODO] Created main TODO: {todo_id} for {agent_name}")
+
         result = {
             "execution_plan": plan,
             "collection_keywords": plan.get("collection_keywords", []),
-            "selected_agents": plan.get("agents", [])
+            "selected_agents": selected_agents,
+            "todos": todos,
+            "todo_counter": todo_counter,
+            "current_phase": "executing"
         }
-        logger.debug(f"[NODE] create_plan_node - Output agents: {result['selected_agents']}, keywords: {result['collection_keywords']}")
+        logger.debug(f"[NODE] create_plan_node - Created {len(selected_agents)} TODOs")
         return result
 
     async def execute_agents_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -389,21 +688,30 @@ class RealEstateSupervisor:
         Returns:
             Updated state with agent results
         """
-        # Skip if we have an error or unclear intent
-        if state.get("intent_type") in ["error", "unclear"]:
+        # Skip if we have an error, unclear, or irrelevant intent
+        if state.get("intent_type") in ["error", "unclear", "irrelevant"]:
+            logger.debug(f"[NODE] execute_agents_node - Skipping due to intent_type: {state.get('intent_type')}")
             return state
 
         # Skip if we already have a final response (from error handling)
         if state.get("final_response"):
+            logger.debug(f"[NODE] execute_agents_node - Skipping, final_response already exists")
             return state
 
         selected_agents = state.get("selected_agents", [])
+        todos = state.get("todos", [])
         logger.info(f"Executing agents: {selected_agents}")
         logger.debug(f"[NODE] execute_agents_node - Starting with {len(selected_agents)} agents")
 
         agent_results = {}
 
         for agent_name in selected_agents:
+            # Find and update TODO status
+            agent_todo = find_todo(todos, agent=agent_name)
+            if agent_todo:
+                todos = update_todo_status(todos, agent_todo["id"], "in_progress")
+                logger.debug(f"[TODO] Updated {agent_todo['id']} to in_progress")
+
             logger.debug(f"[AGENT] Executing agent: {agent_name}")
             if agent_name == "search_agent":
                 # Import and execute search agent
@@ -414,11 +722,29 @@ class RealEstateSupervisor:
                     "original_query": state["query"],
                     "collection_keywords": state.get("collection_keywords", []),
                     "shared_context": state.get("shared_context", {}),
-                    "chat_session_id": state.get("chat_session_id", "")
+                    "chat_session_id": state.get("chat_session_id", ""),
+                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
+                    "todos": todos,  # Pass todos to agent
+                    "todo_counter": state.get("todo_counter", 0)
                 }
 
                 # SearchAgent uses app.ainvoke instead of run
                 result = await agent.app.ainvoke(input_data)
+
+                # Update TODO status based on result
+                if agent_todo:
+                    if result.get("status") == "completed":
+                        todos = update_todo_status(todos, agent_todo["id"], "completed")
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
+                    elif result.get("status") == "error":
+                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error"))
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
+
+                    # Merge any TODO updates from agent
+                    if "todos" in result:
+                        from core.todo_types import merge_todos
+                        todos = merge_todos(todos, result["todos"])
+
                 logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, collected_data_keys={list(result.get('collected_data', {}).keys())}")
                 agent_results[agent_name] = result
 
@@ -433,9 +759,15 @@ class RealEstateSupervisor:
             else:
                 logger.warning(f"Unknown agent: {agent_name}")
 
+        # Get TODO summary
+        summary = get_todo_summary(todos)
+        logger.info(f"[TODO] Progress: {summary['summary']}")
+
         result = {
             "agent_results": agent_results,
-            "status": "agents_executed"
+            "status": "agents_executed",
+            "todos": todos,  # Return updated todos
+            "current_phase": "evaluating"
         }
         logger.debug(f"[NODE] execute_agents_node - Completed. Agents executed: {list(agent_results.keys())}")
         return result
