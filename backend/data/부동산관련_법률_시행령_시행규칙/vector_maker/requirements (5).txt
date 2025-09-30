@@ -1,0 +1,20 @@
+# Core dependencies
+python-docx>=0.8.11
+pandas>=1.5.0
+numpy>=1.23.0
+
+# NLP and Embeddings
+sentence-transformers>=2.2.0
+tiktoken>=0.5.0
+
+# Vector Database
+chromadb>=0.4.0
+
+# Utilities
+tqdm>=4.65.0
+python-dateutil>=2.8.0
+
+# Optional for enhanced features
+openpyxl>=3.0.0  # For Excel support
+pypdf>=3.0.0      # For PDF support (future)
+Pillow>=9.0.0     # For image processing
