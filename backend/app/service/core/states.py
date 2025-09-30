@@ -337,6 +337,8 @@ class SearchAgentState(TypedDict):
     # Agent는 parent state의 todos를 참조하고 업데이트함
     parent_todo_id: Optional[str]  # 부모 TODO ID (supervisor에서 할당)
     current_task: Optional[str]  # 현재 작업 중인 노드/도구
+    todos: Annotated[List[Dict[str, Any]], merge_todos]  # TODO list passed from supervisor
+    todo_counter: int  # Counter for generating unique TODO IDs
 
     # === Search Planning ===
     search_plan: Optional[Dict[str, Any]]  # LLM-generated search plan

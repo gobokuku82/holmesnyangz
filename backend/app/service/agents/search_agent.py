@@ -578,7 +578,7 @@ class SearchAgent:
         Returns:
             Search results and routing decision
         """
-        # Prepare initial state
+        # Prepare initial state with TODO support
         initial_state = {
             "original_query": input_data.get("original_query", ""),
             "collection_keywords": input_data.get("collection_keywords", []),
@@ -589,7 +589,11 @@ class SearchAgent:
             "errors": [],
             "tool_results": {},
             "successful_tools": [],
-            "failed_tools": []
+            "failed_tools": [],
+            # Add TODO-related fields
+            "parent_todo_id": input_data.get("parent_todo_id"),
+            "todos": input_data.get("todos", []),
+            "todo_counter": input_data.get("todo_counter", 0)
         }
 
         try:
@@ -603,7 +607,9 @@ class SearchAgent:
                 "collected_data": result.get("collected_data", {}),
                 "output_data": result.get("output_data"),
                 "search_summary": result.get("search_summary", ""),
-                "shared_context": result.get("shared_context", {})
+                "shared_context": result.get("shared_context", {}),
+                # Include TODOs in return value
+                "todos": result.get("todos", [])
             }
 
         except Exception as e:
@@ -612,7 +618,9 @@ class SearchAgent:
                 "status": "error",
                 "error": str(e),
                 "collected_data": {},
-                "search_summary": "검색 실패"
+                "search_summary": "검색 실패",
+                # Include empty TODOs even on error
+                "todos": []
             }
 
 
