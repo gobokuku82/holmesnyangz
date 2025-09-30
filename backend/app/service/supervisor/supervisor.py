@@ -133,6 +133,14 @@ class LLMManager:
 - 부동산과 무관한 일반 지식 질문
 - 다른 산업이나 주제에 대한 질의
 - 의미없는 텍스트나 무작위 단어
+- 개인 정보나 자기소개 (예: "내 이름은 ~야", "나는 ~다")
+
+중요: 문맥을 우선적으로 판단하세요!
+- 부동산 관련 키워드가 있어도 전체 문맥이 부동산과 무관하면 false로 분류
+- 예시: "내 이름은 양도세야" → false (개인 소개, 부동산과 무관)
+- 예시: "양도세가 뭐야?" → true (부동산 세금 관련 질문)
+- 예시: "집값이라는 친구가 있어" → false (개인 이야기, 부동산과 무관)
+- 예시: "요즘 집값이 어때?" → true (부동산 시세 관련 질문)
 
 질의가 부동산 서비스와 관련이 있는지 판단하세요.
 경계선에 있는 경우(예: 일반 금융이지만 부동산 대출일 수도 있는 경우) true로 분류하세요.
@@ -179,7 +187,7 @@ JSON 형식으로 응답:
             return {"keywords": [], "score": 0.5}
 
         try:
-            system_prompt = """부동산 관련 키워드를 추출하고 점수를 매기세요.
+            system_prompt = """부동산 관련 키워드를 추출하고 문맥 내 역할을 평가하세요.
 
 부동산 관련 키워드 예시:
 - 거래: 매매, 전세, 월세, 임대, 분양
@@ -189,11 +197,27 @@ JSON 형식으로 응답:
 - 법률: 계약, 등기, 세금, 양도세, 취득세
 - 시장: 시세, 가격, 평형, 평수, 매물
 
+중요: 키워드의 문맥상 역할 평가
+1. 키워드가 질문의 주제인가? (높은 점수)
+2. 키워드가 단순히 언급만 되었는가? (낮은 점수)
+3. 부정 패턴이 있는가? (매우 낮은 점수)
+   - "내 이름은 [키워드]" → 개인 소개
+   - "[키워드]라는 친구/사람" → 인물 언급
+   - "나는 [키워드]야/다" → 자기 소개
+
+예시 평가:
+- "양도세 계산 방법" → score: 0.9 (주제)
+- "내 이름은 양도세야" → score: 0.1 (단순 언급, 부정 패턴)
+- "집값 어때?" → score: 0.9 (주제)
+- "집값이라는 애가 있어" → score: 0.1 (인물 언급)
+
 JSON 형식으로 응답:
 {
     "keywords": ["추출된 키워드"],
     "real_estate_keywords": ["부동산 관련 키워드만"],
-    "score": 0.0-1.0 (부동산 관련도 점수)
+    "context_role": "main_topic|mentioned|negative_pattern",
+    "negative_patterns": ["발견된 부정 패턴"],
+    "score": 0.0-1.0 (문맥 고려한 부동산 관련도)
 }"""
 
             user_prompt = f"질의: {query}"
@@ -227,6 +251,27 @@ JSON 형식으로 응답:
         Returns:
             Intent analysis with entities and confidence
         """
+        # Early negative pattern detection
+        negative_patterns = [
+            r"내\s*이름은.*[야다]",  # "내 이름은 ~야/다"
+            r"나는.*[야다]$",  # "나는 ~야/다" at end
+            r".*라는\s*(친구|사람|애|놈|녀석)",  # "~라는 친구/사람"
+            r"^(안녕|하이|헬로|ㅎㅇ)",  # Simple greetings
+            r"^(ㅋ+|ㅎ+|ㅠ+|ㅜ+)$",  # Korean emoticons only
+        ]
+
+        import re
+        for pattern in negative_patterns:
+            if re.search(pattern, query, re.IGNORECASE):
+                logger.info(f"Early negative pattern detected: {query}")
+                return {
+                    "intent_type": "irrelevant",
+                    "is_real_estate_related": False,
+                    "confidence": 0.95,
+                    "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
+                    "reasoning": "개인 소개나 일반 대화로 판단됨"
+                }
+
         # Check for connection errors
         if self._connection_error:
             return {
@@ -252,27 +297,29 @@ JSON 형식으로 응답:
             relevance = await self.classify_service_relevance(query)
 
             # Stage 2: Keyword validation (if needed)
-            if relevance.get("confidence", 0) < 0.8:  # Need additional validation
+            if relevance.get("confidence", 0) < 0.6:  # Lower threshold for additional validation
                 logger.debug(f"Stage 2: Low confidence ({relevance.get('confidence')}), extracting keywords")
                 keywords = await self.extract_keywords_for_validation(query)
 
-                # Combine both stages for final decision
-                if not relevance.get("is_relevant") and keywords.get("score", 0) < 0.3:
-                    # Both indicate irrelevant
-                    logger.info(f"Query classified as irrelevant (Stage1: {relevance.get('is_relevant')}, Stage2 score: {keywords.get('score')})")
-                    return {
-                        "intent_type": "irrelevant",
-                        "is_real_estate_related": False,
-                        "confidence": min(relevance.get("confidence", 0), 1 - keywords.get("score", 0.5)),
-                        "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
-                        "reasoning": f"서비스 관련성: {relevance.get('reasoning', 'N/A')}, 키워드 점수: {keywords.get('score', 0):.2f}"
-                    }
-                elif relevance.get("is_relevant") and keywords.get("score", 0) > 0.5:
-                    # Both indicate relevant - continue to detailed analysis
+                # Stage 1 has priority - only use Stage 2 to confirm, not override
+                if not relevance.get("is_relevant"):
+                    # Stage 1 says irrelevant - only continue if Stage 2 strongly disagrees
+                    if keywords.get("score", 0) < 0.7:  # Need very high score to override Stage 1
+                        logger.info(f"Query classified as irrelevant (Stage1: {relevance.get('is_relevant')}, Stage2 score: {keywords.get('score')})")
+                        return {
+                            "intent_type": "irrelevant",
+                            "is_real_estate_related": False,
+                            "confidence": max(relevance.get("confidence", 0), 1 - keywords.get("score", 0.5)),
+                            "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
+                            "reasoning": f"서비스 관련성: {relevance.get('reasoning', 'N/A')}, 키워드 점수: {keywords.get('score', 0):.2f}"
+                        }
+                    else:
+                        # Stage 2 strongly disagrees - continue but log warning
+                        logger.warning(f"Stage conflict - Stage1: false, Stage2: {keywords.get('score')} - continuing")
+                elif relevance.get("is_relevant") and keywords.get("score", 0) < 0.5:
+                    # Stage 1 says relevant but Stage 2 disagrees - trust Stage 1
+                    logger.debug(f"Stage1 overrides Stage2 - Stage1: true, Stage2: {keywords.get('score')}")
                     pass
-                else:
-                    # Mixed signals - be conservative and continue
-                    logger.debug(f"Mixed signals - Stage1: {relevance.get('is_relevant')}, Stage2: {keywords.get('score')}")
             else:
                 # High confidence from Stage 1
                 if not relevance.get("is_relevant"):

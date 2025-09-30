@@ -1,9 +1,0 @@
-{
-    "name": "Real Estate Chatbot",
-    "description": "부동산 AI 챗봇 - 도와줘 홈즈냥즈",
-    "entry_point": "./langgraph_app.py",
-    "dependencies": "./requirements.txt",
-    "env": "./.env",
-    "python_version": "3.12",
-    "dockerfile_lines": []
-}
