@@ -370,6 +370,74 @@ class SearchAgentState(TypedDict):
     output_data: Optional[Dict[str, Any]]  # Structured output
 
 
+class AnalysisAgentState(TypedDict):
+    """
+    State for Analysis Agent Subgraph
+    Manages data analysis and insight generation
+    Processes data from SearchAgent or directly from Supervisor
+    """
+
+    # === Input from Supervisor or SearchAgent ===
+    original_query: str  # Original user query
+    analysis_type: str  # Type of analysis: market, trend, comparative, investment, comprehensive
+    input_data: Dict[str, Any]  # Data to analyze (from SearchAgent or direct)
+    shared_context: Dict[str, Any]  # Shared context from supervisor/previous agent
+    chat_session_id: str  # Session identifier
+
+    # === TODO Management ===
+    parent_todo_id: Optional[str]  # Parent TODO ID from supervisor
+    current_task: Optional[str]  # Currently executing node/tool
+    todos: Annotated[List[Dict[str, Any]], merge_todos]  # TODO list for tracking
+    todo_counter: int  # Counter for unique TODO IDs
+
+    # === Analysis Planning ===
+    analysis_plan: Optional[Dict[str, Any]]  # LLM-generated analysis plan
+    selected_methods: Optional[List[str]]  # Analysis methods to apply
+    analysis_parameters: Optional[Dict[str, Any]]  # Parameters for each method
+
+    # === Data Preparation ===
+    prepared_data: Optional[Dict[str, Any]]  # Cleaned and normalized data
+    data_validation: Optional[Dict[str, Any]]  # Data quality validation results
+    data_metrics: Optional[Dict[str, Any]]  # Basic data metrics
+
+    # === Analysis Results ===
+    market_analysis: Optional[Dict[str, Any]]  # Market conditions analysis
+    trend_analysis: Optional[Dict[str, Any]]  # Trend and pattern analysis
+    comparative_analysis: Optional[Dict[str, Any]]  # Comparative analysis results
+    investment_analysis: Optional[Dict[str, Any]]  # Investment value analysis
+    risk_analysis: Optional[Dict[str, Any]]  # Risk assessment results
+
+    # === Insights and Recommendations ===
+    insights: Annotated[List[str], append_unique]  # Key insights discovered
+    recommendations: Annotated[List[str], append_unique]  # Action recommendations
+    risk_factors: Annotated[List[str], append_unique]  # Identified risks
+    opportunities: Annotated[List[str], append_unique]  # Identified opportunities
+
+    # === Synthesis ===
+    analysis_summary: Optional[str]  # Executive summary of analysis
+    confidence_scores: Optional[Dict[str, float]]  # Confidence in each analysis
+    data_coverage: Optional[float]  # Percentage of data analyzed
+
+    # === Output ===
+    final_report: Optional[Dict[str, Any]]  # Complete analysis report
+    visualization_data: Optional[Dict[str, Any]]  # Data prepared for visualization
+    key_metrics: Optional[Dict[str, Any]]  # Key performance metrics
+
+    # === Routing Decision ===
+    next_action: Optional[str]  # return_to_supervisor, direct_output, pass_to_agent
+    target_agent: Optional[str]  # Target agent if passing results
+    routing_reason: Optional[str]  # Reason for routing decision
+
+    # === Status ===
+    status: str  # pending, analyzing, processing, completed
+    execution_step: str  # Current execution step
+    errors: Annotated[List[str], add]  # Error messages
+
+    # === Metadata ===
+    analysis_duration: Optional[float]  # Time taken for analysis
+    tool_usage: Annotated[Dict[str, int], merge_dicts]  # Count of tool usage
+
+
 # ============ State Factory Functions ============
 
 def create_base_state(

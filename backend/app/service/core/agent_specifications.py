@@ -303,56 +303,213 @@ AGENT_SPECIFICATIONS: Dict[str, AgentSpecification] = {
     ),
 
     # ====================
-    # AnalysisAgent (예시 - 구현 예정)
+    # AnalysisAgent
     # ====================
     "analysis_agent": AgentSpecification(
         agent_name="analysis_agent",
         display_name="분석 에이전트",
-        version="0.1.0",
-        status=AgentStatus.PLANNED,
+        version="1.0.0",
+        status=AgentStatus.PRODUCTION,
 
         purpose="수집된 부동산 데이터를 분석하여 인사이트를 도출하는 전문 Agent",
         description="""
-        [구현 예정]
-        SearchAgent가 수집한 데이터를 분석하여 트렌드, 패턴, 인사이트를 도출합니다.
-        시장 분석, 가격 동향 분석, 지역 비교 분석 등을 수행합니다.
+        SearchAgent가 수집한 데이터나 직접 입력된 데이터를 분석하여 시장 트렌드, 투자 가치, 리스크 등을 평가합니다.
+        다양한 분석 도구를 활용하여 데이터 기반의 객관적인 인사이트를 제공합니다.
+        LLM을 활용하여 분석 결과를 종합하고 실행 가능한 추천사항을 도출합니다.
         """,
-        domain="데이터 분석",
+        domain="데이터 분석 및 인사이트 도출",
 
+        # 기능
         capabilities=[
-            # TODO: 채워주세요
-            "시장 트렌드 분석",
-            "가격 동향 파악",
-            "지역별 비교 분석",
-            "투자 가치 평가"
+            "시장 현황 분석 (가격, 거래량, 수급)",
+            "가격 트렌드 및 패턴 분석",
+            "지역별/단지별 비교 분석",
+            "투자 가치 평가 (ROI, 수익률)",
+            "리스크 요인 식별 및 평가",
+            "데이터 기반 추천사항 제공",
+            "분석 결과 시각화 데이터 준비"
         ],
         limitations=[
-            # TODO: 채워주세요
-            "미래 가격 예측 불가",
-            "법적 조언 제공 불가"
+            "미래 가격 정확한 예측 불가",
+            "법적 구속력 있는 조언 제공 불가",
+            "개인 맞춤 투자 전략 수립 불가",
+            "실시간 시장 데이터 접근 불가"
         ],
 
+        # 입출력 스키마
         input_schema={
-            "required_fields": ["data_to_analyze", "analysis_type"],
-            "optional_fields": ["analysis_params", "output_format"],
+            "required_fields": ["original_query", "analysis_type", "input_data"],
+            "optional_fields": ["shared_context", "chat_session_id", "analysis_parameters"],
             "field_descriptions": {
-                # TODO: 채워주세요
+                "original_query": "사용자의 원본 분석 요청",
+                "analysis_type": "분석 유형 (market, trend, comparative, investment, comprehensive)",
+                "input_data": "분석할 데이터 (SearchAgent 결과 또는 직접 입력)",
+                "shared_context": "이전 Agent로부터 전달된 컨텍스트",
+                "chat_session_id": "채팅 세션 ID",
+                "analysis_parameters": "분석 파라미터 (깊이, 초점 영역 등)"
             },
             "example": {
-                # TODO: 채워주세요
+                "original_query": "강남구 아파트 시장 분석해줘",
+                "analysis_type": "comprehensive",
+                "input_data": {
+                    "real_estate_search": [
+                        {"title": "래미안 강남", "price": "25억", "region": "강남구"}
+                    ]
+                },
+                "chat_session_id": "session_123"
             }
         },
 
         output_schema={
-            "success_fields": ["analysis_results", "insights", "recommendations"],
-            "error_fields": ["status", "error"],
+            "success_fields": ["status", "final_report", "key_metrics", "next_action"],
+            "error_fields": ["status", "error", "error_details"],
             "field_descriptions": {
-                # TODO: 채워주세요
+                "status": "실행 상태 (completed/error)",
+                "final_report": "종합 분석 보고서",
+                "key_metrics": "핵심 지표 요약",
+                "next_action": "다음 액션 (return_to_supervisor/direct_output)",
+                "error": "에러 메시지",
+                "error_details": "상세 에러 정보"
             },
             "example": {
-                # TODO: 채워주세요
+                "status": "completed",
+                "final_report": {
+                    "summary": "강남구 아파트 시장은 안정적인 상승세",
+                    "key_findings": {
+                        "insights": ["평균 가격 25억원", "거래량 증가 추세"],
+                        "recommendations": ["중장기 투자 적합"],
+                        "risks": ["금리 인상 리스크"],
+                        "opportunities": ["재건축 기회"]
+                    },
+                    "detailed_analysis": {},
+                    "confidence": {"overall": 0.85}
+                },
+                "key_metrics": {
+                    "average_price": "25억",
+                    "price_change": "+5.2%",
+                    "market_heat_index": 72.5
+                },
+                "next_action": "return_to_supervisor"
             }
-        }
+        },
+
+        # 사용 가능한 도구
+        available_tools=[
+            {
+                "name": "market_analyzer",
+                "description": "시장 현황 분석 (가격, 거래량, 수급)",
+                "parameters": {"data": "dict", "params": "dict"},
+                "output_type": "dict",
+                "example_usage": "market_analyzer.analyze(data, params)"
+            },
+            {
+                "name": "trend_analyzer",
+                "description": "가격 및 거래 트렌드 분석",
+                "parameters": {"data": "dict", "period": "str"},
+                "output_type": "dict",
+                "example_usage": "trend_analyzer.analyze(data, {'period': '3months'})"
+            },
+            {
+                "name": "comparative_analyzer",
+                "description": "지역/단지별 비교 분석",
+                "parameters": {"data": "dict", "comparison_type": "str"},
+                "output_type": "dict",
+                "example_usage": "comparative_analyzer.analyze(data, params)"
+            },
+            {
+                "name": "investment_evaluator",
+                "description": "투자 가치 평가",
+                "parameters": {"data": "dict", "investment_params": "dict"},
+                "output_type": "dict",
+                "example_usage": "investment_evaluator.analyze(data, params)"
+            },
+            {
+                "name": "risk_assessor",
+                "description": "리스크 요인 평가",
+                "parameters": {"data": "dict", "risk_params": "dict"},
+                "output_type": "dict",
+                "example_usage": "risk_assessor.analyze(data, params)"
+            }
+        ],
+
+        # 실행 흐름
+        execution_steps=[
+            "1. 분석 요청 이해 및 데이터 확인",
+            "2. 데이터 전처리 및 검증",
+            "3. LLM을 통한 분석 계획 수립",
+            "4. 선택된 분석 도구 실행",
+            "5. 분석 결과 종합 및 인사이트 도출",
+            "6. 최종 보고서 생성",
+            "7. 라우팅 결정 (supervisor 복귀 또는 직접 출력)"
+        ],
+
+        # 성공/실패 기준
+        success_criteria=[
+            "최소 1개 이상의 분석 완료",
+            "인사이트 도출 성공",
+            "최종 보고서 생성 완료"
+        ],
+        failure_conditions=[
+            "입력 데이터 부족",
+            "모든 분석 도구 실행 실패",
+            "타임아웃 (30초 초과)"
+        ],
+
+        # 사용 시나리오
+        use_cases=[
+            "시장 트렌드 분석이 필요한 경우",
+            "투자 가치 평가가 필요한 경우",
+            "지역간 비교 분석이 필요한 경우",
+            "리스크 평가가 필요한 경우",
+            "SearchAgent 수집 데이터의 심층 분석이 필요한 경우"
+        ],
+        not_suitable_for=[
+            "단순 정보 조회만 필요한 경우",
+            "실시간 데이터가 필요한 경우",
+            "법률 자문이 필요한 경우",
+            "개인 맞춤 투자 전략이 필요한 경우"
+        ],
+
+        # 전제 조건
+        prerequisites=[
+            "분석할 데이터가 준비되어 있어야 함",
+            "LLM API 연결 가능",
+            "분석 도구들이 정상 작동"
+        ],
+
+        # 성능 지표
+        performance_metrics={
+            "average_execution_time": "5-10초",
+            "success_rate": "88%",
+            "max_parallel_tools": 5,
+            "timeout": "30초"
+        },
+
+        # 의존성
+        dependencies=[
+            "OpenAI API",
+            "Analysis Tools (market, trend, comparative, investment, risk)",
+            "LangGraph Framework"
+        ],
+
+        # LLM 가이드
+        llm_guidance="""
+        AnalysisAgent 사용 시 주의사항:
+        1. SearchAgent에서 수집된 데이터를 우선적으로 활용
+        2. analysis_type에 따라 적절한 분석 도구 선택
+        3. 여러 분석 도구를 조합하여 종합적인 인사이트 도출
+        4. 데이터가 부족한 경우 SearchAgent 재실행 제안
+        5. 분석 결과는 항상 구조화된 보고서 형태로 제공
+        """,
+
+        # 예시 쿼리
+        example_queries=[
+            "강남구 아파트 시장 트렌드 분석해줘",
+            "이 지역 투자 가치 평가해줘",
+            "서초구와 강남구 아파트 비교 분석",
+            "부동산 투자 리스크 평가해줘",
+            "수집된 데이터로 종합 분석 보고서 만들어줘"
+        ]
     ),
 
     # ====================

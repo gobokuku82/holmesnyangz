@@ -8,6 +8,16 @@ from .legal_search_tool import LegalSearchTool
 from .regulation_search_tool import RegulationSearchTool
 from .loan_search_tool import LoanSearchTool
 from .real_estate_search_tool import RealEstateSearchTool
+from .analysis_tools import (
+    BaseAnalysisTool,
+    MarketAnalyzer,
+    TrendAnalyzer,
+    ComparativeAnalyzer,
+    InvestmentEvaluator,
+    RiskAssessor,
+    AnalysisToolRegistry,
+    analysis_tool_registry
+)
 import os
 
 # Initialize tool registry
@@ -30,5 +40,13 @@ __all__ = [
     "RegulationSearchTool",
     "LoanSearchTool",
     "RealEstateSearchTool",
-    "tool_registry"
+    "tool_registry",
+    "BaseAnalysisTool",
+    "MarketAnalyzer",
+    "TrendAnalyzer",
+    "ComparativeAnalyzer",
+    "InvestmentEvaluator",
+    "RiskAssessor",
+    "AnalysisToolRegistry",
+    "analysis_tool_registry"
 ]

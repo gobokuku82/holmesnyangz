@@ -409,24 +409,36 @@ JSON 형식으로 응답하세요:
   • 투자 추천이 필요한 경우
   • 미래 가격 예측이 필요한 경우
 
-### 2. analysis_agent (분석 에이전트) - [개발 예정]
+### 2. analysis_agent (분석 에이전트) - [구현 완료]
 - **목적**: 수집된 부동산 데이터를 분석하여 인사이트를 도출하는 전문 Agent
 - **기능(Capabilities)**:
-  • 시장 트렌드 분석
-  • 가격 동향 파악
-  • 지역별 비교 분석
-  • 투자 가치 평가
-  • 데이터 시각화
+  • 시장 현황 분석 (가격, 거래량, 수급)
+  • 가격 트렌드 및 패턴 분석
+  • 지역별/단지별 비교 분석
+  • 투자 가치 평가 (ROI, 수익률)
+  • 리스크 요인 식별 및 평가
+  • 데이터 기반 추천사항 제공
+  • 분석 결과 시각화 데이터 준비
 - **한계(Limitations)**:
   • 직접적인 데이터 수집 불가 (search_agent 필요)
-  • 법적 조언 제공 불가
-  • 개인 맞춤 추천 불가
+  • 미래 가격 정확한 예측 불가
+  • 법적 구속력 있는 조언 제공 불가
+  • 개인 맞춤 투자 전략 수립 불가
+- **사용 가능한 도구**:
+  • market_analyzer: 시장 현황 분석
+  • trend_analyzer: 가격 트렌드 분석
+  • comparative_analyzer: 지역별 비교
+  • investment_evaluator: 투자 가치 평가
+  • risk_assessor: 리스크 평가
 - **적합한 사용 케이스**:
-  • 시장 분석이 필요한 경우
-  • 지역 비교가 필요한 경우
+  • 시장 트렌드 분석이 필요한 경우
   • 투자 가치 평가가 필요한 경우
+  • 지역간 비교 분석이 필요한 경우
+  • 리스크 평가가 필요한 경우
+  • SearchAgent 수집 데이터의 심층 분석이 필요한 경우
 - **부적합한 케이스**:
-  • 단순 정보 검색만 필요한 경우
+  • 단순 정보 조회만 필요한 경우
+  • 실시간 데이터가 필요한 경우
   • 법률 자문이 필요한 경우
 
 ### 3. recommendation_agent (추천 에이전트) - [개발 예정]
@@ -450,8 +462,8 @@ JSON 형식으로 응답하세요:
 1. **검색/수집이 필요한 경우** → search_agent 선택
    - 키워드: 검색, 조회, 찾기, 알려줘, 정보, 시세, 매물, 법률, 대출
 
-2. **분석이 필요한 경우** → analysis_agent 선택 (미구현 시 search_agent 사용)
-   - 키워드: 분석, 비교, 평가, 트렌드, 동향, 전망
+2. **분석이 필요한 경우** → analysis_agent 선택
+   - 키워드: 분석, 비교, 평가, 트렌드, 동향, 전망, 시장, 투자, 리스크
 
 3. **추천이 필요한 경우** → recommendation_agent 선택 (미구현 시 search_agent 사용)
    - 키워드: 추천, 제안, 어떤게 좋을까, 적합한, 맞춤
@@ -462,7 +474,7 @@ JSON 형식으로 응답하세요:
 2. 필요한 작업을 단계별로 분해
 3. 각 단계에 적합한 에이전트 선택
 4. 에이전트 간 데이터 흐름 고려
-5. 현재 구현된 에이전트만 선택 (search_agent만 사용 가능)
+5. 현재 구현된 에이전트만 선택 (search_agent, analysis_agent 사용 가능)
 
 JSON 형식으로 응답하세요:
 {
@@ -513,21 +525,77 @@ class RealEstateSupervisor:
         self.workflow = None
         self._build_graph()
 
+    def _route_after_intent(self, state: Dict[str, Any]) -> str:
+        """
+        Route based on intent classification
+
+        Args:
+            state: Current workflow state
+
+        Returns:
+            Next node name based on intent type
+        """
+        intent_type = state.get("intent_type", "")
+
+        if intent_type == "irrelevant":
+            logger.debug(f"[ROUTING] Intent type '{intent_type}' -> guidance_message")
+            return "guidance_message"
+        elif intent_type == "unclear":
+            logger.debug(f"[ROUTING] Intent type '{intent_type}' -> recheck_intent")
+            return "recheck_intent"
+        elif intent_type == "error":
+            logger.debug(f"[ROUTING] Intent type '{intent_type}' -> error_handler")
+            return "error_handler"
+        else:
+            logger.debug(f"[ROUTING] Intent type '{intent_type}' -> create_plan")
+            return "create_plan"
+
     def _build_graph(self):
         """Build the workflow graph"""
         self.workflow = StateGraph(state_schema=RealEstateMainState)
 
         # Add nodes
         self.workflow.add_node("analyze_intent", self.analyze_intent_node)
+        self.workflow.add_node("recheck_intent", self.recheck_intent_node)
+        self.workflow.add_node("error_handler", self.error_handler_node)
+        self.workflow.add_node("guidance_message", self.guidance_message_node)
         self.workflow.add_node("create_plan", self.create_plan_node)
         self.workflow.add_node("execute_agents", self.execute_agents_node)
         self.workflow.add_node("generate_response", self.generate_response_node)
 
         # Add edges
-        self.workflow.add_edge(START,"analyze_intent")
-        self.workflow.add_edge("analyze_intent", "create_plan")
+        self.workflow.add_edge(START, "analyze_intent")
+
+        # Conditional routing after intent analysis
+        self.workflow.add_conditional_edges(
+            "analyze_intent",
+            self._route_after_intent,
+            {
+                "create_plan": "create_plan",
+                "recheck_intent": "recheck_intent",
+                "error_handler": "error_handler",
+                "guidance_message": "guidance_message"
+            }
+        )
+
+        # Conditional routing after recheck
+        self.workflow.add_conditional_edges(
+            "recheck_intent",
+            lambda state: "guidance_message" if state.get("still_unclear") else "create_plan",
+            {
+                "create_plan": "create_plan",
+                "guidance_message": "guidance_message"
+            }
+        )
+
+        # Normal flow edges
         self.workflow.add_edge("create_plan", "execute_agents")
         self.workflow.add_edge("execute_agents", "generate_response")
+
+        # Terminal edges to END
+        self.workflow.add_edge("error_handler", END)
+        self.workflow.add_edge("guidance_message", END)
+        self.workflow.add_edge("generate_response", END)
 
         logger.info("Supervisor workflow graph built successfully")
 
@@ -553,17 +621,7 @@ class RealEstateSupervisor:
             logger.info(f"Query is irrelevant to real estate: {query}")
             return {
                 "intent": intent,
-                "intent_type": "irrelevant",
-                "final_response": {
-                    "type": "irrelevant",
-                    "message": intent.get("message", "죄송합니다. 부동산 관련 질문만 답변 가능합니다."),
-                    "suggestion": "부동산 매매, 전세, 시세, 대출 등에 대해 질문해주세요.",
-                    "examples": [
-                        "강남구 아파트 시세 알려줘",
-                        "주택담보대출 금리는?",
-                        "전세 계약시 주의사항은?"
-                    ]
-                }
+                "intent_type": "irrelevant"
             }
 
         # Check for low confidence
@@ -572,37 +630,23 @@ class RealEstateSupervisor:
             return {
                 "intent": intent,
                 "intent_type": "unclear",
-                "final_response": {
-                    "type": "unclear",
-                    "message": "질문의 의도를 정확히 이해하지 못했습니다.",
-                    "suggestion": "좀 더 구체적으로 질문해주세요.",
-                    "original_query": query
-                }
+                "confidence": intent.get("confidence", 0)
             }
 
-        # Check for errors or unclear intent
+        # Check for errors
         if intent.get("error"):
+            logger.info(f"Error in intent analysis: {intent.get('message')}")
             return {
                 "intent": intent,
-                "intent_type": "error",
-                "final_response": {
-                    "type": "error",
-                    "message": intent.get("message"),
-                    "details": intent.get("details"),
-                    "suggestion": intent.get("suggestion", "다시 시도해주세요.")
-                }
+                "intent_type": "error"
             }
 
-        if intent.get("intent") == "unclear":
+        # Check for unclear intent from LLM
+        if intent.get("intent_type") == "unclear":
+            logger.info(f"Unclear intent from LLM: {query}")
             return {
                 "intent": intent,
-                "intent_type": "unclear",
-                "final_response": {
-                    "type": "help",
-                    "message": intent.get("message"),
-                    "examples": intent.get("examples", []),
-                    "original_query": query
-                }
+                "intent_type": "unclear"
             }
 
         result = {
@@ -623,11 +667,6 @@ class RealEstateSupervisor:
         Returns:
             Updated state with execution plan
         """
-        # Skip if we already have an error, unclear, or irrelevant intent
-        if state.get("intent_type") in ["error", "unclear", "irrelevant"]:
-            logger.debug(f"[NODE] create_plan_node - Skipping due to intent_type: {state.get('intent_type')}")
-            return state
-
         query = state["query"]
         intent = state["intent"]
 
@@ -637,13 +676,12 @@ class RealEstateSupervisor:
 
         # Check for plan creation errors
         if plan.get("error"):
+            logger.error(f"Plan creation failed: {plan.get('message')}")
             return {
                 "execution_plan": plan,
-                "final_response": {
-                    "type": "error",
-                    "message": plan.get("message"),
-                    "details": plan.get("details")
-                },
+                "planning_error": True,
+                "error_message": plan.get("message"),
+                "error_details": plan.get("details"),
                 "selected_agents": []
             }
 
@@ -688,14 +726,9 @@ class RealEstateSupervisor:
         Returns:
             Updated state with agent results
         """
-        # Skip if we have an error, unclear, or irrelevant intent
-        if state.get("intent_type") in ["error", "unclear", "irrelevant"]:
-            logger.debug(f"[NODE] execute_agents_node - Skipping due to intent_type: {state.get('intent_type')}")
-            return state
-
-        # Skip if we already have a final response (from error handling)
-        if state.get("final_response"):
-            logger.debug(f"[NODE] execute_agents_node - Skipping, final_response already exists")
+        # Skip if there was a planning error
+        if state.get("planning_error"):
+            logger.debug("[NODE] execute_agents_node - Skipping due to planning error")
             return state
 
         selected_agents = state.get("selected_agents", [])
@@ -749,12 +782,48 @@ class RealEstateSupervisor:
                 agent_results[agent_name] = result
 
             elif agent_name == "analysis_agent":
-                # Analysis agent can be implemented here
-                logger.info(f"Analysis agent not yet implemented")
-                agent_results[agent_name] = {
-                    "status": "not_implemented",
-                    "message": "Analysis agent coming soon"
+                # Import and execute analysis agent
+                from agents.analysis_agent import AnalysisAgent
+
+                agent = AnalysisAgent(llm_context=self.llm_context)
+
+                # Prepare input data for analysis
+                # Check if we have data from SearchAgent
+                search_data = agent_results.get("search_agent", {}).get("collected_data", {})
+                if not search_data:
+                    # If no search data, check if there's data in state
+                    search_data = state.get("collected_data", {})
+
+                input_data = {
+                    "original_query": state["query"],
+                    "analysis_type": state.get("analysis_type", "comprehensive"),
+                    "input_data": search_data,
+                    "shared_context": state.get("shared_context", {}),
+                    "chat_session_id": state.get("chat_session_id", ""),
+                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
+                    "todos": todos,
+                    "todo_counter": state.get("todo_counter", 0)
                 }
+
+                # Execute AnalysisAgent
+                result = await agent.app.ainvoke(input_data)
+
+                # Update TODO status based on result
+                if agent_todo:
+                    if result.get("status") == "completed":
+                        todos = update_todo_status(todos, agent_todo["id"], "completed")
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
+                    elif result.get("status") == "error":
+                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error"))
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
+
+                    # Merge any TODO updates from agent
+                    if "todos" in result:
+                        from core.todo_types import merge_todos
+                        todos = merge_todos(todos, result["todos"])
+
+                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, report_generated={result.get('final_report') is not None}")
+                agent_results[agent_name] = result
 
             else:
                 logger.warning(f"Unknown agent: {agent_name}")
@@ -782,11 +851,20 @@ class RealEstateSupervisor:
         Returns:
             Updated state with final response
         """
-        # Skip if we already have a final response (from error/unclear handling)
-        if state.get("final_response"):
-            return state
-
         logger.info("Generating final response")
+
+        # Handle planning error
+        if state.get("planning_error"):
+            logger.info("Handling planning error in response generation")
+            return {
+                "final_response": {
+                    "type": "error",
+                    "error_type": "planning_failed",
+                    "message": state.get("error_message", "실행 계획 생성 중 오류가 발생했습니다."),
+                    "details": state.get("error_details", ""),
+                    "suggestion": "다시 시도하거나 다른 방식으로 질문해주세요."
+                }
+            }
 
         agent_results = state.get("agent_results", {})
 
@@ -821,6 +899,166 @@ class RealEstateSupervisor:
         }
         logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}")
         return result
+
+    async def error_handler_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle different types of errors with specific responses
+
+        Args:
+            state: Current state
+
+        Returns:
+            Updated state with error-specific response
+        """
+        logger.info("Handling error response")
+        intent = state.get("intent", {})
+        error_details = intent.get("details", "")
+
+        # Categorize error types and provide specific responses
+        if "API 키가 설정되지 않았습니다" in error_details:
+            error_type = "api_key_missing"
+            message = "API 키가 설정되지 않았습니다."
+            suggestion = "환경 변수에 OPENAI_API_KEY를 설정해주세요."
+        elif "OpenAI 라이브러리가 설치되지 않았습니다" in error_details:
+            error_type = "library_missing"
+            message = "필요한 라이브러리가 설치되지 않았습니다."
+            suggestion = "pip install openai 명령으로 설치해주세요."
+        elif "OpenAI 연결 실패" in error_details:
+            error_type = "connection_failed"
+            message = "OpenAI 서버 연결에 실패했습니다."
+            suggestion = "네트워크 연결을 확인하고 잠시 후 다시 시도해주세요."
+        elif "Azure OpenAI는 아직 지원되지 않습니다" in error_details:
+            error_type = "not_supported"
+            message = "Azure OpenAI는 아직 지원되지 않습니다."
+            suggestion = "OpenAI API를 사용해주세요."
+        elif "LLM 공급자가 설정되지 않았습니다" in error_details:
+            error_type = "provider_missing"
+            message = "LLM 공급자가 설정되지 않았습니다."
+            suggestion = "설정 파일에서 LLM provider를 확인해주세요."
+        elif "LLM 클라이언트가 초기화되지 않았습니다" in error_details:
+            error_type = "client_init_failed"
+            message = "LLM 클라이언트 초기화에 실패했습니다."
+            suggestion = "시스템 관리자에게 문의하세요."
+        else:
+            error_type = "unknown_error"
+            message = intent.get("message", "알 수 없는 시스템 오류가 발생했습니다.")
+            suggestion = intent.get("suggestion", "시스템 관리자에게 문의하세요.")
+
+        logger.debug(f"[ERROR_HANDLER] Error type: {error_type}, Details: {error_details}")
+
+        from datetime import datetime
+        return {
+            "final_response": {
+                "type": "error",
+                "error_type": error_type,
+                "message": message,
+                "details": error_details,
+                "suggestion": suggestion,
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+
+    async def recheck_intent_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Recheck unclear intents with more context and keyword extraction
+
+        Args:
+            state: Current state
+
+        Returns:
+            Updated state with recheck results
+        """
+        query = state["query"]
+        logger.info(f"Rechecking unclear intent for query: {query}")
+
+        try:
+            # Try keyword extraction for additional validation
+            keywords = await self.llm_manager.extract_keywords_for_validation(query)
+            logger.debug(f"[RECHECK] Extracted keywords: {keywords.get('keywords', [])}, Score: {keywords.get('score', 0)}")
+
+            if keywords.get("score", 0) < 0.3:
+                # Still unclear after keyword extraction
+                logger.info(f"Query still unclear after recheck (score: {keywords.get('score', 0)})")
+                return {
+                    "still_unclear": True,
+                    "recheck_result": "failed",
+                    "keywords": keywords.get("keywords", []),
+                    "real_estate_keywords": keywords.get("real_estate_keywords", [])
+                }
+            else:
+                # Found relevant keywords, can proceed
+                logger.info(f"Query clarified through keywords (score: {keywords.get('score', 0)})")
+                return {
+                    "still_unclear": False,
+                    "recheck_result": "success",
+                    "intent_type": "general",  # Default to general processing
+                    "keywords": keywords.get("keywords", []),
+                    "real_estate_keywords": keywords.get("real_estate_keywords", []),
+                    "collection_keywords": keywords.get("real_estate_keywords", [])
+                }
+        except Exception as e:
+            logger.error(f"Recheck failed: {e}")
+            # On error, treat as still unclear
+            return {
+                "still_unclear": True,
+                "recheck_result": "error",
+                "error_message": str(e)
+            }
+
+    async def guidance_message_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Provide guidance message for unclassified or unclear queries
+
+        Args:
+            state: Current state
+
+        Returns:
+            Updated state with guidance response
+        """
+        logger.info("Generating guidance message")
+        intent_type = state.get("intent_type", "")
+        intent = state.get("intent", {})
+        query = state["query"]
+
+        if intent_type == "irrelevant":
+            message = f"사용자 메시지는 '{query}'입니다.\n죄송합니다. 부동산 관련 질문만 답변 가능합니다."
+            suggestion = "부동산 매매, 전세, 시세, 대출 등에 대해 다시 질문해주세요."
+            examples = [
+                "강남구 아파트 시세 알려줘",
+                "주택담보대출 금리는?",
+                "전세 계약시 주의사항은?",
+                "부동산 양도세 계산 방법은?"
+            ]
+            response_type = "irrelevant"
+        elif state.get("still_unclear"):
+            message = f"사용자 메시지는 '{query}'입니다.\n질문을 명확히 이해하지 못했습니다."
+            suggestion = "더 구체적으로 다시 질문해주세요."
+            examples = intent.get("examples", [
+                "특정 지역의 부동산 시세를 알고 싶으시면: '강남구 아파트 시세'",
+                "대출 정보를 원하시면: '주택담보대출 조건'",
+                "법률 정보가 필요하시면: '전세 계약서 작성 방법'"
+            ])
+            response_type = "unclear"
+        else:
+            # Generic guidance
+            base_message = intent.get("message", "요청을 처리할 수 없습니다.")
+            message = f"사용자 메시지는 '{query}'입니다.\n{base_message}"
+            suggestion = intent.get("suggestion", "다른 방식으로 다시 질문해주세요.")
+            examples = intent.get("examples", [])
+            response_type = "guidance"
+
+        logger.debug(f"[GUIDANCE] Type: {response_type}, Message: {message}")
+
+        return {
+            "final_response": {
+                "type": response_type,
+                "message": message,
+                "suggestion": suggestion,
+                "examples": examples,
+                "original_query": state["query"],
+                "extracted_keywords": state.get("keywords", [])
+            }
+        }
 
     async def process_query(
         self,
