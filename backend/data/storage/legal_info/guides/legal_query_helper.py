@@ -377,10 +377,10 @@ class LegalQueryHelper:
             }
             field = field_map.get(article_type)
             if field:
-                filters.append({field: "True"})
+                filters.append({field: True})  # Boolean, not string
 
         if exclude_deleted:
-            filters.append({"is_deleted": "False"})
+            filters.append({"is_deleted": False})  # Boolean, not string
 
         # Combine filters
         if len(filters) == 0:

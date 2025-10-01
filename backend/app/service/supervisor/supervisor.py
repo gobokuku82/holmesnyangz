@@ -917,6 +917,7 @@ class RealEstateSupervisor:
             }
 
         agent_results = state.get("agent_results", {})
+        logger.debug(f"[RESPONSE] agent_results keys: {list(agent_results.keys())}")
 
         # Check if search_agent returned direct output
         search_result = agent_results.get("search_agent", {})
@@ -929,8 +930,12 @@ class RealEstateSupervisor:
         # Process all agent results
         all_data = {}
         for agent_name, result in agent_results.items():
-            if result.get("status") == "success":
-                all_data[agent_name] = result.get("data", {})
+            logger.debug(f"[RESPONSE] Processing {agent_name}: status={result.get('status')}")
+            if result.get("status") == "success" or result.get("status") == "completed":
+                # SearchAgent returns "collected_data", others may return "data"
+                data = result.get("collected_data") or result.get("data", {})
+                logger.debug(f"[RESPONSE] {agent_name} data keys: {list(data.keys()) if isinstance(data, dict) else 'not dict'}")
+                all_data[agent_name] = data
 
         # Create summary
         summary = "데이터 수집 완료"

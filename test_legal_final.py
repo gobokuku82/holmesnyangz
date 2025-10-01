@@ -23,11 +23,12 @@ if legal_tool:
     print(f"   Name: {legal_tool.name}")
     print(f"   Description: {legal_tool.description}")
     print(f"   Use Mock Data: {legal_tool.use_mock_data}")
-    print(f"   Has Search Agent: {hasattr(legal_tool, 'search_agent') and legal_tool.search_agent is not None}")
+    print(f"   Has Embedding Model: {hasattr(legal_tool, 'embedding_model') and legal_tool.embedding_model is not None}")
+    print(f"   Has ChromaDB Collection: {hasattr(legal_tool, 'collection') and legal_tool.collection is not None}")
+    print(f"   Has Metadata Helper: {hasattr(legal_tool, 'metadata_helper') and legal_tool.metadata_helper is not None}")
 
-    if hasattr(legal_tool, 'search_agent') and legal_tool.search_agent:
-        print(f"   Embedding Model Loaded: {legal_tool.search_agent.embedding_model is not None}")
-        print(f"   ChromaDB Collection: {legal_tool.search_agent.collection.count()} documents")
+    if hasattr(legal_tool, 'collection') and legal_tool.collection:
+        print(f"   ChromaDB Documents: {legal_tool.collection.count()}")
 else:
     print("\n[ERROR] Legal Search Tool not found!")
 

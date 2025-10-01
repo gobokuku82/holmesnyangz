@@ -34,6 +34,16 @@ class Config:
         "regional_info": DB_DIR / "real_estate" / "regional_stats.db",       # Regional statistics DB
         "user_profiles": DB_DIR / "user" / "profiles.db",                    # User profiles DB
         "user_data": DB_DIR / "user" / "data.db",                            # User data DB
+        # Legal information databases
+        "legal_metadata": BASE_DIR / "data" / "storage" / "legal_info" / "sqlite_db" / "legal_metadata.db",
+    }
+
+    # ============ Legal Search Paths ============
+    LEGAL_INFO_BASE = BASE_DIR / "data" / "storage" / "legal_info"
+    LEGAL_PATHS = {
+        "chroma_db": LEGAL_INFO_BASE / "chroma_db",                          # ChromaDB vector database
+        "sqlite_db": LEGAL_INFO_BASE / "sqlite_db" / "legal_metadata.db",   # SQLite metadata
+        "embedding_model": BASE_DIR / "app" / "service" / "models" / "kure_v1",  # Korean Legal Embedding Model
     }
 
     # ============ Model Settings (Active) ============
