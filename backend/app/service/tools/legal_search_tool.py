@@ -6,6 +6,7 @@ Searches for legal information related to real estate using ChromaDB
 from typing import Dict, Any, List, Optional
 from .base_tool import BaseTool
 import sys
+import re
 from pathlib import Path
 import chromadb
 from chromadb.config import Settings
@@ -98,6 +99,47 @@ class LegalSearchTool(BaseTool):
 
         self.logger.info(f"Searching legal DB - query: {query}, doc_type: {doc_type}, category: {category}")
 
+        # Check if this is a specific article query (e.g., "주택임대차보호법 제7조")
+        article_query = self._is_specific_article_query(query)
+
+        if article_query:
+            # Fast path: Direct SQL lookup → ChromaDB get by chunk_ids (200x faster)
+            self.logger.info(f"Specific article query detected: {article_query}")
+            try:
+                chunk_ids = self.metadata_helper.get_article_chunk_ids(
+                    title=article_query['law_title'],
+                    article_number=article_query['article_number']
+                )
+
+                if chunk_ids:
+                    self.logger.info(f"Found {len(chunk_ids)} chunks via SQL direct lookup")
+                    # Direct get from ChromaDB (no vector search needed)
+                    results = self.collection.get(
+                        ids=chunk_ids,
+                        include=['documents', 'metadatas']
+                    )
+
+                    # Convert get() results to query() format for consistency
+                    results = {
+                        'ids': [results['ids']],
+                        'documents': [results['documents']],
+                        'metadatas': [results['metadatas']],
+                        'distances': [[0.0] * len(results['ids'])]  # Perfect match (distance=0)
+                    }
+
+                    formatted_data = self._format_chromadb_results(results)
+
+                    return self.format_results(
+                        data=formatted_data,
+                        total_count=len(formatted_data),
+                        query=query
+                    )
+                else:
+                    self.logger.info(f"No chunks found via SQL, falling back to vector search")
+            except Exception as e:
+                self.logger.warning(f"SQL direct lookup failed: {e}, falling back to vector search")
+
+        # Standard path: Vector search with metadata filtering
         # Build filter using metadata helper
         # Use LLM's category selection to reduce search scope by 70%
         filter_dict = self.metadata_helper.build_chromadb_filter(
@@ -168,6 +210,39 @@ class LegalSearchTool(BaseTool):
         """
         # AUTO-DETECTION DISABLED
         # Reason: "전세금" contains "세금" → wrong filter → 0 results
+        return None
+
+    def _is_specific_article_query(self, query: str) -> Optional[Dict[str, str]]:
+        """
+        특정 조문 쿼리인지 감지 (예: "주택임대차보호법 제7조")
+
+        Returns:
+            {"law_title": "주택임대차보호법", "article_number": "제7조"} or None
+        """
+        # Pattern: 법률명 + 제N조[의N]
+        patterns = [
+            r'(.+?)\s*제(\d+)조(?:의(\d+))?',  # "주택임대차보호법 제7조" or "민법 제618조의2"
+            r'(.+?)\s*(\d+)조(?:의(\d+))?',    # "주택임대차보호법 7조"
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, query)
+            if match:
+                law_title = match.group(1).strip()
+                article_num = match.group(2)
+                sub_num = match.group(3)
+
+                # Build article number
+                if sub_num:
+                    article_number = f"제{article_num}조의{sub_num}"
+                else:
+                    article_number = f"제{article_num}조"
+
+                return {
+                    'law_title': law_title,
+                    'article_number': article_number
+                }
+
         return None
 
     def _format_chromadb_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:

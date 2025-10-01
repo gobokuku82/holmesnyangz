@@ -449,6 +449,120 @@ Category: 2_임대차_전세_월세
 
 ---
 
+## 🔧 Tool에서의 LLM 호출 여부
+
+### 결론: Tool은 LLM을 호출하지 않음 ✅
+
+모든 Tool을 검증한 결과, **어떤 Tool도 LLM(GPT)을 호출하지 않습니다**.
+
+### Tool별 동작 방식
+
+#### 1. legal_search_tool.py (실제 DB 사용)
+**동작**:
+- ChromaDB 벡터 검색 (임베딩 유사도 비교)
+- SQL 메타데이터 조회 (SQLite)
+- 특정 조문 직접 조회 (정규식 패턴 매칭)
+
+**LLM 호출**: ❌ 없음
+- 임베딩 모델(`kure_v1`) 사용하지만 이는 LLM이 아님
+- 벡터 변환만 수행, GPT API 호출 없음
+
+**코드 증거**:
+```python
+# Line 155: 임베딩 생성 (로컬 모델, LLM 아님)
+embedding = self.embedding_model.encode(query).tolist()
+
+# Line 157: ChromaDB 벡터 검색 (DB 쿼리, LLM 아님)
+results = self.collection.query(
+    query_embeddings=[embedding],
+    where=filter_dict,
+    n_results=limit
+)
+
+# Line 212: SQL 메타데이터 보강 (DB 쿼리, LLM 아님)
+law_info = self.metadata_helper.get_law_by_title(law_title, fuzzy=True)
+```
+
+---
+
+#### 2. regulation_search_tool.py (Mock 데이터)
+**동작**: Mock 데이터 반환만
+
+**LLM 호출**: ❌ 없음
+
+---
+
+#### 3. loan_search_tool.py (Mock 데이터)
+**동작**: Mock 데이터 반환만
+
+**LLM 호출**: ❌ 없음
+
+---
+
+#### 4. real_estate_search_tool.py (Mock 데이터)
+**동작**: Mock 데이터 반환만
+
+**LLM 호출**: ❌ 없음
+
+---
+
+#### 5. analysis_tools.py (통계 분석)
+**동작**:
+- 시장 분석 (통계 계산)
+- 트렌드 분석 (추세 계산)
+- 비교 분석 (데이터 비교)
+- 투자 평가 (수익률 계산)
+- 리스크 평가 (점수 계산)
+
+**LLM 호출**: ❌ 없음
+
+---
+
+### LLM vs 임베딩 모델 차이
+
+| 항목 | LLM (GPT-4o-mini) | 임베딩 모델 (kure_v1) |
+|------|------------------|---------------------|
+| **목적** | 텍스트 생성, 추론, 판단 | 텍스트 → 벡터 변환 |
+| **입력** | 프롬프트 (자연어) | 텍스트 (단일 문장) |
+| **출력** | 텍스트 (JSON/자연어) | 1024차원 벡터 |
+| **API 호출** | OpenAI API 호출 (비용 발생) | 로컬 모델 (비용 없음) |
+| **소요 시간** | 2-5초 | 0.05초 |
+| **사용 위치** | Supervisor, SearchAgent | legal_search_tool만 |
+
+---
+
+### 시스템 전체 LLM 호출 요약
+
+**총 LLM 호출**: 4회 (모두 Supervisor + SearchAgent)
+
+| 구분 | LLM 호출 | 벡터 검색 | SQL 쿼리 |
+|------|---------|----------|---------|
+| **Supervisor** | 2회 ✓ | - | - |
+| **SearchAgent** | 2회 ✓ | - | - |
+| **Tool (legal_search)** | - | 1회 (0.15초) | N회 (0.005초) |
+| **Tool (기타)** | - | - | - |
+
+**전체 처리 시간 분석** (쿼리: "전세금 인상 한도"):
+```
+총 29.26초
+├─ LLM 호출: ~13초 (44%)
+│  ├─ Supervisor LLM #1: 2.6초
+│  ├─ Supervisor LLM #2: 5.5초
+│  ├─ SearchAgent LLM #3: 2.7초
+│  └─ SearchAgent LLM #4: 2.3초
+│
+├─ 벡터 검색 (Tool): 0.15초 (0.5%)
+├─ SQL 쿼리 (Tool): 0.005초 (0.02%)
+└─ 기타 (초기화, 직렬화): ~16초 (55%)
+```
+
+**핵심**:
+- Tool 실행은 매우 빠름 (0.155초)
+- 병목은 LLM 호출 (13초)
+- 최적화 방향: LLM 호출 횟수 감소 (4회 → 1-2회)
+
+---
+
 ## 📈 LLM 호출 요약
 
 | # | 위치 | 메서드 | 목적 | 소요시간 | Input | Output |
@@ -460,7 +574,7 @@ Category: 2_임대차_전세_월세
 
 **총 LLM 호출**: 4번
 **총 LLM 소요시간**: ~13.1초
-**벡터 검색 시간**: ~0.5초
+**벡터 검색 시간**: ~0.15초 (카테고리 필터 적용 후)
 **전체 실행 시간**: 29.26초 (나머지는 초기화, 직렬화 등)
 
 ---
