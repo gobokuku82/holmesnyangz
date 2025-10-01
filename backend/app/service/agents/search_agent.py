@@ -133,10 +133,24 @@ class SearchAgentLLM:
 - loan_search: 대출, 금리, 금융 상품
 - real_estate_search: 매물, 시세, 거래 정보
 
+⚠️ legal_search 필터 사용 가이드:
+【doc_type 필터 - 매우 신중하게 사용】
+  • doc_type은 사용자가 "시행령", "시행규칙", "대법원규칙" 등을 명시적으로 언급한 경우만 사용
+  • "법률", "법", "법령" 같은 일반적인 단어는 doc_type 지정 금지 (벡터 검색으로 자동 처리됨)
+  • "기타"는 절대 사용 금지 (전체 데이터의 1.4%만 해당)
+  • 불확실하면 doc_type을 생략 → 전체 문서에서 벡터 검색 수행 (권장)
+
+【category 필터 - 적극 활용 권장】
+  • "임대차", "전세", "월세" → category="2_임대차_전세_월세"
+  • "매매", "분양", "공급" → category="3_공급_및_관리_매매_분양"
+  • category는 doc_type보다 안전하고 효과적
+
 법률 검색 예시:
-- "임대차 계약 보증금" → legal_search with category="2_임대차_전세_월세"
-- "공인중개사법 시행령" → legal_search with doc_type="시행령"
+- "전세금 인상 법률" → legal_search (doc_type 없음, category="2_임대차_전세_월세")
+- "임대차 계약 보증금" → legal_search (doc_type 없음, category="2_임대차_전세_월세")
+- "공인중개사법 시행령" → legal_search with doc_type="시행령" (명시적으로 "시행령" 언급)
 - "임차인 보호 조항" → legal_search with is_tenant_protection=true
+- "주택임대차보호법" → legal_search (doc_type 없음, 벡터 검색으로 자동 매칭)
 
 JSON 형식으로 응답:
 {
@@ -144,9 +158,7 @@ JSON 형식으로 응답:
     "tool_parameters": {
         "도구1": {
             "query": "검색 쿼리",
-            "doc_type": "법률|시행령|시행규칙 등 (선택)",
-            "category": "카테고리 (선택)",
-            "limit": 10
+            "category": "카테고리 (권장)"
         },
         "도구2": {"param1": "value1"}
     },

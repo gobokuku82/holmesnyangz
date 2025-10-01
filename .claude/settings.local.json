@@ -9,7 +9,8 @@
       "Bash(then echo \"ChromaDB exists\")",
       "Bash(else echo \"ChromaDB not found\")",
       "Bash(fi)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(timeout 120 python app/service/tests/final_integration_check.py)"
     ],
     "deny": [],
     "ask": []
