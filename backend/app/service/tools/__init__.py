@@ -24,17 +24,15 @@ import os
 tool_registry = ToolRegistry()
 
 # Check if we should use mock data for tools
-# Legal search now has real DB support, so default to False for legal_search
-USE_MOCK_LEGAL = os.getenv("USE_MOCK_LEGAL", "false").lower() == "true"
-USE_MOCK_OTHER_TOOLS = os.getenv("USE_MOCK_TOOLS", "true").lower() == "true"
+USE_MOCK_TOOLS = os.getenv("USE_MOCK_TOOLS", "true").lower() == "true"
 
 # Register all available tools
-# Legal search: Use real DB by default (ChromaDB + SQLite)
+# Legal search: Always use real DB (ChromaDB + SQLite)
 # Other tools: Use mock data by default (DB not ready yet)
-tool_registry.register(LegalSearchTool(use_mock_data=USE_MOCK_LEGAL))
-tool_registry.register(RegulationSearchTool(use_mock_data=USE_MOCK_OTHER_TOOLS))
-tool_registry.register(LoanSearchTool(use_mock_data=USE_MOCK_OTHER_TOOLS))
-tool_registry.register(RealEstateSearchTool(use_mock_data=USE_MOCK_OTHER_TOOLS))
+tool_registry.register(LegalSearchTool())  # No mock mode - always real DB
+tool_registry.register(RegulationSearchTool(use_mock_data=USE_MOCK_TOOLS))
+tool_registry.register(LoanSearchTool(use_mock_data=USE_MOCK_TOOLS))
+tool_registry.register(RealEstateSearchTool(use_mock_data=USE_MOCK_TOOLS))
 
 __all__ = [
     "BaseTool",
