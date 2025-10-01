@@ -942,6 +942,9 @@ class RealEstateSupervisor:
         if all_data:
             summary = f"{len(all_data)}개의 에이전트에서 데이터 수집 완료"
 
+        logger.debug(f"[RESPONSE] all_data final: {list(all_data.keys())}")
+        logger.debug(f"[RESPONSE] all_data content sample: {str(all_data)[:200]}")
+
         final_response = {
             "type": "processed",
             "data": all_data,
@@ -952,7 +955,7 @@ class RealEstateSupervisor:
             "final_response": final_response,
             "response_type": "processed"
         }
-        logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}")
+        logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}, data_keys: {list(final_response.get('data', {}).keys())}")
         return result
 
     async def error_handler_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
