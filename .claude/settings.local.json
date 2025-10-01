@@ -10,7 +10,9 @@
       "Bash(else echo \"ChromaDB not found\")",
       "Bash(fi)",
       "Bash(dir:*)",
-      "Bash(timeout 120 python app/service/tests/final_integration_check.py)"
+      "Bash(timeout 120 python app/service/tests/final_integration_check.py)",
+      "Bash(timeout 600 python app/service/tests/hard_query_test_50.py)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
