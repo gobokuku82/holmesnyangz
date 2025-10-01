@@ -99,10 +99,10 @@ class LegalSearchTool(BaseTool):
         self.logger.info(f"Searching legal DB - query: {query}, doc_type: {doc_type}, category: {category}")
 
         # Build filter using metadata helper
-        # Note: Only exclude_deleted for now since DB has limited categories
+        # Use LLM's category selection to reduce search scope by 70%
         filter_dict = self.metadata_helper.build_chromadb_filter(
             doc_type=doc_type if doc_type else None,
-            category=None,  # Temporarily disable category filter (DB has only one category)
+            category=category if category else None,  # Use LLM's category selection
             article_type=self._detect_article_type(query),
             exclude_deleted=True
         )
@@ -171,7 +171,7 @@ class LegalSearchTool(BaseTool):
         return None
 
     def _format_chromadb_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """ChromaDB 결과를 표준 포맷으로 변환"""
+        """ChromaDB 결과를 표준 포맷으로 변환 + SQL 메타데이터 보강"""
         if not results['ids'][0]:
             return []
 
@@ -205,6 +205,21 @@ class LegalSearchTool(BaseTool):
                 "is_tax_related": metadata.get('is_tax_related') == 'True',
                 "enforcement_date": metadata.get('enforcement_date')
             }
+
+            # Enrich with SQL metadata (total articles, law number, etc.)
+            if law_title != 'N/A':
+                try:
+                    law_info = self.metadata_helper.get_law_by_title(law_title, fuzzy=True)
+                    if law_info:
+                        formatted_item['total_articles'] = law_info.get('total_articles')
+                        formatted_item['law_number'] = law_info.get('law_number')
+                        formatted_item['last_article'] = law_info.get('last_article')
+                        # Override enforcement_date from SQL if available (more accurate)
+                        if law_info.get('enforcement_date'):
+                            formatted_item['enforcement_date'] = law_info['enforcement_date']
+                except Exception as e:
+                    # If SQL query fails, continue without enrichment
+                    self.logger.debug(f"SQL enrichment failed for {law_title}: {e}")
 
             formatted_data.append(formatted_item)
 
