@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python test:*)",
-      "Bash(python test_llm_context.py:*)"
+      "Bash(python test_llm_context.py:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

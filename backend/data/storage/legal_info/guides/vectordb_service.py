@@ -157,6 +157,9 @@ class VectorDBService:
                         metadata['source_file'] = json_file.name
                         metadata['chunk_index'] = chunk_id
 
+                        # Extract and add doc_type from source_file
+                        metadata['doc_type'] = self._extract_doc_type(json_file.name)
+
                         # Clean metadata for ChromaDB
                         metadata = self._clean_metadata(metadata)
 
@@ -183,6 +186,28 @@ class VectorDBService:
         final_count = self.collection.count()
         self.logger.info(f"Loaded {final_count} chunks into ChromaDB")
         return final_count
+
+    def _extract_doc_type(self, source_file: str) -> str:
+        """
+        Extract document type from source filename
+
+        Args:
+            source_file: Filename containing document type indicator
+
+        Returns:
+            Document type: 시행규칙, 시행령, 법률, 대법원규칙, 용어집, or 기타
+        """
+        if '시행규칙' in source_file:
+            return '시행규칙'
+        elif '시행령' in source_file:
+            return '시행령'
+        elif '법률' in source_file or '법(' in source_file:
+            return '법률'
+        elif '대법원규칙' in source_file:
+            return '대법원규칙'
+        elif '용어' in source_file:
+            return '용어집'
+        return '기타'
 
     def _clean_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -14,29 +14,29 @@ TOTAL_DOCS = 1700
 
 # 임베딩 차원
 EMBEDDING_DIM = 1024
-2. ⚠️ 중요: doc_type 문제
-DB에 doc_type 필드가 없습니다! 대신 source_file 필드에서 추출해야 합니다:
-def extract_doc_type(source_file: str) -> str:
-    if '시행규칙' in source_file:
-        return '시행규칙'
-    elif '시행령' in source_file:
-        return '시행령'
-    elif '법률' in source_file or '법(' in source_file:
-        return '법률'
-    elif '대법원규칙' in source_file:
-        return '대법원규칙'
-    elif '용어' in source_file:
-        return '용어집'
-    return '기타'
+2. ✅ doc_type 메타데이터 (2025-10-01 업데이트 완료)
+doc_type 필드가 메타데이터에 추가되었습니다! 이제 직접 필터링 가능합니다.
+
 문서 타입별 분포:
-법률: 666개 (39%)
-시행령: 426개 (25%)
-시행규칙: 268개 (16%)
-대법원규칙: 248개 (15%)
-용어집: 92개 (5%)
+법률: 666개 (39.2%)
+시행령: 426개 (25.1%)
+시행규칙: 268개 (15.8%)
+대법원규칙: 225개 (13.2%)
+용어집: 92개 (5.4%)
+기타: 23개 (1.4%)
+
+사용 예시:
+```python
+results = collection.query(
+    query_embeddings=[embedding],
+    where={"doc_type": "법률"},
+    n_results=10
+)
+```
 3. 주요 메타데이터 필드
 항상 있는 필드:
-source_file - 원본 파일명 (doc_type 추출용)
+doc_type - 문서 타입 (법률/시행령/시행규칙/대법원규칙/용어집/기타)
+source_file - 원본 파일명
 category - 카테고리 폴더명
 article_number - 조항 번호
 article_title - 조항 제목
@@ -64,38 +64,65 @@ is_penalty_related (64개) - 벌칙
 "4_기타"                      # 기타
 5. 사용 파일
 생성된 파일:
-CHROMADB_USAGE_GUIDE.md - 상세 가이드 문서
-example_chromadb_usage.py - 실행 가능한 예제 코드
-이 두 파일로 LangGraph 에이전트에서 ChromaDB를 바로 사용하실 수 있습니다!
+CHROMADB_USAGE_GUIDE.md - ChromaDB 사용 가이드
+SQLITE_METADATA_GUIDE.md - SQLite 메타데이터 사용 가이드 ⭐ NEW
+example_chromadb_usage.py - ChromaDB 예제 코드
+legal_query_helper.py - SQLite 쿼리 헬퍼 ⭐ NEW
+legal_metadata.db - SQLite 메타데이터 DB (28개 법률, 1,552개 조항) ⭐ NEW
 6. 빠른 시작 코드
-# 1. 에이전트 초기화
+
+## A. ChromaDB 직접 사용
+```python
 from example_chromadb_usage import LegalSearchAgent
 agent = LegalSearchAgent()
 
-# 2. 기본 검색
+# 기본 검색
 results = agent.search("임차인 보호")
 
-# 3. 카테고리 필터
-results = agent.search(
-    "전세 계약",
-    category="2_임대차_전세_월세"
-)
+# 카테고리 필터
+results = agent.search("전세 계약", category="2_임대차_전세_월세")
+```
 
-# 4. 특수 필터
-results = agent.search(
-    "보증금",
-    is_tenant_protection=True
-)
+## B. SQLite 메타데이터 활용 ⭐ 권장
+```python
+from legal_query_helper import LegalQueryHelper
 
-# 5. 문서 타입별 검색 (후처리)
-results = agent.search_by_doc_type("취득세", "법률")
-7. 알아야 할 제약사항
+with LegalQueryHelper() as helper:
+    # 1. 빠른 메타데이터 조회
+    total = helper.get_law_total_articles("공인중개사법")  # 33
+    date = helper.get_law_enforcement_date("공인중개사법")  # 2024. 7. 10.
+
+    # 2. ChromaDB 필터 생성 (검색 범위 축소)
+    filter_dict = helper.build_chromadb_filter(
+        doc_type="법률",
+        category="2_임대차_전세_월세",
+        article_type="tenant_protection"
+    )
+
+    # 3. ChromaDB 검색 시 필터 적용
+    results = collection.query(
+        query_embeddings=[embedding],
+        where=filter_dict,  # 1,700개 → 28개로 축소!
+        n_results=10
+    )
+```
+7. 알아야 할 제약사항 및 성능 개선
+
 ✅ 가능한 것:
-벡터 유사도 검색
-카테고리 필터링
-Boolean 메타데이터 필터 (is_tenant_protection 등)
-ID로 직접 조회
-참조 관계 파싱
-❌ 불가능한 것 (후처리 필요):
-문서 타입 직접 필터링 → source_file에서 추출 후 필터링
-법률 계층 구조 탐색 → 참조 필드 파싱 후 처리
+- 벡터 유사도 검색 (ChromaDB)
+- 카테고리 필터링 (ChromaDB + SQLite)
+- 문서 타입 필터링 (ChromaDB + SQLite)
+- Boolean 메타데이터 필터 (ChromaDB)
+- ID로 직접 조회 (ChromaDB + SQLite)
+- **메타데이터 빠른 조회** (SQLite) ⭐ NEW
+- **검색 범위 자동 축소** (SQLite → ChromaDB 필터) ⭐ NEW
+
+❌ 불가능한 것:
+- 법률 계층 구조 탐색 → 참조 필드 파싱 후 처리 (SQLite legal_references 테이블 활용 가능)
+
+📈 성능 개선 효과 (SQLite 메타데이터 활용):
+- 메타데이터 조회: ChromaDB 검색 불필요 → **즉시 응답**
+- 검색 범위 축소: 1,700개 → 28개 (임차인 보호) → **98.4% 감소**
+- 필터링 속도: SQLite 인덱스 활용 → **밀리초 단위 응답**
+
+상세 가이드: SQLITE_METADATA_GUIDE.md 참조
