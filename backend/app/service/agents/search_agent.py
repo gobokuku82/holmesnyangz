@@ -124,17 +124,31 @@ class SearchAgentLLM:
 주어진 키워드를 바탕으로 적절한 검색 도구를 선택하고 검색 계획을 수립하세요.
 
 사용 가능한 도구:
-- legal_search: 법률, 계약, 세금 정보
+- legal_search: 법률, 계약, 세금 정보 (ChromaDB 벡터 검색 + 메타데이터 필터링)
+  * 지원 필터: doc_type (법률/시행령/시행규칙/대법원규칙/용어집/기타)
+  * 지원 필터: category (1_공통 매매_임대차, 2_임대차_전세_월세, 3_공급_및_관리_매매_분양, 4_기타)
+  * 지원 필터: is_tenant_protection (임차인 보호 조항)
+  * 지원 필터: is_tax_related (세금 관련 조항)
 - regulation_search: 규정, 정책, 건축 규제
 - loan_search: 대출, 금리, 금융 상품
 - real_estate_search: 매물, 시세, 거래 정보
+
+법률 검색 예시:
+- "임대차 계약 보증금" → legal_search with category="2_임대차_전세_월세"
+- "공인중개사법 시행령" → legal_search with doc_type="시행령"
+- "임차인 보호 조항" → legal_search with is_tenant_protection=true
 
 JSON 형식으로 응답:
 {
     "selected_tools": ["도구1", "도구2"],
     "tool_parameters": {
-        "도구1": {"param1": "value1"},
-        "도구2": {"param2": "value2"}
+        "도구1": {
+            "query": "검색 쿼리",
+            "doc_type": "법률|시행령|시행규칙 등 (선택)",
+            "category": "카테고리 (선택)",
+            "limit": 10
+        },
+        "도구2": {"param1": "value1"}
     },
     "search_strategy": "검색 전략 설명"
 }"""

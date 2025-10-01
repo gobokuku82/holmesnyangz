@@ -16,7 +16,7 @@ class LegalQueryHelper:
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
             base_path = Path(r"C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info")
-            db_path = str(base_path / "legal_metadata.db")
+            db_path = str(base_path / "sqlite_db" / "legal_metadata.db")
 
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)

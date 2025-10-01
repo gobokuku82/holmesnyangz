@@ -1,92 +1,0 @@
-C:\Users\gobok\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\torchvision\io\image.py:13: UserWarning: Failed to load image Python extension: '[WinError 127] 지정된 프로시저를 찾을 수 없습니다'If you don't plan on using image functionality from `torchvision.io`, you can ignore this warning. Otherwise, there might be something wrong with your environment. Did you have `libjpeg` or `libpng` installed before building `torchvision` from source?
-  warn(
-2025-10-01 10:56:12,311 - app.service.vectordb_service - INFO - Using existing collection: korean_legal_documents
-2025-10-01 10:56:12,311 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
-2025-10-01 10:56:12,311 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\kure_v1
-2025-10-01 10:56:14,193 - app.service.vectordb_service - INFO - Loaded embedding model: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\kure_v1
-2025-10-01 10:56:14,193 - app.service.vectordb_service - INFO - VectorDB service initialized successfully
-============================================================
-Loading ALL Legal Documents into ChromaDB
-============================================================
-
-This will load approximately 1,700 chunks.
-Expected time: 10-20 minutes on CPU
-------------------------------------------------------------
-
-1. Initializing ChromaDB...
-[SUCCESS] ChromaDB initialized
-   Current documents in DB: 1200
-
-2. Need to load 500 more documents...
-   Clearing partial data to reload completely...
-   Collection reset
-
-3. Loading documents into ChromaDB...
-   Processing 4 categories:
-   - 1_공통 매매_임대차
-   - 2_임대차_전세_월세
-   - 3_공급_및_관리_매매_분양
-   - 4_기타
-
-   Progress will be shown every 100 documents...
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:52<02:36, 52.15s/it]Batches:  50%|#####     | 2/4 [01:05<00:58, 29.14s/it]Batches:  75%|#######5  | 3/4 [01:09<00:17, 17.59s/it]Batches: 100%|##########| 4/4 [01:09<00:00, 10.71s/it]Batches: 100%|##########| 4/4 [01:09<00:00, 17.30s/it]
-2025-10-01 10:57:24,035 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [02:16<06:50, 136.82s/it]Batches:  50%|#####     | 2/4 [02:34<02:13, 66.71s/it] Batches:  75%|#######5  | 3/4 [02:43<00:40, 40.32s/it]Batches: 100%|##########| 4/4 [02:43<00:00, 24.51s/it]Batches: 100%|##########| 4/4 [02:43<00:00, 40.91s/it]
-2025-10-01 11:00:07,946 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:36<04:48, 96.21s/it]Batches:  50%|#####     | 2/4 [01:53<01:39, 49.51s/it]Batches:  75%|#######5  | 3/4 [02:00<00:30, 30.52s/it]Batches: 100%|##########| 4/4 [02:01<00:00, 18.60s/it]Batches: 100%|##########| 4/4 [02:01<00:00, 30.32s/it]
-2025-10-01 11:02:09,510 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:40<02:00, 40.14s/it]Batches:  50%|#####     | 2/4 [00:51<00:46, 23.27s/it]Batches:  75%|#######5  | 3/4 [00:59<00:16, 16.42s/it]Batches: 100%|##########| 4/4 [01:00<00:00, 10.14s/it]Batches: 100%|##########| 4/4 [01:00<00:00, 15.10s/it]
-2025-10-01 11:03:10,176 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:28<01:26, 28.71s/it]Batches:  50%|#####     | 2/4 [00:38<00:35, 17.69s/it]Batches:  75%|#######5  | 3/4 [00:43<00:11, 11.86s/it]Batches: 100%|##########| 4/4 [00:43<00:00,  7.31s/it]Batches: 100%|##########| 4/4 [00:43<00:00, 10.99s/it]
-2025-10-01 11:03:54,377 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:27<01:23, 27.89s/it]Batches:  50%|#####     | 2/4 [00:38<00:35, 17.56s/it]Batches:  75%|#######5  | 3/4 [00:43<00:11, 11.73s/it]Batches: 100%|##########| 4/4 [00:43<00:00,  7.21s/it]Batches: 100%|##########| 4/4 [00:43<00:00, 10.82s/it]
-2025-10-01 11:04:37,958 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:29<04:27, 89.13s/it]Batches:  50%|#####     | 2/4 [01:45<01:32, 46.31s/it]Batches:  75%|#######5  | 3/4 [01:51<00:27, 27.91s/it]Batches: 100%|##########| 4/4 [01:51<00:00, 17.02s/it]Batches: 100%|##########| 4/4 [01:51<00:00, 27.95s/it]
-2025-10-01 11:06:30,112 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:31<04:34, 91.55s/it]Batches:  50%|#####     | 2/4 [01:56<01:44, 52.48s/it]Batches:  75%|#######5  | 3/4 [02:07<00:33, 33.68s/it]Batches: 100%|##########| 4/4 [02:08<00:00, 20.57s/it]Batches: 100%|##########| 4/4 [02:08<00:00, 32.11s/it]
-2025-10-01 11:08:38,949 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:44<05:14, 105.00s/it]Batches:  50%|#####     | 2/4 [01:58<01:42, 51.46s/it] Batches:  75%|#######5  | 3/4 [02:05<00:31, 31.13s/it]Batches: 100%|##########| 4/4 [02:06<00:00, 18.99s/it]Batches: 100%|##########| 4/4 [02:06<00:00, 31.57s/it]
-2025-10-01 11:10:45,673 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:58<05:56, 118.70s/it]Batches:  50%|#####     | 2/4 [02:11<01:52, 56.20s/it] Batches:  75%|#######5  | 3/4 [02:17<00:33, 33.48s/it]Batches: 100%|##########| 4/4 [02:17<00:00, 20.40s/it]Batches: 100%|##########| 4/4 [02:17<00:00, 34.48s/it]
-2025-10-01 11:13:04,023 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:48<05:26, 108.80s/it]Batches:  50%|#####     | 2/4 [02:07<01:51, 55.63s/it] Batches:  75%|#######5  | 3/4 [02:15<00:34, 34.09s/it]Batches: 100%|##########| 4/4 [02:16<00:00, 20.87s/it]Batches: 100%|##########| 4/4 [02:16<00:00, 34.07s/it]
-2025-10-01 11:15:20,486 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [02:38<07:55, 158.64s/it]Batches:  50%|#####     | 2/4 [03:02<02:38, 79.18s/it] Batches:  75%|#######5  | 3/4 [03:13<00:48, 48.06s/it]Batches: 100%|##########| 4/4 [03:13<00:00, 29.29s/it]Batches: 100%|##########| 4/4 [03:13<00:00, 48.44s/it]
-2025-10-01 11:18:34,446 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:35<04:46, 95.65s/it]Batches:  50%|#####     | 2/4 [01:53<01:40, 50.03s/it]Batches:  75%|#######5  | 3/4 [02:04<00:32, 32.02s/it]Batches: 100%|##########| 4/4 [02:04<00:00, 19.56s/it]Batches: 100%|##########| 4/4 [02:04<00:00, 31.20s/it]
-2025-10-01 11:20:39,463 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [03:44<11:12, 224.29s/it]Batches:  50%|#####     | 2/4 [04:12<03:37, 108.90s/it]Batches:  75%|#######5  | 3/4 [04:25<01:05, 65.15s/it] Batches: 100%|##########| 4/4 [04:26<00:00, 39.63s/it]Batches: 100%|##########| 4/4 [04:26<00:00, 66.50s/it]
-2025-10-01 11:25:05,741 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [01:04<03:14, 64.84s/it]Batches:  50%|#####     | 2/4 [01:20<01:11, 35.86s/it]Batches:  75%|#######5  | 3/4 [01:25<00:21, 21.80s/it]Batches: 100%|##########| 4/4 [01:25<00:00, 13.34s/it]Batches: 100%|##########| 4/4 [01:25<00:00, 21.46s/it]
-2025-10-01 11:26:31,919 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:53<02:41, 53.81s/it]Batches:  50%|#####     | 2/4 [01:12<01:05, 32.86s/it]Batches:  75%|#######5  | 3/4 [01:21<00:22, 22.25s/it]Batches: 100%|##########| 4/4 [01:21<00:00, 13.61s/it]Batches: 100%|##########| 4/4 [01:21<00:00, 20.50s/it]
-2025-10-01 11:27:54,253 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-Batches:   0%|          | 0/4 [00:00<?, ?it/s]Batches:  25%|##5       | 1/4 [00:18<00:55, 18.57s/it]Batches:  50%|#####     | 2/4 [00:20<00:18,  9.01s/it]Batches:  75%|#######5  | 3/4 [00:22<00:05,  5.63s/it]Batches: 100%|##########| 4/4 [00:22<00:00,  3.49s/it]Batches: 100%|##########| 4/4 [00:22<00:00,  5.67s/it]
-2025-10-01 11:28:17,271 - app.service.vectordb_service - INFO - Inserted batch of 100 documents
-2025-10-01 11:28:17,271 - app.service.vectordb_service - INFO - Loaded 1700 chunks into ChromaDB
-
-[SUCCESS] Loaded 1700 chunks into ChromaDB
-Time taken: 1925.09 seconds (32.08 minutes)
-
-4. Final Database Statistics:
-   - status: initialized
-   - total_chunks: 1700
-   - collection_name: korean_legal_documents
-   - chroma_path: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db
-   - embedding_model: BAAI/bge-m3
-
-5. Verifying data...
-Batches:   0%|          | 0/1 [00:00<?, ?it/s]Batches: 100%|##########| 1/1 [00:00<00:00, 23.49it/s]
-   [SUCCESS] Sample search returned 5 results
-   First result similarity: 0.103
-
-============================================================
-ChromaDB loading completed successfully!
-============================================================
-
-SUMMARY:
-  Total chunks loaded: 1700
-  Time taken: 32.08 minutes
-  Database location: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db
-
-You can now use the search API endpoints!
