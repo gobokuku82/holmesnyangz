@@ -1,43 +1,83 @@
 """
 Legal Search Tool
-Searches for legal information related to real estate
+Searches for legal information related to real estate using ChromaDB
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from .base_tool import BaseTool
 import random
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from legal_search_service import LegalSearchService
 
 
 class LegalSearchTool(BaseTool):
     """
-    Tool for searching legal information
-    - Real estate laws
-    - Contract templates
-    - Legal procedures
-    - Tax regulations
+    Tool for searching legal information using ChromaDB vector search
+    - Real estate laws (법률)
+    - Presidential decrees (시행령)
+    - Ministerial rules (시행규칙)
+    - Legal glossary (용어집)
     """
 
-    def __init__(self, use_mock_data: bool = True):
+    def __init__(self, use_mock_data: bool = False):
         super().__init__(
             name="legal_search",
-            description="법률 정보 검색 - 부동산 관련 법률, 계약서, 절차, 세금 등",
+            description="법률 정보 검색 - 부동산 관련 법률, 시행령, 시행규칙, 용어 등",
             use_mock_data=use_mock_data
         )
+        self.search_service = LegalSearchService() if not use_mock_data else None
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Real search implementation (to be implemented with actual data source)
+        Search legal documents using ChromaDB vector search
 
         Args:
             query: Search query
-            params: Additional parameters
+            params: Additional parameters including:
+                - doc_type: List of document types
+                - category: Category ID
+                - is_tenant_protection: Boolean filter
+                - is_tax_related: Boolean filter
+                - limit: Number of results
 
         Returns:
-            Search results
+            Search results from vector database
         """
-        # TODO: Implement real search when data source is available
-        self.logger.warning("Real search not implemented, falling back to mock")
-        return await self.get_mock_data(query, params)
+        if self.use_mock_data:
+            self.logger.info("Using mock data mode")
+            return await self.get_mock_data(query, params)
+
+        try:
+            # Initialize search service if needed
+            if not self.search_service.is_initialized:
+                await self.search_service.initialize()
+
+            # Extract parameters
+            params = params or {}
+            doc_type = params.get('doc_type')
+            category = params.get('category')
+            is_tenant_protection = params.get('is_tenant_protection')
+            is_tax_related = params.get('is_tax_related')
+            limit = params.get('limit', 10)
+
+            # Execute search
+            results = await self.search_service.search(
+                query=query,
+                doc_type=doc_type,
+                category=category,
+                is_tenant_protection=is_tenant_protection,
+                is_tax_related=is_tax_related,
+                limit=limit
+            )
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"Search error: {e}")
+            # Fallback to mock data on error
+            return await self.get_mock_data(query, params)
 
     async def get_mock_data(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
