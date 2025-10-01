@@ -1,0 +1,127 @@
+version: '1.0'
+created_date: '2025-09-30 20:03:07'
+vector_db:
+  name: ChromaDB
+  collection_name: korean_real_estate_laws
+  embedding_model: multilingual-e5-large
+  distance_metric: cosine
+indexing:
+  primary_fields:
+    text:
+      description: Main content of the chunk
+      type: text
+      vectorize: true
+      weight: 1.0
+    article_title:
+      description: Title of the article
+      type: text
+      vectorize: true
+      weight: 0.8
+  metadata_fields:
+    doc_type:
+      description: Document type (법률/시행령/시행규칙/용어집)
+      type: keyword
+      filterable: true
+      facetable: true
+    category:
+      description: Category folder
+      type: keyword
+      filterable: true
+      facetable: true
+    enforcement_date:
+      description: Enforcement date
+      type: date
+      filterable: true
+      sortable: true
+    chapter:
+      description: Chapter information
+      type: keyword
+      filterable: true
+      hierarchical: true
+    section:
+      description: Section information
+      type: keyword
+      filterable: true
+      hierarchical: true
+    article_number:
+      description: Article number
+      type: keyword
+      filterable: true
+      sortable: true
+    is_deleted:
+      description: Deletion flag
+      type: boolean
+      filterable: true
+      default: false
+  reference_fields:
+    law_references:
+      description: References to other laws
+      type: keyword_array
+      searchable: true
+    decree_references:
+      description: References to decrees
+      type: keyword_array
+      searchable: true
+    form_references:
+      description: References to forms
+      type: keyword_array
+      searchable: true
+  special_flags:
+    is_tenant_protection:
+      description: Tenant protection related
+      type: boolean
+      filterable: true
+    is_delegation:
+      description: Delegation provisions
+      type: boolean
+      filterable: true
+    is_tax_related:
+      description: Tax-related provisions
+      type: boolean
+      filterable: true
+    is_price_disclosure_related:
+      description: Price disclosure related
+      type: boolean
+      filterable: true
+search:
+  default_limit: 10
+  max_limit: 100
+  similarity_threshold: 0.7
+  reranking:
+    enabled: true
+    model: cross-encoder/ms-marco-MiniLM-L-12-v2
+  filters:
+    default_filters: []
+    common_filters:
+    - field: is_deleted
+      value: false
+    - field: doc_type
+      values:
+      - 법률
+      - 시행령
+      - 시행규칙
+query_expansion:
+  enabled: true
+  methods:
+  - synonym_expansion
+  - legal_term_mapping
+  synonym_dict:
+    임대:
+    - 임차
+    - 전세
+    - 월세
+    - 렌트
+    매매:
+    - 매수
+    - 매도
+    - 거래
+    - 양도
+    주택:
+    - 아파트
+    - 집
+    - 주거
+    - 거주지
+    공시:
+    - 고시
+    - 발표
+    - 공개

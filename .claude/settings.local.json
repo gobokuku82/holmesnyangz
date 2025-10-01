@@ -4,7 +4,12 @@
       "Bash(python test:*)",
       "Bash(python test_llm_context.py:*)",
       "Bash(python:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(if [ -d \"chroma_db\" ])",
+      "Bash(then echo \"ChromaDB exists\")",
+      "Bash(else echo \"ChromaDB not found\")",
+      "Bash(fi)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

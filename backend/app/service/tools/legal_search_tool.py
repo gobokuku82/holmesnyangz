@@ -160,15 +160,14 @@ class LegalSearchTool(BaseTool):
         return None
 
     def _detect_article_type(self, query: str) -> Optional[str]:
-        """질문에서 특수 조항 타입 감지"""
-        if "임차인 보호" in query or "임차인보호" in query:
-            return "tenant_protection"
-        elif "세금" in query or "과세" in query:
-            return "tax_related"
-        elif "위임" in query:
-            return "delegation"
-        elif "벌칙" in query or "처벌" in query:
-            return "penalty_related"
+        """질문에서 특수 조항 타입 감지
+
+        NOTE: Disabled to avoid 0 results.
+        Most documents have None for these boolean fields.
+        Only use if explicitly provided in params.
+        """
+        # AUTO-DETECTION DISABLED
+        # Reason: "전세금" contains "세금" → wrong filter → 0 results
         return None
 
     def _format_chromadb_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:

@@ -1,0 +1,150 @@
+{
+  "version": "1.0",
+  "created_date": "2025-09-30 20:03:07",
+  "by_category": {
+    "1_공통 매매_임대차": {
+      "documents": 9,
+      "chunks": 621,
+      "document_types": {
+        "시행규칙": 4,
+        "시행령": 2,
+        "법률": 3
+      }
+    },
+    "2_임대차_전세_월세": {
+      "documents": 5,
+      "chunks": 301,
+      "document_types": {
+        "시행규칙": 1,
+        "시행령": 2,
+        "법률": 2
+      }
+    },
+    "3_공급_및_관리_매매_분양": {
+      "documents": 8,
+      "chunks": 518,
+      "document_types": {
+        "시행규칙": 3,
+        "시행령": 2,
+        "법률": 3
+      }
+    },
+    "4_기타": {
+      "documents": 6,
+      "chunks": 260,
+      "document_types": {
+        "시행규칙": 3,
+        "시행령": 1,
+        "법률": 1,
+        "용어집": 1
+      }
+    }
+  },
+  "by_document_type": {
+    "시행규칙": {
+      "documents": 11,
+      "chunks": 516,
+      "avg_chunks_per_doc": 46.9
+    },
+    "시행령": {
+      "documents": 7,
+      "chunks": 426,
+      "avg_chunks_per_doc": 60.9
+    },
+    "법률": {
+      "documents": 9,
+      "chunks": 666,
+      "avg_chunks_per_doc": 74.0
+    },
+    "용어집": {
+      "documents": 1,
+      "chunks": 92,
+      "avg_chunks_per_doc": 92.0
+    }
+  },
+  "metadata_field_usage": {
+    "rule_title": 516,
+    "rule_number": 516,
+    "enforcement_date": 1608,
+    "chapter": 1393,
+    "article_number": 1608,
+    "article_title": 1608,
+    "is_deleted": 695,
+    "form_references": 137,
+    "decree_references": 101,
+    "law_references": 290,
+    "deletion_date": 16,
+    "decree_title": 426,
+    "decree_number": 426,
+    "table_references": 17,
+    "has_ministry_rule_reference": 8,
+    "law_title": 666,
+    "law_number": 666,
+    "has_amendments": 54,
+    "amendment_count": 54,
+    "newly_established": 17,
+    "special_enforcement_date": 2,
+    "is_court_rule": 27,
+    "civil_execution_references": 3,
+    "abbreviation": 364,
+    "in_appendix": 42,
+    "appendix_info": 40,
+    "section": 856,
+    "is_pilot_program": 1,
+    "is_moved": 51,
+    "is_mediation_related": 17,
+    "is_tenant_protection": 28,
+    "is_series_article": 6,
+    "series_group": 6,
+    "is_penalty_related": 1,
+    "is_regulatory_review": 3,
+    "other_law_references": 97,
+    "is_delegation": 156,
+    "has_penalty": 21,
+    "chapter_title": 469,
+    "section_title": 434,
+    "appendix_references": 5,
+    "has_formula": 1,
+    "is_pricing_related": 3,
+    "env_rule_number": 3,
+    "is_noise_related": 2,
+    "has_appendix_reference": 1,
+    "is_price_disclosure_related": 90,
+    "is_form_related": 13,
+    "law_article_references": 91,
+    "is_appraisal_related": 9,
+    "has_rule_reference": 8,
+    "is_committee_related": 2,
+    "item_count": 34,
+    "article_type": 26,
+    "has_key_terms": 26,
+    "has_decree_reference": 23,
+    "price_disclosure_target": 18,
+    "glossary_title": 92,
+    "term_number": 92,
+    "term_name": 92,
+    "document_type": 92,
+    "term_category": 92,
+    "definition_length": 92,
+    "is_legal_term": 26,
+    "is_tax_related": 7,
+    "is_financial": 4,
+    "is_abbreviation": 15
+  },
+  "reference_statistics": {
+    "law_references": 528,
+    "decree_references": 116,
+    "form_references": 234,
+    "cross_references": 0
+  },
+  "special_flags_usage": {
+    "is_court_rule": 27,
+    "is_mediation_related": 17,
+    "is_tenant_protection": 28,
+    "is_penalty_related": 1,
+    "is_delegation": 156,
+    "is_price_disclosure_related": 90,
+    "is_tax_related": 7,
+    "is_financial": 4
+  }
+}

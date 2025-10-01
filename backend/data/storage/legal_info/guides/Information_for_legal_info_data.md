@@ -58,10 +58,17 @@ law_references - 법률 참조
 decree_references - 시행령 참조
 form_references - 양식 참조
 Boolean 필터 (특수 조항):
-is_tenant_protection (28개) - 임차인 보호
-is_tax_related (7개) - 세금 관련
-is_delegation (156개) - 위임
-is_penalty_related (64개) - 벌칙
+⚠️ 주의: 이 필드들은 해당하는 문서에만 존재하며, 대부분의 문서에는 필드 자체가 없음 (absent)
+is_tenant_protection (28개) - 임차인 보호 조항만 True
+is_tax_related (7개) - 세금 관련 용어만 True
+is_delegation (156개) - 위임 조항만 True
+is_penalty_related (1개) - 벌칙 조항만 True
+is_deleted (679개 False, 16개 True) - 삭제된 조항 표시
+
+필터 사용 예시:
+- {"is_tenant_protection": True} → 28개 문서만 검색
+- {"is_deleted": False} → 삭제되지 않은 679개 문서만 검색
+- 필터 없음 → 전체 1700개 문서 검색 (권장)
 4. 카테고리 정보
 "1_공통 매매_임대차"          # 공통 거래
 "2_임대차_전세_월세"          # 임대차
@@ -71,36 +78,49 @@ is_penalty_related (64개) - 벌칙
 생성된 파일:
 CHROMADB_USAGE_GUIDE.md - ChromaDB 사용 가이드
 SQLITE_METADATA_GUIDE.md - SQLite 메타데이터 상세 가이드
-schema.sql - SQLite 테이블 스키마 정의 (laws, articles, legal_references) ⭐ NEW
-legal_query_helper.py - SQLite 쿼리 헬퍼 클래스
-unified_legal_agent.py - 통합 에이전트 (SQLite + ChromaDB) ⭐ NEW
+schema.sql - SQLite 테이블 스키마 정의 (laws, articles, legal_references)
+legal_query_helper.py - SQLite 쿼리 헬퍼 클래스 (필터 생성용)
+
+주요 코드:
+backend/app/service/tools/legal_search_tool.py - 법률 검색 도구 (ChromaDB + SQLite 통합)
 6. 빠른 시작 코드
 
-## ⭐ 권장: 통합 에이전트 (SQLite + ChromaDB)
+## ⭐ 권장: LegalSearchTool 사용 (현재 시스템)
 ```python
-from unified_legal_agent import UnifiedLegalAgent
+from backend.app.service.tools.legal_search_tool import LegalSearchTool
 
-# 에이전트 초기화
-agent = UnifiedLegalAgent()
+# 도구 초기화 (자동으로 ChromaDB + SQLite 연결)
+tool = LegalSearchTool()
 
-# 메타데이터 질문 (SQLite만 사용 - 즉시 응답)
-result = agent.answer_question("공인중개사법은 몇 조까지인가요?")
-print(result['answer'])  # "공인중개사법은 총 70개 조항이 있으며..."
-print(result['source'])  # "sqlite"
+# 기본 검색 (필터 없음)
+results = await tool.search("전세금 반환 보증")
+print(results['data'])  # 10개 결과 리턴
 
-# 내용 검색 (SQLite 필터 + ChromaDB 벡터 검색)
-result = agent.answer_question("임대차 계약 시 보증금 관련 규정")
-print(result['answer'])  # 검색 결과 포맷팅된 답변
-print(result['source'])  # "chromadb"
-print(result['filter_used'])  # ChromaDB 필터 확인
+# 문서 타입 필터
+results = await tool.search("공인중개사법", params={"doc_type": "법률"})
+
+# 카테고리 필터
+results = await tool.search("임차인 보호", params={"category": "2_임대차_전세_월세"})
+
+# Boolean 필터 (해당 필드가 있는 문서만)
+results = await tool.search("보증금", params={"is_deleted": False})
 ```
 
 ## 또는: ChromaDB 직접 사용
 ```python
-from example_chromadb_usage import LegalSearchAgent
+import chromadb
+from sentence_transformers import SentenceTransformer
 
-agent = LegalSearchAgent()
-results = agent.search("임차인 보호", category="2_임대차_전세_월세")
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_collection("korean_legal_documents")
+model = SentenceTransformer("./kure_v1")
+
+embedding = model.encode("검색 쿼리").tolist()
+results = collection.query(
+    query_embeddings=[embedding],
+    where={"doc_type": "법률"},  # 선택적
+    n_results=10
+)
 ```
 7. 알아야 할 제약사항
 ✅ 가능한 것:
