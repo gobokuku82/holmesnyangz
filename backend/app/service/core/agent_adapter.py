@@ -5,7 +5,7 @@ Agent Adapter - 기존 Agent들을 Registry 시스템에 통합
 
 import logging
 from typing import Dict, Any, Optional, Type
-from core.agent_registry import AgentRegistry, AgentCapabilities
+from app.service.core.agent_registry import AgentRegistry, AgentCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class AgentAdapter:
 
         # SearchAgent 등록
         try:
-            from agents.search_agent import SearchAgent
+            from app.service.agents.search_agent import SearchAgent
 
             capabilities = AgentCapabilities(
                 name="search_agent",
@@ -54,7 +54,7 @@ class AgentAdapter:
 
         # AnalysisAgent 등록
         try:
-            from agents.analysis_agent import AnalysisAgent
+            from app.service.agents.analysis_agent import AnalysisAgent
 
             capabilities = AgentCapabilities(
                 name="analysis_agent",
@@ -80,7 +80,7 @@ class AgentAdapter:
 
         # DocumentAgent 등록
         try:
-            from agents.document_agent import DocumentAgent
+            from app.service.agents.document_agent import DocumentAgent
 
             capabilities = AgentCapabilities(
                 name="document_agent",
@@ -106,7 +106,7 @@ class AgentAdapter:
 
         # ReviewAgent 등록
         try:
-            from agents.review_agent import ReviewAgent
+            from app.service.agents.review_agent import ReviewAgent
 
             capabilities = AgentCapabilities(
                 name="review_agent",
@@ -205,6 +205,11 @@ class AgentAdapter:
     def get_agents_for_intent(intent_type: str) -> list[str]:
         """
         의도 타입에 따라 실행할 Agent 목록 반환
+        4개 Agent의 역할:
+        - search_agent: 법률, 부동산, 대출 정보 검색
+        - analysis_agent: 데이터 분석 및 인사이트 도출
+        - document_agent: 계약서 등 문서 생성
+        - review_agent: 문서 검토 및 위험 분석
 
         Args:
             intent_type: 의도 타입
@@ -220,7 +225,8 @@ class AgentAdapter:
             "계약서검토": ["review_agent"],
             "종합분석": ["search_agent", "analysis_agent"],
             "문서생성": ["document_agent"],
-            "리스크분석": ["search_agent", "analysis_agent", "review_agent"]
+            "리스크분석": ["search_agent", "analysis_agent", "review_agent"],
+            "전체분석": ["search_agent", "analysis_agent", "document_agent", "review_agent"]
         }
 
         agents = intent_agent_mapping.get(intent_type, ["search_agent"])
@@ -237,6 +243,7 @@ class AgentAdapter:
     def get_agent_dependencies(agent_name: str) -> Dict[str, Any]:
         """
         Agent의 의존성 정보 조회
+        4개 Agent 간의 의존성 관계 정의
 
         Args:
             agent_name: Agent 이름
@@ -247,19 +254,27 @@ class AgentAdapter:
         dependencies = {
             "search_agent": {
                 "requires": [],
-                "provides": ["legal_search", "real_estate_search", "loan_search"]
+                "provides": ["legal_search", "real_estate_search", "loan_search"],
+                "team": "search",
+                "description": "정보 검색 Agent - 법률, 부동산, 대출 정보를 검색"
             },
             "analysis_agent": {
                 "requires": ["collected_data"],
-                "provides": ["report", "insights"]
+                "provides": ["report", "insights", "recommendations"],
+                "team": "analysis",
+                "description": "데이터 분석 Agent - 수집된 데이터를 분석하여 인사이트 도출"
             },
             "document_agent": {
-                "requires": ["document_type", "params"],
-                "provides": ["generated_document"]
+                "requires": ["document_type", "document_params"],
+                "provides": ["generated_document"],
+                "team": "document",
+                "description": "문서 생성 Agent - 계약서 등 법적 문서를 생성"
             },
             "review_agent": {
                 "requires": ["document_content"],
-                "provides": ["risk_analysis", "recommendations"]
+                "provides": ["risk_analysis", "recommendations", "compliance_check"],
+                "team": "document",
+                "description": "문서 검토 Agent - 생성된 문서를 검토하고 위험 요소 분석"
             }
         }
 
