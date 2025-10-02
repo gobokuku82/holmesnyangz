@@ -1,11 +1,14 @@
 """
-Real Estate Supervisor - OpenAI Version
-LLM = OpenAI
+Refactored Supervisor with Dynamic Agent Execution
+Agent Registry를 활용한 개선된 Supervisor
+기존 기능을 유지하면서 확장성을 높인 버전
 """
 
 import json
 import logging
 from typing import Dict, Any, Optional, List
+from datetime import datetime
+import asyncio
 from langgraph.graph import StateGraph, START, END
 import sys
 from pathlib import Path
@@ -29,6 +32,8 @@ from core.config import Config
 from core.todo_types import (
     create_todo_dict, update_todo_status, find_todo, get_todo_summary
 )
+from core.agent_registry import AgentRegistry
+from core.agent_adapter import AgentAdapter, initialize_agent_system
 
 logger = logging.getLogger(__name__)
 
@@ -82,541 +87,202 @@ class LLMManager:
 
     def get_model(self, purpose: str) -> str:
         """Get model name for specific purpose"""
-        # Check context overrides first
-        if self.context.model_overrides and purpose in self.context.model_overrides:
-            return self.context.model_overrides[purpose]
-        # Use defaults from config
-        return Config.LLM_DEFAULTS["models"].get(purpose, "gpt-4o-mini")
+        model_map = {
+            "intent": self.context.models.get("intent", "gpt-4o-mini"),
+            "planning": self.context.models.get("planning", "gpt-4o-mini"),
+            "response": self.context.models.get("response", "gpt-4o-mini"),
+            "analysis": self.context.models.get("analysis", "gpt-4o-mini"),
+            "search": self.context.models.get("search", "gpt-4o-mini"),
+            "default": self.context.models.get("default", "gpt-4o-mini")
+        }
+        return model_map.get(purpose, model_map["default"])
 
-    def get_params(self) -> Dict[str, Any]:
-        """Get LLM parameters with context overrides"""
-        params = Config.LLM_DEFAULTS["default_params"].copy()
-
-        # Apply context overrides if present
-        if self.context.temperature is not None:
-            params["temperature"] = self.context.temperature
-        if self.context.max_tokens is not None:
-            params["max_tokens"] = self.context.max_tokens
-        if self.context.response_format is not None:
-            params["response_format"] = self.context.response_format
-
-        return params
-
-    async def classify_service_relevance(self, query: str) -> Dict[str, Any]:
+    async def analyze_intent_with_llm(self, query: str) -> Dict[str, Any]:
         """
-        Stage 1: Classify if query is relevant to our service
-        Uses description-based classification
+        Analyze user intent using LLM
 
         Args:
-            query: User query
+            query: User query to analyze
 
         Returns:
-            Classification result with reasoning
+            Intent analysis results
         """
-        if not self.client:
-            return {"is_relevant": False, "reasoning": "시스템 오류"}
-
-        try:
-            system_prompt = """당신은 부동산 전문 챗봇 서비스의 관련성 분류기입니다.
-
-이 챗봇의 서비스 범위:
-1. 부동산 매매/전세/월세 정보 제공
-2. 부동산 시세 및 시장 분석
-3. 부동산 관련 법률 및 계약 안내
-4. 부동산 대출 및 금융 정보
-5. 부동산 투자 및 개발 정보
-6. 건축 규제 및 인허가 정보
-7. 부동산 세금 및 공과금 안내
-
-서비스 범위에 포함되지 않는 것:
-- 일반적인 인사, 감정 표현, 욕설
-- 부동산과 무관한 일반 지식 질문
-- 다른 산업이나 주제에 대한 질의
-- 의미없는 텍스트나 무작위 단어
-- 개인 정보나 자기소개 (예: "내 이름은 ~야", "나는 ~다")
-
-중요: 문맥을 우선적으로 판단하세요!
-- 부동산 관련 키워드가 있어도 전체 문맥이 부동산과 무관하면 false로 분류
-- 예시: "내 이름은 양도세야" → false (개인 소개, 부동산과 무관)
-- 예시: "양도세가 뭐야?" → true (부동산 세금 관련 질문)
-- 예시: "집값이라는 친구가 있어" → false (개인 이야기, 부동산과 무관)
-- 예시: "요즘 집값이 어때?" → true (부동산 시세 관련 질문)
-
-질의가 부동산 서비스와 관련이 있는지 판단하세요.
-경계선에 있는 경우(예: 일반 금융이지만 부동산 대출일 수도 있는 경우) true로 분류하세요.
-
-JSON 형식으로 응답:
-{
-    "is_relevant": true/false,
-    "confidence": 0.0-1.0,
-    "reasoning": "판단 근거"
-}"""
-
-            user_prompt = f"사용자 질의: {query}"
-
-            model = self.get_model("intent")
-            params = self.get_params()
-            params["temperature"] = 0.1  # Lower temperature for consistent classification
-
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                **params
-            )
-
-            return json.loads(response.choices[0].message.content)
-
-        except Exception as e:
-            logger.error(f"Service relevance classification failed: {e}")
-            return {"is_relevant": True, "reasoning": "분류 실패, 기본 처리"}  # Default to true on error
-
-    async def extract_keywords_for_validation(self, query: str) -> Dict[str, Any]:
-        """
-        Stage 2: Extract and score keywords for validation
-
-        Args:
-            query: User query
-
-        Returns:
-            Keywords and relevance score
-        """
-        if not self.client:
-            return {"keywords": [], "score": 0.5}
-
-        try:
-            system_prompt = """부동산 관련 키워드를 추출하고 문맥 내 역할을 평가하세요.
-
-부동산 관련 키워드 예시:
-- 거래: 매매, 전세, 월세, 임대, 분양
-- 부동산 유형: 아파트, 빌라, 오피스텔, 주택, 상가, 토지
-- 지역: 강남구, 서초구 등 구체적 지역명
-- 금융: 대출, 담보, 금리, LTV, DTI
-- 법률: 계약, 등기, 세금, 양도세, 취득세
-- 시장: 시세, 가격, 평형, 평수, 매물
-
-중요: 키워드의 문맥상 역할 평가
-1. 키워드가 질문의 주제인가? (높은 점수)
-2. 키워드가 단순히 언급만 되었는가? (낮은 점수)
-3. 부정 패턴이 있는가? (매우 낮은 점수)
-   - "내 이름은 [키워드]" → 개인 소개
-   - "[키워드]라는 친구/사람" → 인물 언급
-   - "나는 [키워드]야/다" → 자기 소개
-
-예시 평가:
-- "양도세 계산 방법" → score: 0.9 (주제)
-- "내 이름은 양도세야" → score: 0.1 (단순 언급, 부정 패턴)
-- "집값 어때?" → score: 0.9 (주제)
-- "집값이라는 애가 있어" → score: 0.1 (인물 언급)
-
-JSON 형식으로 응답:
-{
-    "keywords": ["추출된 키워드"],
-    "real_estate_keywords": ["부동산 관련 키워드만"],
-    "context_role": "main_topic|mentioned|negative_pattern",
-    "negative_patterns": ["발견된 부정 패턴"],
-    "score": 0.0-1.0 (문맥 고려한 부동산 관련도)
-}"""
-
-            user_prompt = f"질의: {query}"
-
-            model = self.get_model("intent")
-            params = self.get_params()
-            params["temperature"] = 0.1
-
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                **params
-            )
-
-            return json.loads(response.choices[0].message.content)
-
-        except Exception as e:
-            logger.error(f"Keyword extraction failed: {e}")
-            return {"keywords": [], "score": 0.5}
-
-    async def analyze_intent(self, query: str) -> Dict[str, Any]:
-        """
-        Analyze user intent from query with two-stage validation
-
-        Args:
-            query: User query string
-
-        Returns:
-            Intent analysis with entities and confidence
-        """
-        # Early negative pattern detection
-        negative_patterns = [
-            r"내\s*이름은.*[야다]",  # "내 이름은 ~야/다"
-            r"나는.*[야다]$",  # "나는 ~야/다" at end
-            r".*라는\s*(친구|사람|애|놈|녀석)",  # "~라는 친구/사람"
-            r"^(안녕|하이|헬로|ㅎㅇ)",  # Simple greetings
-            r"^(ㅋ+|ㅎ+|ㅠ+|ㅜ+)$",  # Korean emoticons only
-        ]
-
-        import re
-        for pattern in negative_patterns:
-            if re.search(pattern, query, re.IGNORECASE):
-                logger.info(f"Early negative pattern detected: {query}")
-                return {
-                    "intent_type": "irrelevant",
-                    "is_real_estate_related": False,
-                    "confidence": 0.95,
-                    "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
-                    "reasoning": "개인 소개나 일반 대화로 판단됨"
-                }
-
-        # Check for connection errors
         if self._connection_error:
+            logger.error(f"LLM connection error: {self._connection_error}")
             return {
-                "error": True,
-                "intent": "error",
-                "message": "시스템 연결 오류가 발생했습니다.",
+                "intent_type": "error",
+                "intent": "연결 오류",
+                "confidence": 0.0,
                 "details": self._connection_error,
-                "suggestion": "잠시 후 다시 시도해주세요."
+                "reasoning": "LLM 연결 실패로 인한 기본 처리",
+                "fallback": True
             }
 
         if not self.client:
-            return {
-                "error": True,
-                "intent": "error",
-                "message": "LLM 클라이언트가 초기화되지 않았습니다.",
-                "details": "OpenAI 연결에 실패했습니다.",
-                "suggestion": "시스템 관리자에게 문의하세요."
-            }
+            logger.warning("No LLM client available, using fallback")
+            return self._fallback_intent_analysis(query)
 
         try:
-            # Stage 1: Service relevance classification
-            logger.debug(f"Stage 1: Classifying service relevance for: {query}")
-            relevance = await self.classify_service_relevance(query)
+            # System prompt for intent analysis
+            system_prompt = """당신은 부동산 관련 질문을 분석하는 전문가입니다.
 
-            # Stage 2: Keyword validation (if needed)
-            if relevance.get("confidence", 0) < 0.6:  # Lower threshold for additional validation
-                logger.debug(f"Stage 2: Low confidence ({relevance.get('confidence')}), extracting keywords")
-                keywords = await self.extract_keywords_for_validation(query)
-
-                # Stage 1 has priority - only use Stage 2 to confirm, not override
-                if not relevance.get("is_relevant"):
-                    # Stage 1 says irrelevant - only continue if Stage 2 strongly disagrees
-                    if keywords.get("score", 0) < 0.7:  # Need very high score to override Stage 1
-                        logger.info(f"Query classified as irrelevant (Stage1: {relevance.get('is_relevant')}, Stage2 score: {keywords.get('score')})")
-                        return {
-                            "intent_type": "irrelevant",
-                            "is_real_estate_related": False,
-                            "confidence": max(relevance.get("confidence", 0), 1 - keywords.get("score", 0.5)),
-                            "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
-                            "reasoning": f"서비스 관련성: {relevance.get('reasoning', 'N/A')}, 키워드 점수: {keywords.get('score', 0):.2f}"
-                        }
-                    else:
-                        # Stage 2 strongly disagrees - continue but log warning
-                        logger.warning(f"Stage conflict - Stage1: false, Stage2: {keywords.get('score')} - continuing")
-                elif relevance.get("is_relevant") and keywords.get("score", 0) < 0.5:
-                    # Stage 1 says relevant but Stage 2 disagrees - trust Stage 1
-                    logger.debug(f"Stage1 overrides Stage2 - Stage1: true, Stage2: {keywords.get('score')}")
-                    pass
-            else:
-                # High confidence from Stage 1
-                if not relevance.get("is_relevant"):
-                    logger.info(f"Query classified as irrelevant with high confidence: {relevance.get('confidence')}")
-                    return {
-                        "intent_type": "irrelevant",
-                        "is_real_estate_related": False,
-                        "confidence": relevance.get("confidence", 0.9),
-                        "message": "죄송합니다. 부동산 관련 질문만 답변 가능합니다.",
-                        "reasoning": relevance.get("reasoning", "서비스 범위 외")
-                    }
-
-            # Stage 3: Detailed intent analysis (for relevant queries)
-            system_prompt = """당신은 부동산 전문 챗봇의 의도 분석기입니다.
-사용자 질의를 분석하여 구체적인 의도와 핵심 정보를 추출하세요.
-
-의도 타입:
-- search: 매물/시세 검색
-- analysis: 시장 분석
-- recommendation: 추천 요청
-- legal: 법률/규정 관련
-- loan: 대출 관련
-- general: 일반 문의
-- unclear: 의도가 불명확
+사용자의 질문을 분석하여 다음 카테고리 중 하나로 분류하세요:
+- 법률상담: 임대차, 전세, 매매 관련 법률 질문
+- 시세조회: 부동산 가격, 시세 관련 질문
+- 대출상담: 대출 조건, 금리 관련 질문
+- 계약서작성: 계약서 생성 요청
+- 계약서검토: 기존 계약서 검토 요청
+- 종합분석: 여러 측면의 분석이 필요한 복합 질문
+- unclear: 의도가 명확하지 않은 경우
+- irrelevant: 부동산과 무관한 질문
 
 JSON 형식으로 응답하세요:
 {
-    "intent_type": "의도 타입",
-    "entities": {
-        "region": "지역명",
-        "property_type": "부동산 유형",
-        "transaction_type": "거래 유형"
-    },
-    "keywords": ["핵심 키워드"],
-    "confidence": 0.0-1.0
+    "intent": "카테고리명",
+    "confidence": 0.0-1.0,
+    "keywords": ["주요", "키워드"],
+    "reasoning": "분류 이유"
 }"""
 
-            user_prompt = f"사용자 질의: {query}"
-
-            model = self.get_model("intent")
-            params = self.get_params()
-
             response = self.client.chat.completions.create(
-                model=model,
+                model=self.get_model("intent"),
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": f"다음 질문을 분석하세요: {query}"}
                 ],
-                **params
+                temperature=0.1,
+                max_tokens=200,
+                response_format={"type": "json_object"}
             )
 
             result = json.loads(response.choices[0].message.content)
-            result["is_real_estate_related"] = True  # Already validated in stages 1-2
 
-            return result
+            return {
+                "intent_type": result.get("intent", "unclear"),
+                "intent": result.get("intent", "unclear"),
+                "confidence": result.get("confidence", 0.5),
+                "keywords": result.get("keywords", []),
+                "reasoning": result.get("reasoning", ""),
+                "llm_used": True
+            }
 
         except Exception as e:
             logger.error(f"LLM intent analysis failed: {e}")
-            # Return unclear intent instead of error
-            return {
-                "intent_type": "unclear",
-                "is_real_estate_related": True,  # Give benefit of doubt on error
-                "message": "질문을 이해하지 못했습니다. 다음과 같은 형식으로 질문해주세요:",
-                "examples": [
-                    "강남구 아파트 시세 알려줘",
-                    "서초구 30평대 전세 매물 찾아줘",
-                    "부동산 계약시 주의사항은?",
-                    "주택담보대출 금리 비교해줘"
-                ],
-                "original_query": query
-            }
+            return self._fallback_intent_analysis(query)
 
-    async def create_execution_plan(
-        self,
-        query: str,
-        intent: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _fallback_intent_analysis(self, query: str) -> Dict[str, Any]:
+        """Fallback intent analysis using keywords"""
+        intent_keywords = {
+            "법률상담": ["법", "전세", "임대", "보증금", "계약", "권리", "의무"],
+            "시세조회": ["시세", "가격", "매매가", "전세가", "시장", "동향"],
+            "대출상담": ["대출", "금리", "한도", "조건", "상환"],
+            "계약서작성": ["작성", "만들", "생성"],
+            "계약서검토": ["검토", "확인", "점검", "리뷰"],
+            "종합분석": ["분석", "평가", "비교"]
+        }
+
+        detected_intent = "unclear"
+        max_score = 0
+        found_keywords = []
+
+        for intent, keywords in intent_keywords.items():
+            score = 0
+            for keyword in keywords:
+                if keyword in query:
+                    score += 1
+                    found_keywords.append(keyword)
+
+            if score > max_score:
+                max_score = score
+                detected_intent = intent if score > 0 else "unclear"
+
+        confidence = min(max_score * 0.3, 1.0)  # Simple confidence calculation
+
+        return {
+            "intent_type": detected_intent,
+            "intent": detected_intent,
+            "confidence": confidence,
+            "keywords": found_keywords,
+            "reasoning": "Keyword-based fallback analysis",
+            "fallback": True
+        }
+
+    async def create_execution_plan(self, intent: Dict[str, Any], query: str) -> Dict[str, Any]:
         """
         Create execution plan based on intent
 
         Args:
-            query: User query
-            intent: Analyzed intent
+            intent: Intent analysis results
+            query: Original query
 
         Returns:
-            Execution plan with agents and keywords
+            Execution plan with selected agents
         """
-        # Check for connection errors
-        if self._connection_error:
+        intent_type = intent.get("intent_type", "unclear")
+
+        if intent_type == "error":
             return {
                 "error": True,
-                "message": "시스템 연결 오류로 실행 계획을 생성할 수 없습니다.",
-                "details": self._connection_error,
+                "message": "LLM 연결 오류로 계획을 생성할 수 없습니다.",
+                "details": intent.get("details", ""),
                 "agents": []
             }
 
-        if not self.client:
-            return {
-                "error": True,
-                "message": "LLM 클라이언트가 초기화되지 않았습니다.",
-                "details": "OpenAI 연결에 실패했습니다.",
-                "agents": []
-            }
+        # Use Registry to get available agents
+        available_agents = AgentRegistry.list_agents(enabled_only=True)
+        logger.info(f"Available agents from registry: {available_agents}")
 
-        try:
-            system_prompt = """당신은 부동산 챗봇의 실행 계획 수립 전문가입니다.
-사용자 의도에 따라 가장 적합한 에이전트를 선택하고 실행 계획을 수립하세요.
+        # Get agents for intent type
+        selected_agents = AgentAdapter.get_agents_for_intent(intent_type)
 
-## 에이전트 상세 명세
+        # Filter only enabled agents
+        selected_agents = [
+            agent for agent in selected_agents
+            if agent in available_agents
+        ]
 
-### 1. search_agent (검색 에이전트) - [구현 완료]
-- **목적**: 부동산 관련 데이터를 검색하고 수집하는 전문 Agent
-- **기능(Capabilities)**:
-  • 부동산 매물 정보 검색
-  • 시세 정보 조회
-  • 법률 및 규정 검색
-  • 대출 상품 정보 수집
-  • 여러 데이터 소스 병렬 검색
-  • 검색 결과 구조화 및 요약
-- **한계(Limitations)**:
-  • 데이터 분석이나 인사이트 도출 불가
-  • 추천 로직 수행 불가
-  • 복잡한 계산이나 예측 불가
-- **사용 가능한 도구**:
-  • legal_search: 부동산 법률 정보 검색
-  • regulation_search: 부동산 규정 및 정책 검색
-  • loan_search: 부동산 대출 상품 검색
-  • real_estate_search: 부동산 매물 및 시세 검색
-- **적합한 사용 케이스**:
-  • 부동산 매물 정보가 필요한 경우
-  • 시세 조회가 필요한 경우
-  • 법률/규정 정보 검색이 필요한 경우
-  • 대출 정보 수집이 필요한 경우
-  • 여러 종류의 정보를 동시에 수집해야 하는 경우
-- **부적합한 케이스**:
-  • 복잡한 데이터 분석이 필요한 경우
-  • 투자 추천이 필요한 경우
-  • 미래 가격 예측이 필요한 경우
+        if not selected_agents:
+            # Default to search agent if available
+            if "search_agent" in available_agents:
+                selected_agents = ["search_agent"]
+            else:
+                logger.warning("No agents available for execution")
+                return {
+                    "error": True,
+                    "message": "실행 가능한 에이전트가 없습니다.",
+                    "agents": []
+                }
 
-### 2. analysis_agent (분석 에이전트) - [구현 완료]
-- **목적**: 수집된 부동산 데이터를 분석하여 인사이트를 도출하는 전문 Agent
-- **기능(Capabilities)**:
-  • 시장 현황 분석 (가격, 거래량, 수급)
-  • 가격 트렌드 및 패턴 분석
-  • 지역별/단지별 비교 분석
-  • 투자 가치 평가 (ROI, 수익률)
-  • 리스크 요인 식별 및 평가
-  • 데이터 기반 추천사항 제공
-  • 분석 결과 시각화 데이터 준비
-- **한계(Limitations)**:
-  • 직접적인 데이터 수집 불가 (search_agent 필요)
-  • 미래 가격 정확한 예측 불가
-  • 법적 구속력 있는 조언 제공 불가
-  • 개인 맞춤 투자 전략 수립 불가
-- **사용 가능한 도구**:
-  • market_analyzer: 시장 현황 분석
-  • trend_analyzer: 가격 트렌드 분석
-  • comparative_analyzer: 지역별 비교
-  • investment_evaluator: 투자 가치 평가
-  • risk_assessor: 리스크 평가
-- **적합한 사용 케이스**:
-  • 시장 트렌드 분석이 필요한 경우
-  • 투자 가치 평가가 필요한 경우
-  • 지역간 비교 분석이 필요한 경우
-  • 리스크 평가가 필요한 경우
-  • SearchAgent 수집 데이터의 심층 분석이 필요한 경우
-- **부적합한 케이스**:
-  • 단순 정보 조회만 필요한 경우
-  • 실시간 데이터가 필요한 경우
-  • 법률 자문이 필요한 경우
+        # Determine execution strategy
+        strategy = "sequential"  # Default strategy
+        if len(selected_agents) > 1 and intent_type in ["종합분석", "리스크분석"]:
+            strategy = "parallel"
 
-### 3. document_agent (문서 생성 에이전트) - [구현 완료]
-- **목적**: 부동산 관련 법률 문서를 생성하는 전문 Agent
-- **기능(Capabilities)**:
-  • 임대차계약서 생성
-  • 매매계약서 생성
-  • 전세계약서 생성
-  • 내용증명 작성
-  • 계약해지통지서 작성
-  • 다양한 형식 지원 (TEXT, HTML, JSON, DOCX, PDF)
-- **한계(Limitations)**:
-  • 법적 효력 보장 불가
-  • 전문가 검토 필요
-  • 템플릿 기반 생성
-- **사용 가능한 도구**:
-  • document_generation: 문서 생성 도구
-- **적합한 사용 케이스**:
-  • 계약서 초안 작성이 필요한 경우
-  • 법률 문서 템플릿이 필요한 경우
-  • 내용증명 작성이 필요한 경우
-- **부적합한 케이스**:
-  • 법적 효력이 필요한 최종 문서
-  • 복잡한 특수 계약
+        plan = {
+            "agents": selected_agents,
+            "strategy": strategy,
+            "intent": intent_type,
+            "keywords": intent.get("keywords", []),
+            "confidence": intent.get("confidence", 0.5)
+        }
 
-### 4. review_agent (계약 검토 에이전트) - [구현 완료]
-- **목적**: 부동산 계약서 및 문서를 검토하고 위험을 분석하는 전문 Agent
-- **기능(Capabilities)**:
-  • 계약서 위험 요소 분석
-  • 법적 준수사항 확인
-  • 문서 완성도 평가
-  • 개선 권고사항 제시
-  • 리스크 레벨 평가
-  • 상세 검토 보고서 생성
-- **한계(Limitations)**:
-  • 법적 구속력 있는 조언 불가
-  • 최종 법률 자문 대체 불가
-- **사용 가능한 도구**:
-  • contract_review: 계약서 검토 도구
-- **적합한 사용 케이스**:
-  • 계약서 검토가 필요한 경우
-  • 위험 요소 파악이 필요한 경우
-  • 계약 조항 분석이 필요한 경우
-- **부적합한 케이스**:
-  • 법적 분쟁 해결
-  • 최종 법률 자문
-
-### 5. recommendation_agent (추천 에이전트) - [개발 예정]
-- **목적**: 사용자 요구사항에 맞는 부동산 추천을 제공하는 전문 Agent
-- **기능(Capabilities)**:
-  • 사용자 선호도 분석
-  • 맞춤형 매물 추천
-  • 투자 포트폴리오 제안
-  • 대안 제시
-- **한계(Limitations)**:
-  • 직접적인 데이터 수집 불가
-  • 법적 구속력 있는 조언 불가
-- **적합한 사용 케이스**:
-  • 맞춤 매물 추천이 필요한 경우
-  • 투자 조언이 필요한 경우
-- **부적합한 케이스**:
-  • 단순 정보 조회만 필요한 경우
-
-## 에이전트 선택 기준
-
-1. **검색/수집이 필요한 경우** → search_agent 선택
-   - 키워드: 검색, 조회, 찾기, 알려줘, 정보, 시세, 매물, 법률, 대출
-
-2. **분석이 필요한 경우** → analysis_agent 선택
-   - 키워드: 분석, 비교, 평가, 트렌드, 동향, 전망, 시장, 투자, 리스크
-
-3. **추천이 필요한 경우** → recommendation_agent 선택 (미구현 시 search_agent 사용)
-   - 키워드: 추천, 제안, 어떤게 좋을까, 적합한, 맞춤
-
-## 실행 계획 수립 지침
-
-1. 사용자 의도를 정확히 파악
-2. 필요한 작업을 단계별로 분해
-3. 각 단계에 적합한 에이전트 선택
-4. 에이전트 간 데이터 흐름 고려
-5. 현재 구현된 에이전트만 선택 (search_agent, analysis_agent 사용 가능)
-
-JSON 형식으로 응답하세요:
-{
-    "agents": ["선택된 에이전트 목록"],
-    "collection_keywords": ["수집할 키워드"],
-    "execution_order": "sequential 또는 parallel",
-    "reasoning": "계획 수립 근거",
-    "agent_capabilities_used": ["사용할 에이전트 기능 목록"]
-}"""
-
-            user_prompt = f"""사용자 질의: {query}
-분석된 의도: {json.dumps(intent, ensure_ascii=False)}"""
-
-            model = self.get_model("planning")
-            params = self.get_params()
-
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                **params
-            )
-
-            return json.loads(response.choices[0].message.content)
-
-        except Exception as e:
-            logger.error(f"LLM planning failed: {e}")
-            # Return error instead of falling back
-            return {
-                "error": True,
-                "message": "실행 계획 생성 중 오류가 발생했습니다.",
-                "details": str(e),
-                "agents": []
-            }
+        logger.info(f"Execution plan created: {plan}")
+        return plan
 
 
 class RealEstateSupervisor:
     """
     Main Supervisor for Real Estate Chatbot
-    OpenAI version
+    Refactored with dynamic agent execution
     """
 
     def __init__(self, llm_context: LLMContext = None):
         self.llm_context = llm_context or create_default_llm_context()
         self.llm_manager = LLMManager(self.llm_context)
+
+        # Initialize agent system
+        initialize_agent_system(auto_register=True)
+
         self.workflow = None
         self._build_graph()
 
@@ -704,53 +370,123 @@ class RealEstateSupervisor:
         Returns:
             Updated state with intent analysis
         """
-        query = state["query"]
-        logger.info(f"Analyzing intent for query: {query}")
-        logger.debug(f"[NODE] analyze_intent_node - Input state keys: {list(state.keys())}")
+        logger.info("[NODE] analyze_intent_node - Starting intent analysis")
 
-        intent = await self.llm_manager.analyze_intent(query)
-        logger.debug(f"[LLM] analyze_intent result: intent_type={intent.get('intent_type')}, confidence={intent.get('confidence')}")
+        query = state.get("query", "")
+        intent_result = await self.llm_manager.analyze_intent_with_llm(query)
 
-        # Check if query is not related to real estate
-        if not intent.get("is_real_estate_related", True) or intent.get("intent_type") == "irrelevant":
-            logger.info(f"Query is irrelevant to real estate: {query}")
-            return {
-                "intent": intent,
-                "intent_type": "irrelevant"
-            }
+        state.update({
+            "current_phase": "intent_analysis",
+            "intent": intent_result.get("intent", "unclear"),
+            "intent_type": intent_result.get("intent_type", "unclear"),
+            "intent_confidence": intent_result.get("confidence", 0.0),
+            "collection_keywords": intent_result.get("keywords", [])
+        })
 
-        # Check for low confidence
-        if intent.get("confidence", 0) < 0.3:
-            logger.info(f"Low confidence query: {query} (confidence={intent.get('confidence')})")
-            return {
-                "intent": intent,
-                "intent_type": "unclear",
-                "confidence": intent.get("confidence", 0)
-            }
+        logger.info(f"[NODE] Intent analyzed: {state['intent_type']} (confidence: {state['intent_confidence']})")
+        return state
 
-        # Check for errors
-        if intent.get("error"):
-            logger.info(f"Error in intent analysis: {intent.get('message')}")
-            return {
-                "intent": intent,
-                "intent_type": "error"
-            }
+    async def recheck_intent_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Recheck unclear intent with user clarification
 
-        # Check for unclear intent from LLM
-        if intent.get("intent_type") == "unclear":
-            logger.info(f"Unclear intent from LLM: {query}")
-            return {
-                "intent": intent,
-                "intent_type": "unclear"
-            }
+        Args:
+            state: Current state
 
-        result = {
-            "intent": intent,
-            "intent_type": intent.get("intent_type", "general"),
-            "intent_confidence": intent.get("confidence", 0.0)
+        Returns:
+            Updated state
+        """
+        logger.info("[NODE] recheck_intent_node - Rechecking unclear intent")
+
+        # In production, this would interact with user for clarification
+        # For now, mark as still unclear
+        state["still_unclear"] = True
+        state["current_phase"] = "clarification_needed"
+
+        return state
+
+    async def error_handler_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Handle different types of errors with specific responses
+
+        Args:
+            state: Current state
+
+        Returns:
+            Updated state with error-specific response
+        """
+        logger.info("Handling error response")
+        intent = state.get("intent", {})
+        error_details = intent.get("details", "")
+
+        # Categorize error types and provide specific responses
+        if "API 키가 설정되지 않았습니다" in error_details:
+            error_type = "api_key_missing"
+            message = "API 키가 설정되지 않았습니다."
+            suggestion = "환경 변수에 OPENAI_API_KEY를 설정해주세요."
+        elif "연결 실패" in error_details:
+            error_type = "connection_failed"
+            message = "OpenAI 서비스에 연결할 수 없습니다."
+            suggestion = "네트워크 연결을 확인하거나 잠시 후 다시 시도해주세요."
+        else:
+            error_type = "general_error"
+            message = "처리 중 오류가 발생했습니다."
+            suggestion = "문제가 지속되면 관리자에게 문의해주세요."
+
+        state["final_response"] = {
+            "type": "error",
+            "error_type": error_type,
+            "message": message,
+            "suggestion": suggestion,
+            "details": error_details
         }
-        logger.debug(f"[NODE] analyze_intent_node - Output state changes: {list(result.keys())}")
-        return result
+
+        state["response_type"] = "error"
+        state["status"] = "completed"
+
+        logger.debug(f"[NODE] error_handler_node - Error handled: {error_type}")
+        return state
+
+    async def guidance_message_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Provide guidance for unclear or irrelevant queries
+
+        Args:
+            state: Current state
+
+        Returns:
+            Updated state with guidance message
+        """
+        logger.info("Providing guidance message")
+
+        intent_type = state.get("intent_type", "unclear")
+
+        if intent_type == "irrelevant":
+            message = "죄송하지만 부동산 관련 질문만 답변드릴 수 있습니다."
+            examples = [
+                "전세 보증금 인상률 제한은?",
+                "강남구 아파트 시세는?",
+                "주택 담보 대출 조건은?"
+            ]
+        else:  # unclear
+            message = "질문을 더 구체적으로 설명해주시겠습니까?"
+            examples = [
+                "특정 지역의 시세를 알고 싶으시면: '강남구 아파트 시세'",
+                "법률 상담이 필요하시면: '전세 계약 갱신 거부 가능한가요?'",
+                "대출 정보가 필요하시면: 'LTV 한도는 얼마인가요?'"
+            ]
+
+        state["final_response"] = {
+            "type": "guidance",
+            "message": message,
+            "examples": examples,
+            "original_query": state.get("query", "")
+        }
+
+        state["response_type"] = "guidance"
+        state["status"] = "completed"
+
+        return state
 
     async def create_plan_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -762,58 +498,53 @@ class RealEstateSupervisor:
         Returns:
             Updated state with execution plan
         """
-        query = state["query"]
-        intent = state["intent"]
+        logger.info("[NODE] create_plan_node - Creating execution plan")
 
-        logger.info(f"Creating execution plan for intent: {intent.get('intent_type')}")
+        intent_data = {
+            "intent_type": state.get("intent_type", "unclear"),
+            "intent": state.get("intent", "unclear"),
+            "confidence": state.get("intent_confidence", 0.0),
+            "keywords": state.get("collection_keywords", [])
+        }
 
-        plan = await self.llm_manager.create_execution_plan(query, intent)
+        plan = await self.llm_manager.create_execution_plan(
+            intent_data,
+            state.get("query", "")
+        )
 
-        # Check for plan creation errors
         if plan.get("error"):
-            logger.error(f"Plan creation failed: {plan.get('message')}")
-            return {
-                "execution_plan": plan,
-                "planning_error": True,
-                "error_message": plan.get("message"),
-                "error_details": plan.get("details"),
-                "selected_agents": []
-            }
+            # Handle planning error
+            state["intent_type"] = "error"
+            state["intent"] = {"details": plan.get("message", "")}
+            return state
 
-        # Create TODOs for selected agents
+        state["execution_plan"] = plan
+        state["selected_agents"] = plan.get("agents", [])
+        state["current_phase"] = "planning_complete"
+
+        # Create TODOs for each agent
         todos = state.get("todos", [])
         todo_counter = state.get("todo_counter", 0)
-        selected_agents = plan.get("agents", [])
 
-        # Create main TODO for each selected agent
-        for agent_name in selected_agents:
-            todo_id = f"main_{todo_counter}"
+        for agent_name in state["selected_agents"]:
+            todo_counter += 1
             todo = create_todo_dict(
-                todo_id=todo_id,
-                level="supervisor",
+                id=f"agent_{todo_counter}",
                 task=f"Execute {agent_name}",
                 agent=agent_name,
-                purpose=plan.get("reasoning", ""),
-                subtodos=[]  # Agent will fill this
+                level="supervisor"
             )
             todos.append(todo)
-            todo_counter += 1
-            logger.debug(f"[TODO] Created main TODO: {todo_id} for {agent_name}")
 
-        result = {
-            "execution_plan": plan,
-            "collection_keywords": plan.get("collection_keywords", []),
-            "selected_agents": selected_agents,
-            "todos": todos,
-            "todo_counter": todo_counter,
-            "current_phase": "executing"
-        }
-        logger.debug(f"[NODE] create_plan_node - Created {len(selected_agents)} TODOs")
-        return result
+        state["todos"] = todos
+        state["todo_counter"] = todo_counter
+
+        logger.info(f"[NODE] Execution plan created with {len(state['selected_agents'])} agents")
+        return state
 
     async def execute_agents_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Execute selected agents
+        Execute agents dynamically using Registry
 
         Args:
             state: Current state
@@ -821,197 +552,157 @@ class RealEstateSupervisor:
         Returns:
             Updated state with agent results
         """
-        # Skip if there was a planning error
-        if state.get("planning_error"):
-            logger.debug("[NODE] execute_agents_node - Skipping due to planning error")
-            return state
+        logger.info("[NODE] execute_agents_node - Starting dynamic agent execution")
 
         selected_agents = state.get("selected_agents", [])
-        todos = state.get("todos", [])
-        logger.info(f"Executing agents: {selected_agents}")
-        logger.debug(f"[NODE] execute_agents_node - Starting with {len(selected_agents)} agents")
+        execution_plan = state.get("execution_plan", {})
+        strategy = execution_plan.get("strategy", "sequential")
+
+        logger.info(f"Executing {len(selected_agents)} agents with {strategy} strategy")
 
         agent_results = {}
+        todos = state.get("todos", [])
 
-        for agent_name in selected_agents:
-            # Find and update TODO status
-            agent_todo = find_todo(todos, agent=agent_name)
-            if agent_todo:
-                todos = update_todo_status(todos, agent_todo["id"], "in_progress")
-                logger.debug(f"[TODO] Updated {agent_todo['id']} to in_progress")
-
-            logger.debug(f"[AGENT] Executing agent: {agent_name}")
-            if agent_name == "search_agent":
-                # Import and execute search agent
-                from agents.search_agent import SearchAgent
-
-                agent = SearchAgent(llm_context=self.llm_context)
-                input_data = {
-                    "original_query": state["query"],
-                    "collection_keywords": state.get("collection_keywords", []),
-                    "shared_context": state.get("shared_context", {}),
-                    "chat_session_id": state.get("chat_session_id", ""),
-                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
-                    "todos": todos,  # Pass todos to agent
-                    "todo_counter": state.get("todo_counter", 0)
-                }
-
-                # SearchAgent uses app.ainvoke instead of run
-                result = await agent.app.ainvoke(input_data)
-
-                # Update TODO status based on result
-                if agent_todo:
-                    if result.get("status") == "completed":
-                        todos = update_todo_status(todos, agent_todo["id"], "completed")
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
-                    elif result.get("status") == "error":
-                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error"))
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
-
-                    # Merge any TODO updates from agent
-                    if "todos" in result:
-                        from core.todo_types import merge_todos
-                        todos = merge_todos(todos, result["todos"])
-
-                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, collected_data_keys={list(result.get('collected_data', {}).keys())}")
-                agent_results[agent_name] = result
-
-            elif agent_name == "analysis_agent":
-                # Import and execute analysis agent
-                from agents.analysis_agent import AnalysisAgent
-
-                agent = AnalysisAgent(llm_context=self.llm_context)
-
-                # Prepare input data for analysis
-                # Check if we have data from SearchAgent
-                search_data = agent_results.get("search_agent", {}).get("collected_data", {})
-                if not search_data:
-                    # If no search data, check if there's data in state
-                    search_data = state.get("collected_data", {})
-
-                input_data = {
-                    "original_query": state["query"],
-                    "analysis_type": state.get("analysis_type", "comprehensive"),
-                    "input_data": search_data,
-                    "shared_context": state.get("shared_context", {}),
-                    "chat_session_id": state.get("chat_session_id", ""),
-                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
-                    "todos": todos,
-                    "todo_counter": state.get("todo_counter", 0)
-                }
-
-                # Execute AnalysisAgent
-                result = await agent.app.ainvoke(input_data)
-
-                # Update TODO status based on result
-                if agent_todo:
-                    if result.get("status") == "completed":
-                        todos = update_todo_status(todos, agent_todo["id"], "completed")
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
-                    elif result.get("status") == "error":
-                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error"))
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
-
-                    # Merge any TODO updates from agent
-                    if "todos" in result:
-                        from core.todo_types import merge_todos
-                        todos = merge_todos(todos, result["todos"])
-
-                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, report_generated={result.get('final_report') is not None}")
-                agent_results[agent_name] = result
-
-            elif agent_name == "document_agent":
-                # Import and execute document agent
-                from agents.document_agent import DocumentAgent
-
-                agent = DocumentAgent()
-                input_data = {
-                    "original_query": state["query"],
-                    "document_type": state.get("document_type"),
-                    "document_params": state.get("document_params", {}),
-                    "document_format": state.get("document_format", "TEXT"),
-                    "shared_context": state.get("shared_context", {}),
-                    "chat_session_id": state.get("chat_session_id", ""),
-                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
-                    "todos": todos,
-                    "todo_counter": state.get("todo_counter", 0)
-                }
-
-                # Execute DocumentAgent
-                result = await agent.execute(input_data)
-
-                # Update TODO status based on result
-                if agent_todo:
-                    if result.get("status") in ["completed", "generated"]:
-                        todos = update_todo_status(todos, agent_todo["id"], "completed")
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
-                    elif result.get("status") == "error":
-                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error_message"))
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
-
-                    # Merge any TODO updates from agent
-                    if "todos" in result:
-                        from core.todo_types import merge_todos
-                        todos = merge_todos(todos, result["todos"])
-
-                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, document_type={result.get('document_type')}")
-                agent_results[agent_name] = result
-
-            elif agent_name == "review_agent":
-                # Import and execute review agent
-                from agents.review_agent import ReviewAgent
-
-                agent = ReviewAgent()
-                input_data = {
-                    "original_query": state["query"],
-                    "document_content": state.get("document_content", ""),
-                    "document_type": state.get("document_type"),
-                    "shared_context": state.get("shared_context", {}),
-                    "chat_session_id": state.get("chat_session_id", ""),
-                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
-                    "todos": todos,
-                    "todo_counter": state.get("todo_counter", 0)
-                }
-
-                # Execute ReviewAgent
-                result = await agent.execute(input_data)
-
-                # Update TODO status based on result
-                if agent_todo:
-                    if result.get("status") == "completed":
-                        todos = update_todo_status(todos, agent_todo["id"], "completed")
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
-                    elif result.get("status") == "error":
-                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error_message"))
-                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
-
-                    # Merge any TODO updates from agent
-                    if "todos" in result:
-                        from core.todo_types import merge_todos
-                        todos = merge_todos(todos, result["todos"])
-
-                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, risk_level={result.get('risk_level')}")
-                agent_results[agent_name] = result
-
-            else:
-                logger.warning(f"Unknown agent: {agent_name}")
-
-        # Get TODO summary
-        summary = get_todo_summary(todos)
-        logger.info(f"[TODO] Progress: {summary['summary']}")
-
-        result = {
-            "agent_results": agent_results,
-            "status": "agents_executed",
-            "todos": todos,  # Return updated todos
-            "current_phase": "evaluating"
+        # Prepare base input for agents
+        base_input = {
+            "query": state["query"],
+            "original_query": state.get("query"),
+            "chat_session_id": state.get("chat_session_id", ""),
+            "shared_context": state.get("shared_context", {}),
+            "todos": todos,
+            "todo_counter": state.get("todo_counter", 0),
+            "collection_keywords": state.get("collection_keywords", [])
         }
-        logger.debug(f"[NODE] execute_agents_node - Completed. Agents executed: {list(agent_results.keys())}")
-        return result
+
+        # Execute agents based on strategy
+        if strategy == "parallel" and len(selected_agents) > 1:
+            # Parallel execution
+            tasks = []
+            for agent_name in selected_agents:
+                input_data = self._prepare_agent_input(agent_name, base_input, agent_results)
+                task = AgentAdapter.execute_agent_dynamic(
+                    agent_name,
+                    input_data,
+                    self.llm_context
+                )
+                tasks.append((agent_name, task))
+
+            # Wait for all tasks
+            for agent_name, task in tasks:
+                try:
+                    result = await task
+                    agent_results[agent_name] = result
+
+                    # Update TODO
+                    for i, todo in enumerate(todos):
+                        if todo.get("agent") == agent_name:
+                            status = "completed" if result.get("status") in ["completed", "success"] else "failed"
+                            todos[i] = update_todo_status(todos[i], status)
+                            break
+
+                    logger.info(f"Agent '{agent_name}' completed: {result.get('status')}")
+
+                except Exception as e:
+                    logger.error(f"Agent '{agent_name}' failed: {e}")
+                    agent_results[agent_name] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+
+        else:
+            # Sequential execution
+            for agent_name in selected_agents:
+                try:
+                    input_data = self._prepare_agent_input(agent_name, base_input, agent_results)
+
+                    # Execute agent
+                    result = await AgentAdapter.execute_agent_dynamic(
+                        agent_name,
+                        input_data,
+                        self.llm_context
+                    )
+
+                    agent_results[agent_name] = result
+
+                    # Update TODO
+                    for i, todo in enumerate(todos):
+                        if todo.get("agent") == agent_name:
+                            status = "completed" if result.get("status") in ["completed", "success"] else "failed"
+                            todos[i] = update_todo_status(todos[i], status)
+                            break
+
+                    # Merge any TODO updates from agent
+                    if "todos" in result:
+                        from core.todo_types import merge_todos
+                        todos = merge_todos(todos, result["todos"])
+
+                    logger.info(f"Agent '{agent_name}' completed: {result.get('status')}")
+
+                except Exception as e:
+                    logger.error(f"Failed to execute agent '{agent_name}': {e}")
+                    agent_results[agent_name] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+
+        state["agent_results"] = agent_results
+        state["todos"] = todos
+        state["current_phase"] = "execution_complete"
+
+        # Calculate execution statistics
+        success_count = sum(1 for r in agent_results.values()
+                          if r.get("status") in ["completed", "success"])
+
+        state["execution_stats"] = {
+            "total_agents": len(selected_agents),
+            "successful": success_count,
+            "failed": len(selected_agents) - success_count
+        }
+
+        logger.info(f"[NODE] Agent execution completed: {success_count}/{len(selected_agents)} successful")
+        return state
+
+    def _prepare_agent_input(
+        self,
+        agent_name: str,
+        base_input: Dict[str, Any],
+        agent_results: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Prepare input data for specific agent
+
+        Args:
+            agent_name: Name of the agent
+            base_input: Base input data
+            agent_results: Results from previously executed agents
+
+        Returns:
+            Prepared input data
+        """
+        input_data = base_input.copy()
+
+        # Add agent-specific inputs
+        if agent_name == "analysis_agent":
+            # Pass search results to analysis agent
+            search_data = agent_results.get("search_agent", {}).get("collected_data", {})
+            input_data["input_data"] = search_data
+            input_data["analysis_type"] = "comprehensive"
+
+        elif agent_name == "document_agent":
+            input_data["document_type"] = "lease_contract"
+            input_data["document_params"] = {}
+
+        elif agent_name == "review_agent":
+            # Pass document to review if available
+            doc_data = agent_results.get("document_agent", {}).get("data", {})
+            input_data["document_content"] = doc_data.get("document", "")
+            input_data["review_type"] = "comprehensive"
+
+        return input_data
 
     async def generate_response_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generate final response based on agent results
+        Generate final response from agent results
 
         Args:
             state: Current state
@@ -1019,42 +710,18 @@ class RealEstateSupervisor:
         Returns:
             Updated state with final response
         """
-        logger.info("Generating final response")
-
-        # Handle planning error
-        if state.get("planning_error"):
-            logger.info("Handling planning error in response generation")
-            return {
-                "final_response": {
-                    "type": "error",
-                    "error_type": "planning_failed",
-                    "message": state.get("error_message", "실행 계획 생성 중 오류가 발생했습니다."),
-                    "details": state.get("error_details", ""),
-                    "suggestion": "다시 시도하거나 다른 방식으로 질문해주세요."
-                }
-            }
+        logger.info("[NODE] generate_response_node - Generating final response")
 
         agent_results = state.get("agent_results", {})
-        original_query = state.get("query", "")
-        logger.debug(f"[RESPONSE] agent_results keys: {list(agent_results.keys())}")
+        query = state.get("query", "")
 
-        # Check if search_agent returned direct output
-        search_result = agent_results.get("search_agent", {})
-        if search_result.get("direct_output"):
-            return {
-                "final_response": search_result["direct_output"],
-                "response_type": "direct"
-            }
-
-        # Process all agent results
+        # Collect all successful agent data
         all_data = {}
         for agent_name, result in agent_results.items():
-            logger.debug(f"[RESPONSE] Processing {agent_name}: status={result.get('status')}")
-            if result.get("status") == "success" or result.get("status") == "completed":
-                # SearchAgent returns "collected_data", others may return "data"
+            if result.get("status") in ["completed", "success"]:
                 data = result.get("collected_data") or result.get("data", {})
-                logger.debug(f"[RESPONSE] {agent_name} data keys: {list(data.keys()) if isinstance(data, dict) else 'not dict'}")
-                all_data[agent_name] = data
+                if data:
+                    all_data[agent_name] = data
 
         # Generate natural language response using LLM if data is available
         if all_data and not self.llm_manager._connection_error and self.llm_manager.client:
@@ -1075,7 +742,7 @@ class RealEstateSupervisor:
 4. 한국어로 자연스럽게 답변하세요
 5. 답변은 간결하고 명확하게 작성하세요"""
 
-                user_prompt = f"""사용자 질문: {original_query}
+                user_prompt = f"""사용자 질문: {query}
 
 수집된 정보:
 {json.dumps(context, ensure_ascii=False, indent=2)}
@@ -1137,205 +804,6 @@ class RealEstateSupervisor:
         }
         logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}, data_keys: {list(final_response.get('data', {}).keys())}")
         return result
-
-    async def error_handler_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Handle different types of errors with specific responses
-
-        Args:
-            state: Current state
-
-        Returns:
-            Updated state with error-specific response
-        """
-        logger.info("Handling error response")
-        intent = state.get("intent", {})
-        error_details = intent.get("details", "")
-
-        # Categorize error types and provide specific responses
-        if "API 키가 설정되지 않았습니다" in error_details:
-            error_type = "api_key_missing"
-            message = "API 키가 설정되지 않았습니다."
-            suggestion = "환경 변수에 OPENAI_API_KEY를 설정해주세요."
-        elif "OpenAI 라이브러리가 설치되지 않았습니다" in error_details:
-            error_type = "library_missing"
-            message = "필요한 라이브러리가 설치되지 않았습니다."
-            suggestion = "pip install openai 명령으로 설치해주세요."
-        elif "OpenAI 연결 실패" in error_details:
-            error_type = "connection_failed"
-            message = "OpenAI 서버 연결에 실패했습니다."
-            suggestion = "네트워크 연결을 확인하고 잠시 후 다시 시도해주세요."
-        elif "Azure OpenAI는 아직 지원되지 않습니다" in error_details:
-            error_type = "not_supported"
-            message = "Azure OpenAI는 아직 지원되지 않습니다."
-            suggestion = "OpenAI API를 사용해주세요."
-        elif "LLM 공급자가 설정되지 않았습니다" in error_details:
-            error_type = "provider_missing"
-            message = "LLM 공급자가 설정되지 않았습니다."
-            suggestion = "설정 파일에서 LLM provider를 확인해주세요."
-        elif "LLM 클라이언트가 초기화되지 않았습니다" in error_details:
-            error_type = "client_init_failed"
-            message = "LLM 클라이언트 초기화에 실패했습니다."
-            suggestion = "시스템 관리자에게 문의하세요."
-        else:
-            error_type = "unknown_error"
-            message = intent.get("message", "알 수 없는 시스템 오류가 발생했습니다.")
-            suggestion = intent.get("suggestion", "시스템 관리자에게 문의하세요.")
-
-        logger.debug(f"[ERROR_HANDLER] Error type: {error_type}, Details: {error_details}")
-
-        from datetime import datetime
-        return {
-            "final_response": {
-                "type": "error",
-                "error_type": error_type,
-                "message": message,
-                "details": error_details,
-                "suggestion": suggestion,
-                "timestamp": datetime.now().isoformat()
-            }
-        }
-
-    async def recheck_intent_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Recheck unclear intents with more context and keyword extraction
-
-        Args:
-            state: Current state
-
-        Returns:
-            Updated state with recheck results
-        """
-        query = state["query"]
-        logger.info(f"Rechecking unclear intent for query: {query}")
-
-        try:
-            # Try keyword extraction for additional validation
-            keywords = await self.llm_manager.extract_keywords_for_validation(query)
-            logger.debug(f"[RECHECK] Extracted keywords: {keywords.get('keywords', [])}, Score: {keywords.get('score', 0)}")
-
-            if keywords.get("score", 0) < 0.3:
-                # Still unclear after keyword extraction
-                logger.info(f"Query still unclear after recheck (score: {keywords.get('score', 0)})")
-                return {
-                    "still_unclear": True,
-                    "recheck_result": "failed",
-                    "keywords": keywords.get("keywords", []),
-                    "real_estate_keywords": keywords.get("real_estate_keywords", [])
-                }
-            else:
-                # Found relevant keywords, can proceed
-                logger.info(f"Query clarified through keywords (score: {keywords.get('score', 0)})")
-                return {
-                    "still_unclear": False,
-                    "recheck_result": "success",
-                    "intent_type": "general",  # Default to general processing
-                    "keywords": keywords.get("keywords", []),
-                    "real_estate_keywords": keywords.get("real_estate_keywords", []),
-                    "collection_keywords": keywords.get("real_estate_keywords", [])
-                }
-        except Exception as e:
-            logger.error(f"Recheck failed: {e}")
-            # On error, treat as still unclear
-            return {
-                "still_unclear": True,
-                "recheck_result": "error",
-                "error_message": str(e)
-            }
-
-    async def guidance_message_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Provide guidance message for unclassified or unclear queries
-
-        Args:
-            state: Current state
-
-        Returns:
-            Updated state with guidance response
-        """
-        logger.info("Generating guidance message")
-        intent_type = state.get("intent_type", "")
-        intent = state.get("intent", {})
-        query = state["query"]
-
-        if intent_type == "irrelevant":
-            message = f"사용자 메시지는 '{query}'입니다.\n죄송합니다. 부동산 관련 질문만 답변 가능합니다."
-            suggestion = "부동산 매매, 전세, 시세, 대출 등에 대해 다시 질문해주세요."
-            examples = [
-                "강남구 아파트 시세 알려줘",
-                "주택담보대출 금리는?",
-                "전세 계약시 주의사항은?",
-                "부동산 양도세 계산 방법은?"
-            ]
-            response_type = "irrelevant"
-        elif state.get("still_unclear"):
-            message = f"사용자 메시지는 '{query}'입니다.\n질문을 명확히 이해하지 못했습니다."
-            suggestion = "더 구체적으로 다시 질문해주세요."
-            examples = intent.get("examples", [
-                "특정 지역의 부동산 시세를 알고 싶으시면: '강남구 아파트 시세'",
-                "대출 정보를 원하시면: '주택담보대출 조건'",
-                "법률 정보가 필요하시면: '전세 계약서 작성 방법'"
-            ])
-            response_type = "unclear"
-        else:
-            # Generic guidance
-            base_message = intent.get("message", "요청을 처리할 수 없습니다.")
-            message = f"사용자 메시지는 '{query}'입니다.\n{base_message}"
-            suggestion = intent.get("suggestion", "다른 방식으로 다시 질문해주세요.")
-            examples = intent.get("examples", [])
-            response_type = "guidance"
-
-        logger.debug(f"[GUIDANCE] Type: {response_type}, Message: {message}")
-
-        return {
-            "final_response": {
-                "type": response_type,
-                "message": message,
-                "suggestion": suggestion,
-                "examples": examples,
-                "original_query": state["query"],
-                "extracted_keywords": state.get("keywords", [])
-            }
-        }
-
-    async def process_query(
-        self,
-        query: str,
-        session_id: str = None,
-        llm_context: LLMContext = None
-    ) -> Dict[str, Any]:
-        """
-        Process user query through the workflow
-
-        Args:
-            query: User query
-            session_id: Session ID
-            llm_context: Optional LLM context override
-
-        Returns:
-            Complete state with final response
-        """
-        logger.info(f"Processing query: {query}")
-
-        # Use override context if provided
-        if llm_context:
-            self.llm_context = llm_context
-            self.llm_manager = LLMManager(llm_context)
-
-        # Initialize state
-        initial_state = {
-            "query": query,
-            "chat_session_id": session_id or "default_session",
-            "shared_context": {},
-            "messages": []
-        }
-
-        # Compile and run workflow
-        app = self.workflow.compile()
-        final_state = await app.ainvoke(initial_state)
-
-        logger.info("Query processing completed")
-        return final_state
 
     def _prepare_context_for_llm(self, all_data: Dict) -> Dict:
         """
@@ -1430,6 +898,47 @@ class RealEstateSupervisor:
                 sources.append(f"시장 데이터: {analysis_data['data_source']}")
 
         return sources
+
+    async def process_query(
+        self,
+        query: str,
+        session_id: Optional[str] = None,
+        llm_context: Optional[LLMContext] = None
+    ) -> Dict[str, Any]:
+        """
+        Main entry point for processing user queries
+
+        Args:
+            query: User query
+            session_id: Optional session ID for tracking
+            llm_context: Optional LLM context override
+
+        Returns:
+            Dict containing the final state with response
+        """
+        logger.info(f"Starting query processing: {query[:100]}...")
+
+        # Use override context if provided
+        if llm_context:
+            self.llm_context = llm_context
+            self.llm_manager = LLMManager(llm_context)
+
+        # Initialize state
+        initial_state = {
+            "query": query,
+            "chat_session_id": session_id or "default_session",
+            "shared_context": {},
+            "messages": [],
+            "todos": [],
+            "todo_counter": 0
+        }
+
+        # Compile and run workflow
+        app = self.workflow.compile()
+        final_state = await app.ainvoke(initial_state)
+
+        logger.info("Query processing completed")
+        return final_state
 
 
 # For backwards compatibility
