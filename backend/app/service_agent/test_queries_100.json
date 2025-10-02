@@ -1,0 +1,557 @@
+{
+  "total_count": 90,
+  "categories": {
+    "특정조항검색": 15,
+    "시맨틱검색": 20,
+    "메타데이터필터링": 7,
+    "임차인보호조항": 5,
+    "복합검색": 9,
+    "실전사례": 10,
+    "법률용어": 7,
+    "공인중개사": 6,
+    "특수상황": 5,
+    "절차방법": 6
+  },
+  "queries": [
+    {
+      "id": 1,
+      "query": "주택임대차보호법 제1조",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 2,
+      "query": "주택임대차보호법 제2조",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 3,
+      "query": "주택임대차보호법 제3조",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 4,
+      "query": "주택임대차보호법 제4조 대항력",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 5,
+      "query": "주택임대차보호법 제5조 우선변제권",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 6,
+      "query": "주택임대차보호법 제6조 계약갱신요구권",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 7,
+      "query": "주택임대차보호법 제7조 차임 증액",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 8,
+      "query": "주택임대차보호법 제8조 확정일자",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 9,
+      "query": "민법 제618조 임대차",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 10,
+      "query": "민법 제622조 임차인의 의무",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 11,
+      "query": "민법 제626조 임대인의 의무",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 12,
+      "query": "민법 제627조 보증금 반환",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 13,
+      "query": "공인중개사법 제10조",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 14,
+      "query": "공인중개사법 제25조 중개보수",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 15,
+      "query": "공인중개사법 제30조 손해배상",
+      "category": "특정조항검색",
+      "expected_strategy": "SQLite 직접 조회"
+    },
+    {
+      "id": 16,
+      "query": "전세금 5% 인상 제한",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 17,
+      "query": "전세 보증금은 얼마까지 올릴 수 있나요",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 18,
+      "query": "전세 계약 갱신할 때 임대료 인상률",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 19,
+      "query": "전세금 반환 시기",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 20,
+      "query": "전세 계약 종료 후 보증금 돌려받기",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 21,
+      "query": "월세 인상 한도",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 22,
+      "query": "월세를 전세로 전환할 수 있나요",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 23,
+      "query": "월세 계약 갱신 거부",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 24,
+      "query": "임대차 계약 갱신 요구권",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 25,
+      "query": "2년 계약 만료 후 재계약",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 26,
+      "query": "계약 갱신 거부 사유",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 27,
+      "query": "임대인이 계약 갱신을 거부하는 경우",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 28,
+      "query": "임대차 보증금 반환 청구",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 29,
+      "query": "보증금 반환 지연 이자",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 30,
+      "query": "임대인이 보증금을 안 돌려줄 때",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 31,
+      "query": "소액 보증금 우선변제",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 32,
+      "query": "전입신고와 대항력",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 33,
+      "query": "임차권 등기명령",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 34,
+      "query": "대항력이 발생하는 시점",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 35,
+      "query": "확정일자 받는 방법",
+      "category": "시맨틱검색",
+      "expected_strategy": "ChromaDB 벡터 검색"
+    },
+    {
+      "id": 36,
+      "query": "주택임대차보호법 시행령",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 37,
+      "query": "주택임대차보호법 시행규칙",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 38,
+      "query": "공인중개사법 시행령",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 39,
+      "query": "민법 임대차 규정",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 40,
+      "query": "임대차 관련 법률",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 41,
+      "query": "전세 월세 관련 규정",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 42,
+      "query": "매매 분양 관련 법률",
+      "category": "메타데이터필터링",
+      "expected_strategy": "SQLite 필터 + 벡터 검색"
+    },
+    {
+      "id": 43,
+      "query": "임차인 보호 조항",
+      "category": "임차인보호조항",
+      "expected_strategy": "is_tenant_protection 필터"
+    },
+    {
+      "id": 44,
+      "query": "임차인 권리 보호",
+      "category": "임차인보호조항",
+      "expected_strategy": "is_tenant_protection 필터"
+    },
+    {
+      "id": 45,
+      "query": "임차인에게 유리한 법",
+      "category": "임차인보호조항",
+      "expected_strategy": "is_tenant_protection 필터"
+    },
+    {
+      "id": 46,
+      "query": "세입자 보호 규정",
+      "category": "임차인보호조항",
+      "expected_strategy": "is_tenant_protection 필터"
+    },
+    {
+      "id": 47,
+      "query": "임대차 약자 보호",
+      "category": "임차인보호조항",
+      "expected_strategy": "is_tenant_protection 필터"
+    },
+    {
+      "id": 48,
+      "query": "주택임대차보호법에서 전세금 인상 제한 조항",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 49,
+      "query": "민법상 임차인의 수선 의무",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 50,
+      "query": "공인중개사법상 중개수수료 상한",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 51,
+      "query": "임대차 계약에서 임차인이 알아야 할 권리",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 52,
+      "query": "전세 계약 시 주의사항",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 53,
+      "query": "월세 계약서 필수 기재사항",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 54,
+      "query": "소액임차인 우선변제권 요건",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 55,
+      "query": "임대차 계약 해지 사유와 절차",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 56,
+      "query": "보증금 반환청구권 행사 방법",
+      "category": "복합검색",
+      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+    },
+    {
+      "id": 57,
+      "query": "집주인이 갑자기 나가라고 하면",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 58,
+      "query": "전세금을 20% 올려달라고 하는데",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 59,
+      "query": "계약서에 확정일자가 없으면",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 60,
+      "query": "전입신고를 늦게 했는데 괜찮나요",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 61,
+      "query": "임대인이 집을 팔았는데 계약은 유효한가요",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 62,
+      "query": "보증금을 못 받고 이사 가야 하나요",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 63,
+      "query": "중개사가 수수료를 더 받으려고 해요",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 64,
+      "query": "계약 만료 6개월 전 통보받았어요",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 65,
+      "query": "전세 사기 피해 예방 방법",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 66,
+      "query": "임대차 분쟁 해결 절차",
+      "category": "실전사례",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 67,
+      "query": "대항력이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 68,
+      "query": "우선변제권이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 69,
+      "query": "확정일자란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 70,
+      "query": "임차권 등기명령이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 71,
+      "query": "소액임차인이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 72,
+      "query": "계약갱신요구권이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 73,
+      "query": "차임 증액청구권이란",
+      "category": "법률용어",
+      "expected_strategy": "벡터 검색"
+    },
+    {
+      "id": 74,
+      "query": "공인중개사 중개수수료 계산",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 75,
+      "query": "중개보수 상한액",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 76,
+      "query": "중개사 의무사항",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 77,
+      "query": "부동산 중개 계약서 작성",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 78,
+      "query": "중개사 과실 손해배상",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 79,
+      "query": "중개수수료는 누가 내나요",
+      "category": "공인중개사",
+      "expected_strategy": "메타데이터 + 벡터"
+    },
+    {
+      "id": 80,
+      "query": "재개발 지역 임대차 계약",
+      "category": "특수상황",
+      "expected_strategy": "복합 검색"
+    },
+    {
+      "id": 81,
+      "query": "다가구 주택 임대차",
+      "category": "특수상황",
+      "expected_strategy": "복합 검색"
+    },
+    {
+      "id": 82,
+      "query": "상가 임대차와 주택 임대차 차이",
+      "category": "특수상황",
+      "expected_strategy": "복합 검색"
+    },
+    {
+      "id": 83,
+      "query": "전세권 설정 등기",
+      "category": "특수상황",
+      "expected_strategy": "복합 검색"
+    },
+    {
+      "id": 84,
+      "query": "임대차 계약 무효 사유",
+      "category": "특수상황",
+      "expected_strategy": "복합 검색"
+    },
+    {
+      "id": 85,
+      "query": "임대차 계약서 작성 방법",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 86,
+      "query": "확정일자 받는 절차",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 87,
+      "query": "전입신고 방법",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 88,
+      "query": "임차권 등기명령 신청",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 89,
+      "query": "보증금 반환 소송 절차",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    },
+    {
+      "id": 90,
+      "query": "임대차 분쟁조정 신청",
+      "category": "절차방법",
+      "expected_strategy": "시맨틱 검색"
+    }
+  ]
+}

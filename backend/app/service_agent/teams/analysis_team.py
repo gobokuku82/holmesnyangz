@@ -4,6 +4,7 @@ Analysis Team Supervisor - 데이터 분석을 관리하는 서브그래프
 """
 
 import logging
+import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from langgraph.graph import StateGraph, START, END
@@ -292,19 +293,31 @@ class AnalysisTeamSupervisor:
     async def generate_insights_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
         """
         인사이트 생성 노드
-        분석 결과를 바탕으로 인사이트 도출
+        분석 결과를 바탕으로 인사이트 도출 - LLM 사용 시 더 정확함
         """
         logger.info("[AnalysisTeam] Generating insights")
 
         state["analysis_progress"] = 0.7
 
-        analysis_method = self.analysis_methods.get(
-            state.get("analysis_type", "comprehensive"),
-            self._comprehensive_analysis
-        )
-
-        # 분석 타입별 인사이트 생성
-        insights = analysis_method(state)
+        # LLM 사용 가능 시 LLM 기반 인사이트 생성
+        if self.llm_context and self.llm_context.api_key:
+            try:
+                insights = await self._generate_insights_with_llm(state)
+            except Exception as e:
+                logger.warning(f"LLM insight generation failed, using fallback: {e}")
+                # Fallback: 기존 rule-based 방식
+                analysis_method = self.analysis_methods.get(
+                    state.get("analysis_type", "comprehensive"),
+                    self._comprehensive_analysis
+                )
+                insights = analysis_method(state)
+        else:
+            # Fallback: 기존 rule-based 방식
+            analysis_method = self.analysis_methods.get(
+                state.get("analysis_type", "comprehensive"),
+                self._comprehensive_analysis
+            )
+            insights = analysis_method(state)
 
         state["insights"] = insights
         state["analysis_progress"] = 0.8
@@ -313,6 +326,120 @@ class AnalysisTeamSupervisor:
         state["confidence_level"] = self._calculate_confidence(state)
 
         return state
+
+    async def _generate_insights_with_llm(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
+        """LLM을 사용한 인사이트 생성"""
+        from openai import OpenAI
+
+        # 분석 데이터 준비
+        raw_analysis = state.get("raw_analysis", {})
+        analysis_type = state.get("analysis_type", "comprehensive")
+        query = state.get("shared_context", {}).get("query", "")
+
+        system_prompt = """당신은 부동산 데이터 분석 전문가입니다.
+수집된 데이터를 분석하여 의미 있는 인사이트와 실행 가능한 추천사항을 제공하세요.
+
+## 분석 타입별 가이드:
+
+### comprehensive (종합 분석)
+- 전반적인 상황 파악
+- 주요 트렌드 및 패턴 식별
+- 다각도 관점에서 분석
+- 장단점 모두 고려
+
+### market (시장 분석)
+- 가격 트렌드 분석
+- 수요/공급 상황 파악
+- 시장 전망 제시
+- 투자 타이밍 평가
+
+### risk (리스크 분석)
+- 잠재적 위험 요소 식별
+- 위험도 수준 평가
+- 완화 방안 제시
+- 주의사항 안내
+
+### comparison (비교 분석)
+- 옵션 간 비교
+- 장단점 대비
+- 최적 선택지 추천
+- 의사결정 기준 제시
+
+## 응답 형식:
+{
+    "insights": [
+        {
+            "type": "key_finding | trend | risk | opportunity | recommendation",
+            "title": "인사이트 제목 (한줄)",
+            "description": "상세 설명 (2-3문장)",
+            "confidence": 0.0~1.0,
+            "importance": "high | medium | low",
+            "supporting_evidence": ["근거1", "근거2"],
+            "recommendations": ["추천사항1", "추천사항2"]
+        }
+    ],
+    "overall_assessment": "전체적인 평가 (2-3문장)",
+    "key_takeaways": ["핵심 포인트1", "핵심 포인트2", "핵심 포인트3"]
+}
+
+## 인사이트 작성 가이드:
+- 구체적이고 실행 가능한 내용
+- 전문 용어 사용 시 간단한 설명 추가
+- 숫자와 데이터로 뒷받침
+- 긍정적/부정적 측면 균형있게 제시
+- 사용자가 실제로 활용할 수 있는 추천사항"""
+
+        try:
+            client = OpenAI(api_key=self.llm_context.api_key)
+
+            # 분석 데이터를 컨텍스트로 전달
+            user_prompt = f"""## 사용자 질문:
+{query}
+
+## 분석 타입:
+{analysis_type}
+
+## 수집된 데이터:
+{json.dumps(raw_analysis, ensure_ascii=False, indent=2)}
+
+위 데이터를 바탕으로 의미 있는 인사이트를 생성해주세요."""
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response.choices[0].message.content)
+            logger.info(f"LLM Insight Generation: {len(result.get('insights', []))} insights generated")
+
+            # LLM 응답을 AnalysisInsight 객체로 변환
+            insights = []
+            for insight_data in result.get("insights", []):
+                insight = AnalysisInsight(
+                    insight_type=insight_data.get("type", "key_finding"),
+                    description=f"{insight_data.get('title', '')}: {insight_data.get('description', '')}",
+                    confidence=insight_data.get("confidence", 0.7),
+                    supporting_data=insight_data.get("supporting_evidence", []),
+                    recommendations=insight_data.get("recommendations", [])
+                )
+                insights.append(insight)
+
+            # 전체 평가와 핵심 포인트 저장
+            state["llm_assessment"] = {
+                "overall": result.get("overall_assessment", ""),
+                "key_takeaways": result.get("key_takeaways", [])
+            }
+
+            return insights
+
+        except Exception as e:
+            logger.error(f"LLM insight generation failed: {e}")
+            raise
 
     def _comprehensive_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
         """종합 분석"""

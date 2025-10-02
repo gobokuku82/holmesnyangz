@@ -5,6 +5,7 @@ Search Team Supervisor - 검색 관련 Agent들을 관리하는 서브그래프
 
 import logging
 import asyncio
+import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from langgraph.graph import StateGraph, START, END
@@ -129,34 +130,114 @@ class SearchTeamSupervisor:
         return state
 
     def _extract_keywords(self, query: str) -> SearchKeywords:
-        """쿼리에서 키워드 추출"""
-        # 간단한 키워드 추출 (실제로는 NLP 사용 가능)
+        """쿼리에서 키워드 추출 - LLM 사용 시 더 정확함"""
+        # LLM이 있으면 LLM 기반 추출, 없으면 패턴 매칭
+        if self.llm_context and self.llm_context.api_key:
+            try:
+                return self._extract_keywords_with_llm(query)
+            except Exception as e:
+                logger.warning(f"LLM keyword extraction failed, using fallback: {e}")
+
+        # Fallback: 패턴 매칭 기반 키워드 추출
+        return self._extract_keywords_with_patterns(query)
+
+    def _extract_keywords_with_llm(self, query: str) -> SearchKeywords:
+        """LLM을 사용한 키워드 추출"""
+        from openai import OpenAI
+
+        system_prompt = """당신은 부동산 검색 쿼리에서 키워드를 추출하는 전문가입니다.
+사용자 질문을 분석하여 검색에 필요한 핵심 키워드를 카테고리별로 추출하세요.
+
+## 카테고리별 키워드 설명:
+
+1. **legal (법률 관련)**
+   - 법률 용어, 권리, 의무, 계약 조항 관련
+   - 예: 법, 전세, 임대, 보증금, 계약, 권리, 의무, 갱신, 임차인, 임대인, 법률, 조항, 규정
+   - 예시: "전세금 5% 인상" → ["전세금", "인상", "임대차", "갱신"]
+
+2. **real_estate (부동산 시세)**
+   - 부동산 종류, 지역, 가격, 시세 관련
+   - 예: 아파트, 빌라, 오피스텔, 시세, 매매, 가격, 평수, 지역명, 동네명
+   - 예시: "강남구 아파트 시세" → ["강남구", "아파트", "시세", "전세가"]
+
+3. **loan (대출 관련)**
+   - 대출 상품, 금리, 조건 관련
+   - 예: 대출, 금리, 한도, LTV, DTI, DSR, 담보, 신용, 상환, 금융
+   - 예시: "주택담보대출 금리" → ["주택담보대출", "금리", "한도"]
+
+4. **general (일반 정보)**
+   - 숫자, 단위, 날짜 등 보조 정보
+   - 예: 5억, 10%, 2024년, 3개월, 평당
+   - 예시: "5억 전세" → ["5억", "전세"]
+
+## 응답 형식 (JSON 형식으로 응답):
+{
+    "legal": ["법률", "관련", "키워드"],
+    "real_estate": ["부동산", "관련", "키워드"],
+    "loan": ["대출", "관련", "키워드"],
+    "general": ["숫자", "단위", "날짜"]
+}
+
+## 추출 가이드:
+- 검색에 실제로 도움이 되는 키워드만 추출
+- 불용어(은, 는, 이, 가 등)는 제외
+- 동의어나 유사어는 대표 키워드 하나만 포함
+- 빈 배열로 반환 가능 (해당 카테고리에 키워드가 없으면)
+- 동일한 키워드가 여러 카테고리에 속할 수 있음 (예: "전세"는 legal과 real_estate 모두)"""
+
+        try:
+            client = OpenAI(api_key=self.llm_context.api_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"키워드 추출할 질문: {query}"}
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response.choices[0].message.content)
+            logger.info(f"LLM Keyword Extraction: {result}")
+
+            return SearchKeywords(
+                legal=result.get("legal", []),
+                real_estate=result.get("real_estate", []),
+                loan=result.get("loan", []),
+                general=result.get("general", [])
+            )
+        except Exception as e:
+            logger.error(f"LLM keyword extraction failed: {e}")
+            raise
+
+    def _extract_keywords_with_patterns(self, query: str) -> SearchKeywords:
+        """패턴 매칭 기반 키워드 추출 (Fallback)"""
         legal_keywords = []
         real_estate_keywords = []
         loan_keywords = []
         general_keywords = []
 
         # 법률 관련 키워드
-        legal_terms = ["법", "전세", "임대", "계약", "보증금", "권리", "의무"]
+        legal_terms = ["법", "전세", "임대", "계약", "보증금", "권리", "의무", "갱신", "임차인", "임대인"]
         for term in legal_terms:
             if term in query:
                 legal_keywords.append(term)
 
         # 부동산 관련 키워드
-        estate_terms = ["아파트", "시세", "매매", "가격", "평수", "지역", "강남", "강북"]
+        estate_terms = ["아파트", "빌라", "오피스텔", "시세", "매매", "가격", "평수", "지역", "강남", "강북", "서초", "송파"]
         for term in estate_terms:
             if term in query:
                 real_estate_keywords.append(term)
 
         # 대출 관련 키워드
-        loan_terms = ["대출", "금리", "한도", "LTV", "DTI", "DSR"]
+        loan_terms = ["대출", "금리", "한도", "LTV", "DTI", "DSR", "담보", "신용"]
         for term in loan_terms:
             if term in query:
                 loan_keywords.append(term)
 
         # 일반 키워드 (숫자, 퍼센트 등)
         import re
-        numbers = re.findall(r'\d+[%억만원]?', query)
+        numbers = re.findall(r'\d+[%억만원평]?', query)
         general_keywords.extend(numbers)
 
         return SearchKeywords(
