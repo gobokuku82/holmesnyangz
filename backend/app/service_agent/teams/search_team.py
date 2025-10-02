@@ -41,6 +41,15 @@ class SearchTeamSupervisor:
         # Agent 초기화 (Registry에서 가져오기)
         self.available_agents = self._initialize_agents()
 
+        # 법률 검색 도구 초기화
+        self.legal_search_tool = None
+        try:
+            from app.service.tools.legal_search_tool import LegalSearchTool
+            self.legal_search_tool = LegalSearchTool()
+            logger.info("LegalSearchTool initialized successfully")
+        except Exception as e:
+            logger.warning(f"LegalSearchTool initialization failed: {e}")
+
         # 서브그래프 구성
         self.app = None
         self._build_subgraph()
@@ -194,29 +203,80 @@ class SearchTeamSupervisor:
     async def execute_search_node(self, state: SearchTeamState) -> SearchTeamState:
         """
         검색 실행 노드
-        실제 검색 Agent 호출
+        실제 검색 Agent 호출 + 하이브리드 법률 검색
         """
         logger.info("[SearchTeam] Executing searches")
 
         search_scope = state.get("search_scope", [])
         keywords = state.get("keywords", {})
         shared_context = state.get("shared_context", {})
+        query = shared_context.get("query", "")
 
-        # SearchAgent 입력 준비
-        search_input = {
-            "query": shared_context.get("query", ""),
-            "original_query": shared_context.get("original_query", ""),
-            "chat_session_id": shared_context.get("session_id", ""),
-            "collection_keywords": self._flatten_keywords(keywords),
-            "search_scope": search_scope,
-            "shared_context": {},
-            "todos": [],
-            "todo_counter": 0
-        }
-
-        # SearchAgent 실행
-        if self.available_agents.get("search_agent"):
+        # === 1. 법률 검색 (우선 실행) ===
+        if "legal" in search_scope and self.legal_search_tool:
             try:
+                logger.info("[SearchTeam] Executing legal search")
+
+                # 검색 파라미터 구성
+                search_params = {
+                    "limit": 10
+                }
+
+                # 임차인 보호 조항 필터
+                if any(term in query for term in ["임차인", "전세", "임대", "보증금"]):
+                    search_params["is_tenant_protection"] = True
+
+                # 법률 검색 실행
+                result = await self.legal_search_tool.search(query, search_params)
+
+                # 결과 파싱
+                if result.get("status") == "success":
+                    legal_data = result.get("data", [])
+
+                    # 결과 포맷 변환
+                    state["legal_results"] = [
+                        {
+                            "law_title": item.get("law_title", ""),
+                            "article_number": item.get("article_number", ""),
+                            "article_title": item.get("article_title", ""),
+                            "content": item.get("content", ""),
+                            "relevance_score": 1.0 - item.get("distance", 0.0),
+                            "chapter": item.get("chapter"),
+                            "section": item.get("section"),
+                            "source": "legal_db"
+                        }
+                        for item in legal_data
+                    ]
+
+                    state["search_progress"]["legal_search"] = "completed"
+                    logger.info(f"[SearchTeam] Legal search completed: {len(legal_data)} results")
+                else:
+                    state["search_progress"]["legal_search"] = "failed"
+                    logger.warning(f"Legal search returned status: {result.get('status')}")
+
+            except Exception as e:
+                logger.error(f"Legal search failed: {e}")
+                state["search_progress"]["legal_search"] = "failed"
+                # 실패해도 계속 진행
+
+        # === 2. SearchAgent 실행 (부동산, 대출 검색) ===
+        # 법률 검색이 이미 완료되었으므로 scope에서 제외
+        remaining_scope = [s for s in search_scope if s != "legal"]
+
+        if remaining_scope and self.available_agents.get("search_agent"):
+            try:
+                # SearchAgent 입력 준비
+                search_input = {
+                    "query": query,
+                    "original_query": shared_context.get("original_query", query),
+                    "chat_session_id": shared_context.get("session_id", ""),
+                    "collection_keywords": self._flatten_keywords(keywords),
+                    "search_scope": remaining_scope,
+                    "shared_context": {},
+                    "todos": [],
+                    "todo_counter": 0
+                }
+
                 result = await AgentAdapter.execute_agent_dynamic(
                     "search_agent",
                     search_input,
@@ -227,17 +287,15 @@ class SearchTeamSupervisor:
                 if result.get("status") in ["completed", "success"]:
                     collected_data = result.get("collected_data", {})
 
-                    # 법률 검색 결과
-                    if "legal_search" in collected_data:
-                        state["legal_results"] = collected_data["legal_search"][:10]
-
                     # 부동산 검색 결과
                     if "real_estate_search" in collected_data:
                         state["real_estate_results"] = collected_data["real_estate_search"]
+                        state["search_progress"]["real_estate_search"] = "completed"
 
                     # 대출 검색 결과
                     if "loan_search" in collected_data:
                         state["loan_results"] = collected_data["loan_search"]
+                        state["search_progress"]["loan_search"] = "completed"
 
                     state["search_progress"]["search_agent"] = "completed"
                 else:
@@ -248,9 +306,6 @@ class SearchTeamSupervisor:
                 logger.error(f"Search execution failed: {e}")
                 state["search_progress"]["search_agent"] = "failed"
                 state["error"] = str(e)
-        else:
-            logger.warning("SearchAgent not available")
-            state["error"] = "SearchAgent not available"
 
         return state
 

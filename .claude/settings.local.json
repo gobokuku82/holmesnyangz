@@ -21,7 +21,13 @@
       "Bash(for file in core/*.py)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(if [ -d \"C:\\kdy\\projects\\holmesnayangs\\bera_v001\\holmesnyangz\\backend\\data\\storage\\legal_info\\chroma_db\" ])",
+      "Bash(venvScripts:*)",
+      "Bash(\"venv\\Scripts\\python.exe\" -m pip install --upgrade pip)",
+      "Bash(\"venv\\Scripts\\pip.exe\" install:*)",
+      "Bash(\"venv\\Scripts\\pip.exe\":*)",
+      "Bash(\"..\\venv\\Scripts\\python.exe\" \"app\\service_agent\\hn_agent_simple_test.py\" \"전세금 5% 인상\")"
     ],
     "deny": [],
     "ask": []
