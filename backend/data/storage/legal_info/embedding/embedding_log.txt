@@ -1,0 +1,128 @@
+C:\Users\gobok\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\torchvision\io\image.py:13: UserWarning: Failed to load image Python extension: '[WinError 127] 지정된 프로시저를 찾을 수 없습니다'If you don't plan on using image functionality from `torchvision.io`, you can ignore this warning. Otherwise, there might be something wrong with your environment. Did you have `libjpeg` or `libpng` installed before building `torchvision` from source?
+  warn(
+[EMOJI] 전체 모드로 실행 (모든 카테고리 처리)
+
+============================================================
+ChromaDB 재임베딩 시작: 2025-10-02 08:27:25
+============================================================
+
+[1] ChromaDB 초기화 중...
+   [OK] 기존 컬렉션 삭제 완료
+   [OK] 새 컬렉션 생성 완료
+
+[2] 임베딩 모델 로드 중...
+   [OK] kure_v1 모델 로드 완료
+
+   [EMOJI] 전체 모드: 모든 카테고리 처리
+
+[3] 처리 중: 1_공통 매매_임대차
+   경로: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chunked\1_공통 매매_임대차
+
+   [OK] 공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked.json: 33개 문서 임베딩 완료
+   [FAIL] 공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked_article_1, 공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked_article_2 in add.
+   [FAIL] 공인중개사법(법률)(제19841호)(20241227)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 공인중개사법(법률)(제19841호)(20241227)_chunked_article_3, 공인중개사법(법률)(제19841호)(20241227)_chunked_article_1, 공인중개사법(법률)(제19841호)(20241227)_chunked_article_25 in add.
+   [FAIL] 공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked_article_1, 공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked_article_2 in add.
+   [FAIL] 부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked_article_3, 부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked_article_2, 부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked_article_1 in add.
+   [FAIL] 부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked_article_5, 부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked_article_6 in add.
+   [FAIL] 부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked_article_1, 부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked_article_2 in add.
+   [FAIL] 부동산등기규칙(대법원규칙)(제03169호)(20250801)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산등기규칙(대법원규칙)(제03169호)(20250801)_chunked_article_15 in add.
+   [FAIL] 부동산등기법(법률)(제20435호)(20250131)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산등기법(법률)(제20435호)(20250131)_chunked_article_101 in add.
+   [EMOJI] 1_공통 매매_임대차 완료: 33개 문서
+
+[3] 처리 중: 2_임대차_전세_월세
+   경로: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chunked\2_임대차_전세_월세
+
+   [OK] 민간임대주택에 관한 특별법 시행규칙(국토교통부령)(제01491호)(20250604)_chunked.json: 51개 문서 임베딩 완료
+   [FAIL] 민간임대주택에 관한 특별법 시행령(대통령령)(제35581호)(20250604)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 민간임대주택에 관한 특별법 시행령(대통령령)(제35581호)(20250604)_chunked_article_6 in add.
+   [FAIL] 민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked_article_1, 민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked_article_2 in add.
+   [FAIL] 주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked_article_2, 주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked_article_1 in add.
+   [OK] 주택임대차보호법(법률)(제19356호)(20230719)_chunked.json: 42개 문서 임베딩 완료
+   [EMOJI] 2_임대차_전세_월세 완료: 93개 문서
+
+[3] 처리 중: 3_공급_및_관리_매매_분양
+   경로: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chunked\3_공급_및_관리_매매_분양
+
+   [OK] 건축물의 분양에 관한 법률 시행규칙(국토교통부령)(제00909호)(20211102)_chunked.json: 10개 문서 임베딩 완료
+   [FAIL] 건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked_article_1, 건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked_article_2 in add.
+   [FAIL] 건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked_article_1, 건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked_article_2, 건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked_article_3 in add.
+   [OK] 공동주택관리법 시행규칙(국토교통부령)(제01482호)(20250415)_chunked.json: 48개 문서 임베딩 완료
+   [OK] 공동주택관리법 시행령(대통령령)(제35451호)(20250415)_chunked.json: 124개 문서 임베딩 완료
+   [OK] 공동주택관리법(법률)(제20385호)(20250101)_chunked.json: 106개 문서 임베딩 완료
+   [OK] 주택법 시행규칙(국토교통부령)(제01373호)(20250203)_chunked.json: 61개 문서 임베딩 완료
+   [OK] 주택법(법률)(제20048호)(20240717)_chunked.json: 130개 문서 임베딩 완료
+   [EMOJI] 3_공급_및_관리_매매_분양 완료: 479개 문서
+
+[3] 처리 중: 4_기타
+   경로: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chunked\4_기타
+
+   [FAIL] 공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked_article_2, 공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked_article_1, 공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked_article_3 in add.
+   [OK] 공동주택 층간소음의 범위와 기준에 관한 규칙(국토교통부령)(제01185호)(20230102)_chunked.json: 3개 문서 임베딩 완료
+   [OK] 부동산 가격공시에 관한 법률 시행규칙(국토교통부령)(제01118호)(20220330)_chunked.json: 32개 문서 임베딩 완료
+   [OK] 부동산 가격공시에 관한 법률 시행령(대통령령)(제35058호)(20241210)_chunked.json: 79개 문서 임베딩 완료
+   [FAIL] 부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked.json 처리 실패: Expected IDs to be unique, found duplicates of: 부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked_article_1, 부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked_article_4 in add.
+   [OK] 부동산_용어_95가지_chunked.json: 92개 문서 임베딩 완료
+   [EMOJI] 4_기타 완료: 206개 문서
+
+
+============================================================
+[OK] ChromaDB 재임베딩 완료!
+============================================================
+[EMOJI] 처리 통계:
+   - 처리 파일: 13개
+   - 임베딩 문서: 811개
+   - 소요 시간: 1935.59초
+
+[EMOJI] 카테고리별 통계:
+   - 1_공통 매매_임대차: 33개
+   - 2_임대차_전세_월세: 93개
+   - 3_공급_및_관리_매매_분양: 479개
+   - 4_기타: 206개
+
+종료 시간: 2025-10-02 08:59:41
+============================================================
+
+
+[EMOJI] 임베딩 결과 검증 중...
+
+[OK] 전체 문서 개수: 904
+
+[WARN] Unknown title 문서: 0개 (0.0%)
+
+[EMOJI] doc_type 분포:
+   - 법률: 371개 (41.0%)
+   - 시행령: 203개 (22.5%)
+   - 시행규칙: 235개 (26.0%)
+   - 용어집: 92개 (10.2%)
+   - 기타: 3개 (0.3%)
+
+[EMOJI] 카테고리 분포:
+   - 1_공통 매매_임대차: 133개 (14.7%)
+   - 2_임대차_전세_월세: 93개 (10.3%)
+   - 3_공급_및_관리_매매_분양: 472개 (52.2%)
+   - 4_기타: 206개 (22.8%)
+
+[EMOJI] 샘플 메타데이터 (첫 3개 문서):
+
+   [1] 공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked_article_1
+       title: 공인중개사법 시행규칙
+       doc_type: 시행규칙
+       category: 1_공통 매매_임대차
+       article_number: 제1조
+       chunk_index: 0
+
+   [2] 공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked_article_2
+       title: 공인중개사법 시행규칙
+       doc_type: 시행규칙
+       category: 1_공통 매매_임대차
+       article_number: 제2조
+       chunk_index: 0
+
+   [3] 공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked_article_3
+       title: 공인중개사법 시행규칙
+       doc_type: 시행규칙
+       category: 1_공통 매매_임대차
+       article_number: 제3조
+       chunk_index: 0
+
+============================================================
+

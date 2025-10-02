@@ -12,7 +12,10 @@
       "Bash(dir:*)",
       "Bash(timeout 120 python app/service/tests/final_integration_check.py)",
       "Bash(timeout 600 python app/service/tests/hard_query_test_50.py)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(timeout:*)",
+      "Bash(tasklist)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []

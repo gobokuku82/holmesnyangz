@@ -27,7 +27,7 @@ import re
 PROJECT_ROOT = Path(__file__).resolve().parents[5]
 CHUNKED_DIR = PROJECT_ROOT / "backend" / "data" / "storage" / "legal_info" / "chunked"
 CHROMA_PATH = PROJECT_ROOT / "backend" / "data" / "storage" / "legal_info" / "chroma_db"
-MODEL_PATH = PROJECT_ROOT / "backend" / "models" / "kure_v1"
+MODEL_PATH = PROJECT_ROOT / "backend" / "app" / "service" / "models" / "kure_v1"
 
 # 카테고리 매핑
 CATEGORIES = [
@@ -181,36 +181,36 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
     print(f"{'='*60}\n")
 
     # 1. ChromaDB 초기화
-    print("1️⃣ ChromaDB 초기화 중...")
+    print("[1] ChromaDB 초기화 중...")
     chroma_client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
     try:
         chroma_client.delete_collection("korean_legal_documents")
-        print("   ✅ 기존 컬렉션 삭제 완료")
+        print("   [OK] 기존 컬렉션 삭제 완료")
     except Exception as e:
-        print(f"   ℹ️ 기존 컬렉션 없음: {e}")
+        print(f"   [INFO] 기존 컬렉션 없음 (새로 생성)")
 
     collection = chroma_client.create_collection(
         name="korean_legal_documents",
         metadata={"hnsw:space": "cosine"}
     )
-    print("   ✅ 새 컬렉션 생성 완료\n")
+    print("   [OK] 새 컬렉션 생성 완료\n")
 
     # 2. 임베딩 모델 로드
-    print("2️⃣ 임베딩 모델 로드 중...")
+    print("[2] 임베딩 모델 로드 중...")
     model = SentenceTransformer(str(MODEL_PATH))
-    print("   ✅ kure_v1 모델 로드 완료\n")
+    print("   [OK] kure_v1 모델 로드 완료\n")
 
     # 3. 카테고리 결정
     if test_mode:
         categories_to_process = ["2_임대차_전세_월세"]
-        print("   🧪 테스트 모드: 2_임대차_전세_월세만 처리\n")
+        print("   [EMOJI] 테스트 모드: 2_임대차_전세_월세만 처리\n")
     elif category_filter:
         categories_to_process = [category_filter]
-        print(f"   🎯 필터 모드: {category_filter}만 처리\n")
+        print(f"   [EMOJI] 필터 모드: {category_filter}만 처리\n")
     else:
         categories_to_process = CATEGORIES
-        print("   🚀 전체 모드: 모든 카테고리 처리\n")
+        print("   [EMOJI] 전체 모드: 모든 카테고리 처리\n")
 
     # 4. 카테고리별 처리
     total_embedded = 0
@@ -221,10 +221,10 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
         category_path = CHUNKED_DIR / category
 
         if not category_path.exists():
-            print(f"   ⚠️ 카테고리 폴더 없음: {category}")
+            print(f"   [WARN] 카테고리 폴더 없음: {category}")
             continue
 
-        print(f"3️⃣ 처리 중: {category}")
+        print(f"[3] 처리 중: {category}")
         print(f"   경로: {category_path}\n")
 
         json_files = list(category_path.glob("*_chunked.json"))
@@ -236,12 +236,12 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
                     chunks = json.load(f)
 
                 if not chunks:
-                    print(f"   ⚠️ 빈 파일: {json_file.name}")
+                    print(f"   [WARN] 빈 파일: {json_file.name}")
                     continue
 
                 # 메타데이터 정규화
                 documents = []
-                for chunk in chunks:
+                for idx, chunk in enumerate(chunks):
                     normalized_meta = normalize_metadata(
                         raw_metadata=chunk.get("metadata", {}),
                         category=category,
@@ -249,8 +249,11 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
                         chunk_id=chunk["id"]
                     )
 
+                    # ID를 완전히 고유하게 만들기 (파일명_인덱스)
+                    unique_id = f"{json_file.stem}_{idx}"
+
                     documents.append({
-                        "id": chunk["id"],
+                        "id": unique_id,
                         "text": chunk["text"],
                         "metadata": normalized_meta
                     })
@@ -282,26 +285,26 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
                 total_embedded += len(documents)
                 total_files += 1
 
-                print(f"   ✅ {json_file.name}: {len(documents)}개 문서 임베딩 완료")
+                print(f"   [OK] {json_file.name}: {len(documents)}개 문서 임베딩 완료")
 
             except Exception as e:
-                print(f"   ❌ {json_file.name} 처리 실패: {e}")
+                print(f"   [FAIL] {json_file.name} 처리 실패: {e}")
 
         category_stats[category] = category_embedded
-        print(f"   📊 {category} 완료: {category_embedded}개 문서\n")
+        print(f"   [EMOJI] {category} 완료: {category_embedded}개 문서\n")
 
     # 5. 최종 통계
     end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
 
     print(f"\n{'='*60}")
-    print(f"✅ ChromaDB 재임베딩 완료!")
+    print(f"[OK] ChromaDB 재임베딩 완료!")
     print(f"{'='*60}")
-    print(f"📊 처리 통계:")
+    print(f"[EMOJI] 처리 통계:")
     print(f"   - 처리 파일: {total_files}개")
     print(f"   - 임베딩 문서: {total_embedded}개")
     print(f"   - 소요 시간: {duration:.2f}초")
-    print(f"\n📈 카테고리별 통계:")
+    print(f"\n[EMOJI] 카테고리별 통계:")
     for category, count in category_stats.items():
         print(f"   - {category}: {count}개")
     print(f"\n종료 시간: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -312,14 +315,14 @@ async def embed_documents(test_mode: bool = False, category_filter: str = None):
 
 def verify_embedding():
     """임베딩 결과 검증"""
-    print("\n🔍 임베딩 결과 검증 중...\n")
+    print("\n[EMOJI] 임베딩 결과 검증 중...\n")
 
     chroma_client = chromadb.PersistentClient(path=str(CHROMA_PATH))
     collection = chroma_client.get_collection("korean_legal_documents")
 
     # 전체 문서 개수
     total_count = collection.count()
-    print(f"✅ 전체 문서 개수: {total_count}\n")
+    print(f"[OK] 전체 문서 개수: {total_count}\n")
 
     # Unknown title 개수 확인
     try:
@@ -328,7 +331,7 @@ def verify_embedding():
             limit=10000
         )
         unknown_count = len(unknown_results['ids'])
-        print(f"⚠️ Unknown title 문서: {unknown_count}개 ({unknown_count/total_count*100:.1f}%)")
+        print(f"[WARN] Unknown title 문서: {unknown_count}개 ({unknown_count/total_count*100:.1f}%)")
 
         if unknown_count > 0:
             print(f"   샘플 ID: {unknown_results['ids'][:5]}")
@@ -336,7 +339,7 @@ def verify_embedding():
         print(f"   Unknown 체크 실패: {e}")
 
     # doc_type 분포
-    print(f"\n📊 doc_type 분포:")
+    print(f"\n[EMOJI] doc_type 분포:")
     for doc_type in ["법률", "시행령", "시행규칙", "대법원규칙", "용어집", "기타"]:
         try:
             results = collection.get(
@@ -350,7 +353,7 @@ def verify_embedding():
             pass
 
     # 카테고리 분포
-    print(f"\n📊 카테고리 분포:")
+    print(f"\n[EMOJI] 카테고리 분포:")
     for category in CATEGORIES:
         try:
             results = collection.get(
@@ -364,7 +367,7 @@ def verify_embedding():
             pass
 
     # 샘플 메타데이터 확인
-    print(f"\n📝 샘플 메타데이터 (첫 3개 문서):")
+    print(f"\n[EMOJI] 샘플 메타데이터 (첫 3개 문서):")
     sample = collection.get(limit=3, include=["metadatas"])
     for i, (doc_id, metadata) in enumerate(zip(sample['ids'], sample['metadatas']), 1):
         print(f"\n   [{i}] {doc_id}")
@@ -385,16 +388,16 @@ if __name__ == "__main__":
         mode = sys.argv[1]
 
         if mode == "--test":
-            print("🧪 테스트 모드로 실행 (2_임대차_전세_월세만 처리)")
+            print("[EMOJI] 테스트 모드로 실행 (2_임대차_전세_월세만 처리)")
             asyncio.run(embed_documents(test_mode=True))
             verify_embedding()
         elif mode == "--full":
-            print("🚀 전체 모드로 실행 (모든 카테고리 처리)")
+            print("[EMOJI] 전체 모드로 실행 (모든 카테고리 처리)")
             asyncio.run(embed_documents(test_mode=False))
             verify_embedding()
         elif mode.startswith("--category="):
             category = mode.split("=")[1]
-            print(f"🎯 카테고리 필터 모드로 실행: {category}")
+            print(f"[EMOJI] 카테고리 필터 모드로 실행: {category}")
             asyncio.run(embed_documents(test_mode=False, category_filter=category))
             verify_embedding()
         else:
