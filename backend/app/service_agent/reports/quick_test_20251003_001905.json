@@ -1,0 +1,46 @@
+{
+  "total_time": 44.27843260765076,
+  "avg_time": 8.855686521530151,
+  "results": [
+    {
+      "query": "전세금 5% 인상이 가능한가요?",
+      "category": "법률",
+      "elapsed": 7.130807876586914,
+      "success": true,
+      "answer_length": 436,
+      "response_type": "answer"
+    },
+    {
+      "query": "강남구 아파트 시세 알려주세요",
+      "category": "시세",
+      "elapsed": 8.568783521652222,
+      "success": true,
+      "answer_length": 504,
+      "response_type": "answer"
+    },
+    {
+      "query": "주택담보대출 금리 비교해주세요",
+      "category": "대출",
+      "elapsed": 13.24244737625122,
+      "success": true,
+      "answer_length": 612,
+      "response_type": "answer"
+    },
+    {
+      "query": "강남 아파트 매매가격과 관련 법률 알려주세요",
+      "category": "법률+시세",
+      "elapsed": 7.536574840545654,
+      "success": true,
+      "answer_length": 497,
+      "response_type": "answer"
+    },
+    {
+      "query": "전세 대출 받을 때 주의사항과 금리는?",
+      "category": "법률+대출",
+      "elapsed": 7.799818992614746,
+      "success": true,
+      "answer_length": 477,
+      "response_type": "answer"
+    }
+  ]
+}

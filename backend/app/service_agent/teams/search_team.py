@@ -42,14 +42,31 @@ class SearchTeamSupervisor:
         # Agent 초기화 (Registry에서 가져오기)
         self.available_agents = self._initialize_agents()
 
-        # 법률 검색 도구 초기화
+        # 검색 도구 초기화
         self.legal_search_tool = None
+        self.market_data_tool = None
+        self.loan_data_tool = None
+
         try:
             from app.service.tools.legal_search_tool import LegalSearchTool
             self.legal_search_tool = LegalSearchTool()
             logger.info("LegalSearchTool initialized successfully")
         except Exception as e:
             logger.warning(f"LegalSearchTool initialization failed: {e}")
+
+        try:
+            from app.service_agent.tools.market_data_tool import MarketDataTool
+            self.market_data_tool = MarketDataTool()
+            logger.info("MarketDataTool initialized successfully")
+        except Exception as e:
+            logger.warning(f"MarketDataTool initialization failed: {e}")
+
+        try:
+            from app.service_agent.tools.loan_data_tool import LoanDataTool
+            self.loan_data_tool = LoanDataTool()
+            logger.info("LoanDataTool initialized successfully")
+        except Exception as e:
+            logger.warning(f"LoanDataTool initialization failed: {e}")
 
         # 서브그래프 구성
         self.app = None
@@ -340,9 +357,53 @@ class SearchTeamSupervisor:
                 state["search_progress"]["legal_search"] = "failed"
                 # 실패해도 계속 진행
 
-        # === 2. SearchAgent 실행 (부동산, 대출 검색) ===
-        # 법률 검색이 이미 완료되었으므로 scope에서 제외
-        remaining_scope = [s for s in search_scope if s != "legal"]
+        # === 2. 부동산 시세 검색 ===
+        if "real_estate" in search_scope and self.market_data_tool:
+            try:
+                logger.info("[SearchTeam] Executing real estate search")
+
+                # 부동산 검색 실행
+                result = await self.market_data_tool.search(query, {})
+
+                if result.get("status") == "success":
+                    market_data = result.get("data", [])
+
+                    # 결과 포맷 변환
+                    state["real_estate_results"] = market_data
+                    state["search_progress"]["real_estate_search"] = "completed"
+                    logger.info(f"[SearchTeam] Real estate search completed: {len(market_data)} results")
+                else:
+                    state["search_progress"]["real_estate_search"] = "failed"
+
+            except Exception as e:
+                logger.error(f"Real estate search failed: {e}")
+                state["search_progress"]["real_estate_search"] = "failed"
+
+        # === 3. 대출 상품 검색 ===
+        if "loan" in search_scope and self.loan_data_tool:
+            try:
+                logger.info("[SearchTeam] Executing loan search")
+
+                # 대출 검색 실행
+                result = await self.loan_data_tool.search(query, {})
+
+                if result.get("status") == "success":
+                    loan_data = result.get("data", [])
+
+                    # 결과 포맷 변환
+                    state["loan_results"] = loan_data
+                    state["search_progress"]["loan_search"] = "completed"
+                    logger.info(f"[SearchTeam] Loan search completed: {len(loan_data)} results")
+                else:
+                    state["search_progress"]["loan_search"] = "failed"
+
+            except Exception as e:
+                logger.error(f"Loan search failed: {e}")
+                state["search_progress"]["loan_search"] = "failed"
+
+        # === 4. SearchAgent 실행 (추가 검색 필요 시) ===
+        # 법률/부동산/대출 검색이 이미 완료되었으므로 scope에서 제외
+        remaining_scope = [s for s in search_scope if s not in ["legal", "real_estate", "loan"]]
 
         if remaining_scope and self.available_agents.get("search_agent"):
             try:
