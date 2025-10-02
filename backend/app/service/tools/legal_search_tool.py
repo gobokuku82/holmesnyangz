@@ -16,14 +16,6 @@ from sentence_transformers import SentenceTransformer
 sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 from config import Config
 
-# Import legal_query_helper
-backend_dir = Path(__file__).parent.parent.parent.parent
-legal_guides_path = backend_dir / "data" / "storage" / "legal_info" / "guides"
-if str(legal_guides_path) not in sys.path:
-    sys.path.insert(0, str(legal_guides_path))
-
-from legal_query_helper import LegalQueryHelper
-
 
 class LegalSearchTool(BaseTool):
     """
@@ -45,12 +37,7 @@ class LegalSearchTool(BaseTool):
         try:
             # Get paths from Config
             chroma_path = str(Config.LEGAL_PATHS["chroma_db"])
-            sqlite_path = str(Config.LEGAL_PATHS["sqlite_db"])
             embedding_model_path = str(Config.LEGAL_PATHS["embedding_model"])
-
-            # Initialize SQLite metadata helper
-            self.metadata_helper = LegalQueryHelper(sqlite_path)
-            self.logger.info(f"SQLite DB loaded: {sqlite_path}")
 
             # Initialize ChromaDB
             self.chroma_client = chromadb.PersistentClient(
@@ -103,30 +90,18 @@ class LegalSearchTool(BaseTool):
         article_query = self._is_specific_article_query(query)
 
         if article_query:
-            # Fast path: Direct SQL lookup → ChromaDB get by chunk_ids (200x faster)
             self.logger.info(f"Specific article query detected: {article_query}")
+
+            # Try ChromaDB direct metadata filtering first
             try:
-                chunk_ids = self.metadata_helper.get_article_chunk_ids(
-                    title=article_query['law_title'],
+                # Method 1: Direct ChromaDB metadata filtering with partial matching
+                results = self._search_specific_article_chromadb(
+                    law_title=article_query['law_title'],
                     article_number=article_query['article_number']
                 )
 
-                if chunk_ids:
-                    self.logger.info(f"Found {len(chunk_ids)} chunks via SQL direct lookup")
-                    # Direct get from ChromaDB (no vector search needed)
-                    results = self.collection.get(
-                        ids=chunk_ids,
-                        include=['documents', 'metadatas']
-                    )
-
-                    # Convert get() results to query() format for consistency
-                    results = {
-                        'ids': [results['ids']],
-                        'documents': [results['documents']],
-                        'metadatas': [results['metadatas']],
-                        'distances': [[0.0] * len(results['ids'])]  # Perfect match (distance=0)
-                    }
-
+                if results and results['ids'][0]:
+                    self.logger.info(f"Found {len(results['ids'][0])} results via ChromaDB metadata filtering")
                     formatted_data = self._format_chromadb_results(results)
 
                     return self.format_results(
@@ -135,18 +110,63 @@ class LegalSearchTool(BaseTool):
                         query=query
                     )
                 else:
-                    self.logger.info(f"No chunks found via SQL, falling back to vector search")
+                    self.logger.info("No results from ChromaDB metadata filtering, trying enhanced vector search")
+
             except Exception as e:
-                self.logger.warning(f"SQL direct lookup failed: {e}, falling back to vector search")
+                self.logger.warning(f"ChromaDB metadata filtering failed: {e}")
+
+            # Method 2: Enhanced vector search for specific article
+            try:
+                # Build enhanced query for better vector matching
+                enhanced_query = f"{article_query['law_title']} {article_query['article_number']} 내용 조항"
+                self.logger.info(f"Using enhanced query for vector search: {enhanced_query}")
+
+                # Use standard vector search with enhanced query
+                embedding = self.embedding_model.encode(enhanced_query).tolist()
+
+                # Build filter for the specific law (partial matching)
+                filter_dict = self._build_filter_dict(
+                    doc_type=doc_type,
+                    category=category,
+                    law_title_contains=article_query['law_title']
+                )
+
+                results = self.collection.query(
+                    query_embeddings=[embedding],
+                    where=filter_dict if filter_dict else None,
+                    n_results=limit * 2,  # Get more results for filtering
+                    include=['documents', 'metadatas', 'distances']
+                )
+
+                # Post-filter for the specific article
+                if results['ids'][0]:
+                    filtered_results = self._filter_results_for_article(
+                        results,
+                        article_query['article_number']
+                    )
+
+                    if filtered_results['ids'][0]:
+                        self.logger.info(f"Found {len(filtered_results['ids'][0])} results via enhanced vector search")
+                        formatted_data = self._format_chromadb_results(filtered_results)
+
+                        return self.format_results(
+                            data=formatted_data,
+                            total_count=len(formatted_data),
+                            query=query
+                        )
+
+            except Exception as e:
+                self.logger.warning(f"Enhanced vector search failed: {e}")
+
+            # If all specific article methods fail, fall back to standard vector search
+            self.logger.info("All specific article methods failed, falling back to standard vector search")
 
         # Standard path: Vector search with metadata filtering
-        # Build filter using metadata helper
-        # Use LLM's category selection to reduce search scope by 70%
-        filter_dict = self.metadata_helper.build_chromadb_filter(
-            doc_type=doc_type if doc_type else None,
-            category=category if category else None,  # Use LLM's category selection
-            article_type=self._detect_article_type(query),
-            exclude_deleted=True
+        filter_dict = self._build_filter_dict(
+            doc_type=doc_type,
+            category=category,
+            is_tenant_protection=is_tenant_protection,
+            is_tax_related=is_tax_related
         )
 
         self.logger.debug(f"Filter dict: {filter_dict}")
@@ -177,6 +197,170 @@ class LegalSearchTool(BaseTool):
         """
         raise NotImplementedError("Legal search tool does not support mock data mode")
 
+    def _search_specific_article_chromadb(self, law_title: str, article_number: str) -> Dict[str, Any]:
+        """
+        ChromaDB에서 특정 조문 직접 검색 (메타데이터 필터링)
+
+        Args:
+            law_title: 법률 제목 (e.g., "주택임대차보호법")
+            article_number: 조문 번호 (e.g., "제7조")
+
+        Returns:
+            ChromaDB query results
+        """
+        try:
+            # Use get() with where clause for direct metadata filtering
+            # Note: Using unified 'title' field instead of separate law_title/decree_title/rule_title
+            where_clause = {
+                '$and': [
+                    {'article_number': article_number},
+                    {'is_deleted': {'$ne': 'True'}}
+                ]
+            }
+
+            # Try exact match first
+            results = self.collection.get(
+                where=where_clause,
+                limit=100,  # Get more to filter by title
+                include=['documents', 'metadatas']
+            )
+
+            # Filter by law title (partial matching since ChromaDB doesn't support $contains in get())
+            if results['ids']:
+                filtered_ids = []
+                filtered_docs = []
+                filtered_metadatas = []
+
+                for i, metadata in enumerate(results['metadatas']):
+                    # Check if title contains the law_title (partial matching)
+                    title = metadata.get('title', '')
+                    if law_title in title:
+                        filtered_ids.append(results['ids'][i])
+                        filtered_docs.append(results['documents'][i] if 'documents' in results else '')
+                        filtered_metadatas.append(metadata)
+
+                if filtered_ids:
+                    # Convert to query() format for consistency
+                    return {
+                        'ids': [filtered_ids],
+                        'documents': [filtered_docs],
+                        'metadatas': [filtered_metadatas],
+                        'distances': [[0.0] * len(filtered_ids)]  # Perfect match
+                    }
+
+            # If exact match fails, try with query() and more flexible filtering
+            where_clause = {
+                '$and': [
+                    {'article_number': article_number},
+                    {'is_deleted': {'$ne': 'True'}}
+                ]
+            }
+
+            # Create a query that will match the law title
+            query_text = f"{law_title} {article_number}"
+            embedding = self.embedding_model.encode(query_text).tolist()
+
+            results = self.collection.query(
+                query_embeddings=[embedding],
+                where=where_clause,
+                n_results=20,
+                include=['documents', 'metadatas', 'distances']
+            )
+
+            # Additional filtering by title
+            if results['ids'][0]:
+                filtered_results = {'ids': [[]], 'documents': [[]], 'metadatas': [[]], 'distances': [[]]}
+
+                for i, metadata in enumerate(results['metadatas'][0]):
+                    title = metadata.get('title', '')
+                    if law_title in title:
+                        filtered_results['ids'][0].append(results['ids'][0][i])
+                        filtered_results['documents'][0].append(results['documents'][0][i])
+                        filtered_results['metadatas'][0].append(metadata)
+                        filtered_results['distances'][0].append(results['distances'][0][i])
+
+                if filtered_results['ids'][0]:
+                    return filtered_results
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"ChromaDB specific article search failed: {e}")
+            return {'ids': [[]], 'documents': [[]], 'metadatas': [[]], 'distances': [[]]}
+
+    def _filter_results_for_article(self, results: Dict[str, Any], article_number: str) -> Dict[str, Any]:
+        """
+        Filter search results for a specific article number
+
+        Args:
+            results: ChromaDB query results
+            article_number: Article number to filter for (e.g., "제7조")
+
+        Returns:
+            Filtered results
+        """
+        if not results['ids'][0]:
+            return results
+
+        filtered = {'ids': [[]], 'documents': [[]], 'metadatas': [[]], 'distances': [[]]}
+
+        for i, metadata in enumerate(results['metadatas'][0]):
+            if metadata.get('article_number') == article_number:
+                filtered['ids'][0].append(results['ids'][0][i])
+                filtered['documents'][0].append(results['documents'][0][i])
+                filtered['metadatas'][0].append(metadata)
+                filtered['distances'][0].append(results['distances'][0][i])
+
+        return filtered
+
+    def _build_filter_dict(
+        self,
+        doc_type: Optional[str] = None,
+        category: Optional[str] = None,
+        is_tenant_protection: Optional[bool] = None,
+        is_tax_related: Optional[bool] = None,
+        law_title_contains: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Build ChromaDB filter dictionary
+
+        Args:
+            doc_type: Document type filter
+            category: Category filter
+            is_tenant_protection: Tenant protection filter
+            is_tax_related: Tax related filter
+            law_title_contains: Partial law title match
+
+        Returns:
+            Filter dictionary for ChromaDB where clause
+        """
+        conditions = []
+
+        # Always exclude deleted documents
+        conditions.append({'is_deleted': {'$ne': 'True'}})
+
+        if doc_type:
+            conditions.append({'doc_type': doc_type})
+
+        if category:
+            conditions.append({'category': category})
+
+        if is_tenant_protection is not None:
+            conditions.append({'is_tenant_protection': str(is_tenant_protection)})
+
+        if is_tax_related is not None:
+            conditions.append({'is_tax_related': str(is_tax_related)})
+
+        # Note: ChromaDB doesn't support $contains in where clause
+        # We'll handle title filtering in post-processing
+
+        if len(conditions) == 1:
+            return conditions[0]
+        elif len(conditions) > 1:
+            return {'$and': conditions}
+        else:
+            return None
+
     def _detect_doc_type(self, query: str) -> Optional[str]:
         """질문에서 문서 타입 감지"""
         if "시행령" in query:
@@ -199,17 +383,6 @@ class LegalSearchTool(BaseTool):
             return "1_공통 매매_임대차"
         elif any(keyword in query for keyword in ["관리", "수선", "시설"]):
             return "3_공급_및_관리_매매_분양"
-        return None
-
-    def _detect_article_type(self, query: str) -> Optional[str]:
-        """질문에서 특수 조항 타입 감지
-
-        NOTE: Disabled to avoid 0 results.
-        Most documents have None for these boolean fields.
-        Only use if explicitly provided in params.
-        """
-        # AUTO-DETECTION DISABLED
-        # Reason: "전세금" contains "세금" → wrong filter → 0 results
         return None
 
     def _is_specific_article_query(self, query: str) -> Optional[Dict[str, str]]:
@@ -246,7 +419,7 @@ class LegalSearchTool(BaseTool):
         return None
 
     def _format_chromadb_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """ChromaDB 결과를 표준 포맷으로 변환 + SQL 메타데이터 보강"""
+        """ChromaDB 결과를 표준 포맷으로 변환"""
         if not results['ids'][0]:
             return []
 
@@ -258,17 +431,14 @@ class LegalSearchTool(BaseTool):
             results['distances'][0],
             results['ids'][0]
         ):
-            law_title = (
-                metadata.get('law_title') or
-                metadata.get('decree_title') or
-                metadata.get('rule_title', 'N/A')
-            )
+            # Use unified 'title' field (fallback to legacy fields if needed)
+            title = metadata.get('title') or metadata.get('law_title') or metadata.get('decree_title') or metadata.get('rule_title', 'N/A')
 
             formatted_item = {
                 "type": "legal_document",
                 "doc_id": doc_id,
                 "doc_type": metadata.get('doc_type', 'N/A'),
-                "law_title": law_title,
+                "law_title": title,  # Use unified title
                 "article_number": metadata.get('article_number', 'N/A'),
                 "article_title": metadata.get('article_title', 'N/A'),
                 "category": metadata.get('category', 'N/A'),
@@ -278,23 +448,10 @@ class LegalSearchTool(BaseTool):
                 "section": metadata.get('section'),
                 "is_tenant_protection": metadata.get('is_tenant_protection') == 'True',
                 "is_tax_related": metadata.get('is_tax_related') == 'True',
-                "enforcement_date": metadata.get('enforcement_date')
+                "enforcement_date": metadata.get('enforcement_date'),
+                "number": metadata.get('number'),  # Law number
+                "source_file": metadata.get('source_file')
             }
-
-            # Enrich with SQL metadata (total articles, law number, etc.)
-            if law_title != 'N/A':
-                try:
-                    law_info = self.metadata_helper.get_law_by_title(law_title, fuzzy=True)
-                    if law_info:
-                        formatted_item['total_articles'] = law_info.get('total_articles')
-                        formatted_item['law_number'] = law_info.get('law_number')
-                        formatted_item['last_article'] = law_info.get('last_article')
-                        # Override enforcement_date from SQL if available (more accurate)
-                        if law_info.get('enforcement_date'):
-                            formatted_item['enforcement_date'] = law_info['enforcement_date']
-                except Exception as e:
-                    # If SQL query fails, continue without enrichment
-                    self.logger.debug(f"SQL enrichment failed for {law_title}: {e}")
 
             formatted_data.append(formatted_item)
 
