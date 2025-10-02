@@ -491,7 +491,52 @@ JSON 형식으로 응답하세요:
   • 실시간 데이터가 필요한 경우
   • 법률 자문이 필요한 경우
 
-### 3. recommendation_agent (추천 에이전트) - [개발 예정]
+### 3. document_agent (문서 생성 에이전트) - [구현 완료]
+- **목적**: 부동산 관련 법률 문서를 생성하는 전문 Agent
+- **기능(Capabilities)**:
+  • 임대차계약서 생성
+  • 매매계약서 생성
+  • 전세계약서 생성
+  • 내용증명 작성
+  • 계약해지통지서 작성
+  • 다양한 형식 지원 (TEXT, HTML, JSON, DOCX, PDF)
+- **한계(Limitations)**:
+  • 법적 효력 보장 불가
+  • 전문가 검토 필요
+  • 템플릿 기반 생성
+- **사용 가능한 도구**:
+  • document_generation: 문서 생성 도구
+- **적합한 사용 케이스**:
+  • 계약서 초안 작성이 필요한 경우
+  • 법률 문서 템플릿이 필요한 경우
+  • 내용증명 작성이 필요한 경우
+- **부적합한 케이스**:
+  • 법적 효력이 필요한 최종 문서
+  • 복잡한 특수 계약
+
+### 4. review_agent (계약 검토 에이전트) - [구현 완료]
+- **목적**: 부동산 계약서 및 문서를 검토하고 위험을 분석하는 전문 Agent
+- **기능(Capabilities)**:
+  • 계약서 위험 요소 분석
+  • 법적 준수사항 확인
+  • 문서 완성도 평가
+  • 개선 권고사항 제시
+  • 리스크 레벨 평가
+  • 상세 검토 보고서 생성
+- **한계(Limitations)**:
+  • 법적 구속력 있는 조언 불가
+  • 최종 법률 자문 대체 불가
+- **사용 가능한 도구**:
+  • contract_review: 계약서 검토 도구
+- **적합한 사용 케이스**:
+  • 계약서 검토가 필요한 경우
+  • 위험 요소 파악이 필요한 경우
+  • 계약 조항 분석이 필요한 경우
+- **부적합한 케이스**:
+  • 법적 분쟁 해결
+  • 최종 법률 자문
+
+### 5. recommendation_agent (추천 에이전트) - [개발 예정]
 - **목적**: 사용자 요구사항에 맞는 부동산 추천을 제공하는 전문 Agent
 - **기능(Capabilities)**:
   • 사용자 선호도 분석
@@ -875,6 +920,79 @@ class RealEstateSupervisor:
                 logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, report_generated={result.get('final_report') is not None}")
                 agent_results[agent_name] = result
 
+            elif agent_name == "document_agent":
+                # Import and execute document agent
+                from agents.document_agent import DocumentAgent
+
+                agent = DocumentAgent()
+                input_data = {
+                    "original_query": state["query"],
+                    "document_type": state.get("document_type"),
+                    "document_params": state.get("document_params", {}),
+                    "document_format": state.get("document_format", "TEXT"),
+                    "shared_context": state.get("shared_context", {}),
+                    "chat_session_id": state.get("chat_session_id", ""),
+                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
+                    "todos": todos,
+                    "todo_counter": state.get("todo_counter", 0)
+                }
+
+                # Execute DocumentAgent
+                result = await agent.execute(input_data)
+
+                # Update TODO status based on result
+                if agent_todo:
+                    if result.get("status") in ["completed", "generated"]:
+                        todos = update_todo_status(todos, agent_todo["id"], "completed")
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
+                    elif result.get("status") == "error":
+                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error_message"))
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
+
+                    # Merge any TODO updates from agent
+                    if "todos" in result:
+                        from core.todo_types import merge_todos
+                        todos = merge_todos(todos, result["todos"])
+
+                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, document_type={result.get('document_type')}")
+                agent_results[agent_name] = result
+
+            elif agent_name == "review_agent":
+                # Import and execute review agent
+                from agents.review_agent import ReviewAgent
+
+                agent = ReviewAgent()
+                input_data = {
+                    "original_query": state["query"],
+                    "document_content": state.get("document_content", ""),
+                    "document_type": state.get("document_type"),
+                    "shared_context": state.get("shared_context", {}),
+                    "chat_session_id": state.get("chat_session_id", ""),
+                    "parent_todo_id": agent_todo["id"] if agent_todo else None,
+                    "todos": todos,
+                    "todo_counter": state.get("todo_counter", 0)
+                }
+
+                # Execute ReviewAgent
+                result = await agent.execute(input_data)
+
+                # Update TODO status based on result
+                if agent_todo:
+                    if result.get("status") == "completed":
+                        todos = update_todo_status(todos, agent_todo["id"], "completed")
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to completed")
+                    elif result.get("status") == "error":
+                        todos = update_todo_status(todos, agent_todo["id"], "failed", result.get("error_message"))
+                        logger.debug(f"[TODO] Updated {agent_todo['id']} to failed")
+
+                    # Merge any TODO updates from agent
+                    if "todos" in result:
+                        from core.todo_types import merge_todos
+                        todos = merge_todos(todos, result["todos"])
+
+                logger.debug(f"[AGENT] {agent_name} result: status={result.get('status')}, risk_level={result.get('risk_level')}")
+                agent_results[agent_name] = result
+
             else:
                 logger.warning(f"Unknown agent: {agent_name}")
 
@@ -917,6 +1035,7 @@ class RealEstateSupervisor:
             }
 
         agent_results = state.get("agent_results", {})
+        original_query = state.get("query", "")
         logger.debug(f"[RESPONSE] agent_results keys: {list(agent_results.keys())}")
 
         # Check if search_agent returned direct output
@@ -937,23 +1056,84 @@ class RealEstateSupervisor:
                 logger.debug(f"[RESPONSE] {agent_name} data keys: {list(data.keys()) if isinstance(data, dict) else 'not dict'}")
                 all_data[agent_name] = data
 
-        # Create summary
-        summary = "데이터 수집 완료"
-        if all_data:
-            summary = f"{len(all_data)}개의 에이전트에서 데이터 수집 완료"
+        # Generate natural language response using LLM if data is available
+        if all_data and not self.llm_manager._connection_error and self.llm_manager.client:
+            try:
+                logger.info("[RESPONSE] Generating LLM-based answer")
 
-        logger.debug(f"[RESPONSE] all_data final: {list(all_data.keys())}")
-        logger.debug(f"[RESPONSE] all_data content sample: {str(all_data)[:200]}")
+                # Prepare context for LLM
+                context = self._prepare_context_for_llm(all_data)
 
-        final_response = {
-            "type": "processed",
-            "data": all_data,
-            "summary": summary
-        }
+                # Create LLM prompt
+                system_prompt = """당신은 부동산 전문 상담사입니다.
+수집된 데이터를 기반으로 사용자 질문에 대한 명확하고 구체적인 답변을 제공하세요.
+
+답변 원칙:
+1. 질문에 직접적으로 답하세요
+2. 구체적인 수치나 법률 조항을 인용하세요
+3. 실용적인 조언을 포함하세요
+4. 한국어로 자연스럽게 답변하세요
+5. 답변은 간결하고 명확하게 작성하세요"""
+
+                user_prompt = f"""사용자 질문: {original_query}
+
+수집된 정보:
+{json.dumps(context, ensure_ascii=False, indent=2)}
+
+위 정보를 바탕으로 사용자 질문에 대한 답변을 작성하세요."""
+
+                # Call LLM
+                response = self.llm_manager.client.chat.completions.create(
+                    model=self.llm_manager.get_model("response"),
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=1000
+                )
+
+                final_answer = response.choices[0].message.content
+                logger.info("[RESPONSE] LLM answer generated successfully")
+
+                # Extract sources
+                sources = self._extract_sources(all_data)
+
+                # Create structured response
+                final_response = {
+                    "type": "answer",
+                    "answer": final_answer,  # LLM generated natural language answer
+                    "sources": sources,       # Source information
+                    "data": all_data         # Original data for reference
+                }
+
+            except Exception as e:
+                logger.error(f"LLM response generation failed: {e}")
+                # Fallback to data-only response
+                summary = f"{len(all_data)}개의 에이전트에서 데이터 수집 완료"
+                final_response = {
+                    "type": "processed",
+                    "data": all_data,
+                    "summary": summary + " (답변 생성 실패)"
+                }
+        else:
+            # No data or connection error - fallback to simple summary
+            summary = "데이터 수집 완료"
+            if all_data:
+                summary = f"{len(all_data)}개의 에이전트에서 데이터 수집 완료"
+
+            logger.debug(f"[RESPONSE] all_data final: {list(all_data.keys())}")
+            logger.debug(f"[RESPONSE] all_data content sample: {str(all_data)[:200]}")
+
+            final_response = {
+                "type": "processed",
+                "data": all_data,
+                "summary": summary
+            }
 
         result = {
             "final_response": final_response,
-            "response_type": "processed"
+            "response_type": final_response.get("type", "processed")
         }
         logger.debug(f"[NODE] generate_response_node - Completed with response type: {final_response.get('type')}, data_keys: {list(final_response.get('data', {}).keys())}")
         return result
@@ -1156,6 +1336,100 @@ class RealEstateSupervisor:
 
         logger.info("Query processing completed")
         return final_state
+
+    def _prepare_context_for_llm(self, all_data: Dict) -> Dict:
+        """
+        Prepare structured context from all agent data for LLM
+
+        Args:
+            all_data: Combined data from all agents
+
+        Returns:
+            Structured context dict for LLM consumption
+        """
+        context = {}
+
+        # Extract from SearchAgent results
+        if "search_agent" in all_data:
+            search_data = all_data["search_agent"]
+
+            # Legal search results
+            if "legal_search" in search_data and search_data["legal_search"]:
+                laws = search_data["legal_search"][:5]  # Top 5 laws
+                context["legal_info"] = [
+                    {
+                        "title": law.get("law_name", ""),
+                        "article": law.get("article_number", ""),
+                        "content": law.get("content", "")[:500]  # First 500 chars
+                    }
+                    for law in laws
+                ]
+
+            # Real estate data
+            if "real_estate_search" in search_data:
+                context["real_estate_info"] = search_data["real_estate_search"]
+
+            # Loan data
+            if "loan_search" in search_data:
+                context["loan_info"] = search_data["loan_search"]
+
+        # Extract from AnalysisAgent results
+        if "analysis_agent" in all_data:
+            analysis_data = all_data["analysis_agent"]
+            if "report" in analysis_data:
+                context["analysis"] = {
+                    "summary": analysis_data["report"].get("summary", ""),
+                    "insights": analysis_data["report"].get("insights", []),
+                    "recommendations": analysis_data["report"].get("recommendations", [])
+                }
+
+        # Extract from DocumentAgent results
+        if "document_agent" in all_data:
+            doc_data = all_data["document_agent"]
+            context["generated_document"] = {
+                "type": doc_data.get("document_type", ""),
+                "status": doc_data.get("status", "")
+            }
+
+        # Extract from ReviewAgent results
+        if "review_agent" in all_data:
+            review_data = all_data["review_agent"]
+            context["review_results"] = {
+                "risk_factors": review_data.get("risk_factors", []),
+                "recommendations": review_data.get("recommendations", [])
+            }
+
+        return context
+
+    def _extract_sources(self, all_data: Dict) -> List[str]:
+        """
+        Extract source citations from collected data
+
+        Args:
+            all_data: Combined data from all agents
+
+        Returns:
+            List of source citations
+        """
+        sources = []
+
+        # Extract legal sources
+        if "search_agent" in all_data:
+            search_data = all_data["search_agent"]
+            if "legal_search" in search_data and search_data["legal_search"]:
+                for law in search_data["legal_search"][:5]:
+                    law_name = law.get("law_name", "")
+                    article = law.get("article_number", "")
+                    if law_name and article:
+                        sources.append(f"{law_name} {article}")
+
+        # Extract market data sources
+        if "analysis_agent" in all_data:
+            analysis_data = all_data["analysis_agent"]
+            if "data_source" in analysis_data:
+                sources.append(f"시장 데이터: {analysis_data['data_source']}")
+
+        return sources
 
 
 # For backwards compatibility

@@ -136,8 +136,19 @@ class TestSpecificArticleSearch:
 
             # Get search results
             data = result.get("data", [])
-            result_count = len(data)
 
+            # Check if this is an error response (law not found)
+            if data and len(data) == 1 and data[0].get("type") == "error":
+                print(f"  [NOT FOUND] {data[0]['message']}")
+                return {
+                    "query": query,
+                    "status": "not_found",
+                    "message": data[0]['message'],
+                    "expected": expected,
+                    "actual": None
+                }
+
+            result_count = len(data)
             print(f"  Found {result_count} results")
 
             # Check if we got minimum expected results
@@ -230,6 +241,9 @@ class TestSpecificArticleSearch:
                 success_count += 1
             elif result["status"] == "error":
                 error_count += 1
+            elif result["status"] == "not_found":
+                # Not found is expected behavior for non-existent laws
+                failure_count += 1
             else:
                 failure_count += 1
 

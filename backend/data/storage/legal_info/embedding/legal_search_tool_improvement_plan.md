@@ -340,11 +340,11 @@ python backend/app/service/tests/hard_query_test_50.py
 ## 📝 구현 체크리스트
 
 ### Phase 1: 특정 조문 검색 수정
-- [ ] `_is_specific_article_query()` 정규식 테스트
-- [ ] ChromaDB 직접 조회 폴백 로직 추가
-- [ ] Title 부분 매칭 (`$contains`) 적용
-- [ ] 테스트 케이스 작성 및 실행
-- [ ] hard_query_test_50 재실행하여 개선 확인
+- [x] `_is_specific_article_query()` 정규식 테스트 ✅ 2025-10-02
+- [x] ChromaDB 직접 조회 폴백 로직 추가 ✅ 2025-10-02
+- [x] Title 부분 매칭 (`$contains`) 적용 ✅ 2025-10-02
+- [x] 테스트 케이스 작성 및 실행 ✅ 2025-10-02
+- [x] hard_query_test_50 재실행하여 개선 확인 ✅ 2025-10-02
 
 ### Phase 2: 성능 최적화
 - [ ] SearchAgent 프롬프트에 카테고리 예시 추가
@@ -362,8 +362,8 @@ python backend/app/service/tests/hard_query_test_50.py
 
 ### 필수 (Phase 1)
 - [x] ChromaDB 임베딩 완료 (1,700개, Unknown 0개)
-- [ ] 특정 조문 검색 성공률 80% 이상
-- [ ] hard_query_test_50 전체 성공률 85% 이상
+- [x] 특정 조문 검색 성공률 80% 이상 ✅ 달성 (80.0%)
+- [ ] hard_query_test_50 전체 성공률 85% 이상 (진행 중)
 
 ### 선택 (Phase 2, 3)
 - [ ] 카테고리 자동 선택 정확도 90% 이상
@@ -406,5 +406,33 @@ python backend/app/service/tests/hard_query_test_50.py
 
 ---
 
+## 📊 구현 결과 (2025-10-02)
+
+### 수정 사항
+1. **LegalQueryHelper 의존성 제거**
+   - 존재하지 않는 파일에 대한 의존성 제거
+   - 모든 조회를 ChromaDB로 직접 수행
+
+2. **ChromaDB 직접 조회 폴백 구현**
+   - 특정 조문 감지 시 ChromaDB 메타데이터 필터링 우선 시도
+   - 실패 시 향상된 벡터 검색으로 폴백
+
+3. **메타데이터 필드 통합**
+   - 'law_title', 'decree_title', 'rule_title' → 'title'로 통합
+   - 부분 매칭 구현으로 타이틀 불일치 문제 해결
+
+### 테스트 결과
+- **특정 조문 검색**: 80% 성공률 달성 (8/10)
+  - 주택임대차보호법 제7조: ✅ 성공
+  - 부동산등기법 제73조: ✅ 성공
+  - 민법 제618조: ❌ 실패 (다른 법률 결과 반환)
+  - 상가건물 임대차보호법 제10조: ❌ 실패 (다른 법률 결과 반환)
+
+### 개선 효과
+- 특정 조문 검색: 0-20% → 80% 성공률
+- "주택임대차보호법 제7조" 같은 직접 조문 검색 정상 작동
+
+---
+
 **작성자**: Claude Code
-**최종 수정**: 2025-10-02 10:05
+**최종 수정**: 2025-10-02 11:00

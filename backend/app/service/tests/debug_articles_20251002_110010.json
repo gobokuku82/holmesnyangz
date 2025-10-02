@@ -1,0 +1,667 @@
+{
+  "timestamp": "2025-10-02T11:00:10.348878",
+  "total_documents": 1700,
+  "title_field_analysis": {
+    "title": 100,
+    "law_title": 0,
+    "decree_title": 0,
+    "rule_title": 0,
+    "sample_titles": [
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙",
+      "공인중개사법 시행규칙"
+    ],
+    "sample_law_titles": []
+  },
+  "test_cases": [
+    {
+      "name": "민법 제618조",
+      "law_title": "민법",
+      "article_number": "제618조",
+      "tests": {
+        "search_by_article_number": {
+          "count": 0,
+          "documents": []
+        },
+        "search_by_title_keyword": {
+          "count": 0,
+          "documents": []
+        },
+        "exact_match": {
+          "exact_count": 0,
+          "partial_count": 0,
+          "exact_matches": [],
+          "partial_matches": []
+        },
+        "vector_search": {
+          "query": "민법 제618조",
+          "count": 20,
+          "matches_with_expected_article": 0,
+          "results": [
+            {
+              "rank": 1,
+              "title": "부동산 가격공시에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제61조",
+              "article_title": "비주거용 일반부동산 소유자 등의 의견청취",
+              "distance": 0.4860103130340576,
+              "relevance": 0.5139896869659424,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 2,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제98조",
+              "article_title": "벌칙",
+              "distance": 0.48966479301452637,
+              "relevance": 0.5103352069854736,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 3,
+              "title": "부동산 거래신고 등에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제5조",
+              "article_title": "법 제6조의4제2항에서 준용하는 경우를 포함한다",
+              "distance": 0.5041635632514954,
+              "relevance": 0.49583643674850464,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 4,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제87조",
+              "article_title": "「민법」의 준용",
+              "distance": 0.504220724105835,
+              "relevance": 0.49577927589416504,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 5,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제102조",
+              "article_title": "벌칙",
+              "distance": 0.51470947265625,
+              "relevance": 0.48529052734375,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 6,
+              "title": "부동산 거래신고 등에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제6조",
+              "article_title": "법 제6조의4제3항에서 준용하는 경우를 포함한다",
+              "distance": 0.514985203742981,
+              "relevance": 0.48501479625701904,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 7,
+              "title": "건축물의 분양에 관한 법률",
+              "doc_type": "법률",
+              "article_number": "제6조의4",
+              "article_title": "분양 건축물의 계약 취소",
+              "distance": 0.5152237415313721,
+              "relevance": 0.48477625846862793,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 8,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제103조",
+              "article_title": "벌칙",
+              "distance": 0.51598060131073,
+              "relevance": 0.48401939868927,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 9,
+              "title": "부동산 가격공시에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제37조",
+              "article_title": "개별주택 소유자 등의 의견청취",
+              "distance": 0.5182515382766724,
+              "relevance": 0.48174846172332764,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 10,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제18조",
+              "article_title": "토지 등의 우선 공급",
+              "distance": 0.5199882984161377,
+              "relevance": 0.4800117015838623,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 11,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제100조",
+              "article_title": "벌칙",
+              "distance": 0.5244897603988647,
+              "relevance": 0.47551023960113525,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 12,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제99조",
+              "article_title": "벌칙",
+              "distance": 0.525226354598999,
+              "relevance": 0.474773645401001,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 13,
+              "title": "건축물의 분양에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_number": "제6조",
+              "article_title": "분양 광고",
+              "distance": 0.5258427858352661,
+              "relevance": 0.4741572141647339,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 14,
+              "title": "부동산 가격공시에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제42조",
+              "article_title": "공동주택소유자 등의 의견청취",
+              "distance": 0.5265313386917114,
+              "relevance": 0.4734686613082886,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 15,
+              "title": "공인중개사의 매수신청대리인 등록 등에 관한 규칙",
+              "doc_type": "대법원규칙",
+              "article_number": "제18조",
+              "article_title": "의무, 금지행위",
+              "distance": 0.526597261428833,
+              "relevance": 0.473402738571167,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 16,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제105조",
+              "article_title": "양벌규정",
+              "distance": 0.5278062224388123,
+              "relevance": 0.47219377756118774,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 17,
+              "title": "민간임대주택에 관한 특별법 시행령",
+              "doc_type": "시행령",
+              "article_number": "제15조",
+              "article_title": "토지등의 환매 등의 기준과 절차",
+              "distance": 0.5323960781097412,
+              "relevance": 0.4676039218902588,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 18,
+              "title": "공동주택관리법",
+              "doc_type": "법률",
+              "article_number": "제84조",
+              "article_title": "「민법」의 준용",
+              "distance": 0.5329286456108093,
+              "relevance": 0.4670713543891907,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 19,
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_number": "제92조",
+              "article_title": "분양권 전매 등에 대한 신고포상금",
+              "distance": 0.5330743789672852,
+              "relevance": 0.46692562103271484,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 20,
+              "title": "공인중개사법",
+              "doc_type": "법률",
+              "article_number": "제43조",
+              "article_title": "민법의 준용",
+              "distance": 0.5356101989746094,
+              "relevance": 0.4643898010253906,
+              "matches_expected_article": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "상가건물 임대차보호법 제10조",
+      "law_title": "상가건물 임대차보호법",
+      "article_number": "제10조",
+      "tests": {
+        "search_by_article_number": {
+          "count": 25,
+          "documents": [
+            {
+              "id": "공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)_chunked_9",
+              "title": "공인중개사법 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "중개사무소등록증 등의 게시",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "공인중개사법 시행령(대통령령)(제34401호)(20240710)_chunked_16",
+              "title": "공인중개사법 시행령",
+              "doc_type": "시행령",
+              "article_title": "시험의 합격자 결정",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "공인중개사법(법률)(제19841호)(20241227)_chunked_12",
+              "title": "공인중개사법",
+              "doc_type": "법률",
+              "article_title": "등록의 결격사유 등",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "공인중개사의 매수신청대리인 등록 등에 관한 규칙(대법원규칙)(제03067호)(20230101)_chunked_9",
+              "title": "공인중개사의 매수신청대리인 등록 등에 관한 규칙",
+              "doc_type": "대법원규칙",
+              "article_title": "실무교육",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "부동산 거래신고 등에 관한 법률 시행규칙(국토교통부령)(제01294호)(20240101)_chunked_15",
+              "title": "부동산 거래신고 등에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "토지현황사진의 보관",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "부동산 거래신고 등에 관한 법률 시행령(대통령령)(제35485호)(20250429)_chunked_12",
+              "title": "부동산 거래신고 등에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_title": "허가기준",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "부동산 거래신고 등에 관한 법률(법률)(제20194호)(20240517)_chunked_14",
+              "title": "부동산 거래신고 등에 관한 법률",
+              "doc_type": "법률",
+              "article_title": "토지거래허가구역의 지정",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "부동산등기규칙(대법원규칙)(제03169호)(20250801)_chunked_12",
+              "title": "부동산등기규칙",
+              "doc_type": "대법원규칙",
+              "article_title": "등기부의 보관 ㆍ 관리",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "부동산등기법(법률)(제20435호)(20250131)_chunked_11",
+              "title": "부동산등기법",
+              "doc_type": "법률",
+              "article_title": "등기사무의 정지 등",
+              "category": "1_공통 매매_임대차"
+            },
+            {
+              "id": "민간임대주택에 관한 특별법 시행규칙(국토교통부령)(제01491호)(20250604)_chunked_14",
+              "title": "민간임대주택에 관한 특별법 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "촉진지구 지정제안서 제출서류 등",
+              "category": "2_임대차_전세_월세"
+            },
+            {
+              "id": "민간임대주택에 관한 특별법 시행령(대통령령)(제35581호)(20250604)_chunked_17",
+              "title": "민간임대주택에 관한 특별법 시행령",
+              "doc_type": "시행령",
+              "article_title": "주택임대관리업자의 업무 범위",
+              "category": "2_임대차_전세_월세"
+            },
+            {
+              "id": "민간임대주택에 관한 특별법(법률)(제20661호)(20250604)_chunked_15",
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_title": "주택임대관리업의 등록말소 등",
+              "category": "2_임대차_전세_월세"
+            },
+            {
+              "id": "주택임대차보호법 시행령(대통령령)(제35161호)(20250301)_chunked_9",
+              "title": "주택임대차보호법 시행령",
+              "doc_type": "시행령",
+              "article_title": "보증금 중 일정액의 범위 등",
+              "category": "2_임대차_전세_월세"
+            },
+            {
+              "id": "주택임대차보호법(법률)(제19356호)(20230719)_chunked_19",
+              "title": "주택임대차보호법",
+              "doc_type": "법률",
+              "article_title": "강행규정",
+              "category": "2_임대차_전세_월세"
+            },
+            {
+              "id": "건축물의 분양에 관한 법률 시행령(대통령령)(제34007호)(20231219)_chunked_12",
+              "title": "건축물의 분양에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_title": "설계의 변경",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "건축물의 분양에 관한 법률(법률)(제17007호)(20210101)_chunked_14",
+              "title": "건축물의 분양에 관한 법률",
+              "doc_type": "법률",
+              "article_title": "벌칙",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "공동주택관리법 시행규칙(국토교통부령)(제01482호)(20250415)_chunked_12",
+              "title": "공동주택관리법 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "설계도서의 보관",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "공동주택관리법 시행령(대통령령)(제35451호)(20250415)_chunked_10",
+              "title": "공동주택관리법 시행령",
+              "doc_type": "시행령",
+              "article_title": "관리업무의 인계",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "공동주택관리법(법률)(제20385호)(20250101)_chunked_9",
+              "title": "공동주택관리법",
+              "doc_type": "법률",
+              "article_title": "혼합주택단지의 관리",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "주택법 시행규칙(국토교통부령)(제01373호)(20250203)_chunked_13",
+              "title": "주택법 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "직장주택조합의 설립신고서 등",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "주택법(법률)(제20048호)(20240717)_chunked_9",
+              "title": "주택법",
+              "doc_type": "법률",
+              "article_title": "영업실적 등의 제출",
+              "category": "3_공급_및_관리_매매_분양"
+            },
+            {
+              "id": "공동주택 분양가격의 산정 등에 관한 규칙(국토교통부령)(제01135호)(20220715)_chunked_10",
+              "title": "공동주택 분양가격의 산정 등에 관한 규칙",
+              "doc_type": "기타",
+              "article_title": "공공택지 외의 택지의 감정평가 절차",
+              "category": "4_기타"
+            },
+            {
+              "id": "부동산 가격공시에 관한 법률 시행규칙(국토교통부령)(제01118호)(20220330)_chunked_9",
+              "title": "부동산 가격공시에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_title": "표준주택 소유자의 의견제출",
+              "category": "4_기타"
+            },
+            {
+              "id": "부동산 가격공시에 관한 법률 시행령(대통령령)(제35058호)(20241210)_chunked_9",
+              "title": "부동산 가격공시에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_title": "표준지공시지가의 공시사항",
+              "category": "4_기타"
+            },
+            {
+              "id": "부동산 가격공시에 관한 법률(법률)(제17459호)(20201210)_chunked_9",
+              "title": "부동산 가격공시에 관한 법률",
+              "doc_type": "법률",
+              "article_title": "개별공시지가의 결정ㆍ공시 등",
+              "category": "4_기타"
+            }
+          ]
+        },
+        "search_by_title_keyword": {
+          "count": 0,
+          "documents": []
+        },
+        "exact_match": {
+          "exact_count": 0,
+          "partial_count": 0,
+          "exact_matches": [],
+          "partial_matches": []
+        },
+        "vector_search": {
+          "query": "상가건물 임대차보호법 제10조",
+          "count": 20,
+          "matches_with_expected_article": 6,
+          "results": [
+            {
+              "rank": 1,
+              "title": "주택임대차보호법",
+              "doc_type": "법률",
+              "article_number": "제10조",
+              "article_title": "강행규정",
+              "distance": 0.38119441270828247,
+              "relevance": 0.6188055872917175,
+              "matches_expected_article": true
+            },
+            {
+              "rank": 2,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제10조",
+              "article_title": "주택임대관리업의 등록말소 등",
+              "distance": 0.42015379667282104,
+              "relevance": 0.579846203327179,
+              "matches_expected_article": true
+            },
+            {
+              "rank": 3,
+              "title": "민간임대주택에 관한 특별법 시행령",
+              "doc_type": "시행령",
+              "article_number": "제9조",
+              "article_title": "주택임대관리업 등록말소 등의 기준",
+              "distance": 0.4231852889060974,
+              "relevance": 0.5768147110939026,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 4,
+              "title": "공동주택관리법",
+              "doc_type": "법률",
+              "article_number": "제90조",
+              "article_title": "부정행위 금지 등",
+              "distance": 0.43090856075286865,
+              "relevance": 0.5690914392471313,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 5,
+              "title": "공동주택관리법",
+              "doc_type": "법률",
+              "article_number": "제84조",
+              "article_title": "「민법」의 준용",
+              "distance": 0.43122899532318115,
+              "relevance": 0.5687710046768188,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 6,
+              "title": "주택임대차보호법",
+              "doc_type": "법률",
+              "article_number": "제10조의2",
+              "article_title": "초과 차임 등의 반환청구",
+              "distance": 0.4347416162490845,
+              "relevance": 0.5652583837509155,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 7,
+              "title": "주택임대차보호법",
+              "doc_type": "법률",
+              "article_number": "제13조",
+              "article_title": "「소액사건심판법」의 준용",
+              "distance": 0.4407057762145996,
+              "relevance": 0.5592942237854004,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 8,
+              "title": "주택임대차보호법",
+              "doc_type": "법률",
+              "article_number": "제11조",
+              "article_title": "일시사용을 위한 임대차",
+              "distance": 0.4439217448234558,
+              "relevance": 0.5560782551765442,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 9,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제50조의2",
+              "article_title": "가정어린이집 운영에 관한 특례",
+              "distance": 0.4466330409049988,
+              "relevance": 0.5533669590950012,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 10,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제9조",
+              "article_title": "주택임대관리업의 결격사유",
+              "distance": 0.44851154088974,
+              "relevance": 0.55148845911026,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 11,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제5조의7",
+              "article_title": "임대사업자의 임대주택 추가 등록 제한 등",
+              "distance": 0.454312801361084,
+              "relevance": 0.545687198638916,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 12,
+              "title": "부동산 거래신고 등에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_number": "제8조",
+              "article_title": "토지거래허가구역의 공고",
+              "distance": 0.45622092485427856,
+              "relevance": 0.5437790751457214,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 13,
+              "title": "민간임대주택에 관한 특별법",
+              "doc_type": "법률",
+              "article_number": "제16조",
+              "article_title": "등록증 대여 등 금지",
+              "distance": 0.4599161148071289,
+              "relevance": 0.5400838851928711,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 14,
+              "title": "부동산 가격공시에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_number": "제10조",
+              "article_title": "표준주택 소유자의 의견제출",
+              "distance": 0.46400630474090576,
+              "relevance": 0.5359936952590942,
+              "matches_expected_article": true
+            },
+            {
+              "rank": 15,
+              "title": "부동산 거래신고 등에 관한 법률 시행령",
+              "doc_type": "시행령",
+              "article_number": "제6조",
+              "article_title": "법 제6조의4제3항에서 준용하는 경우를 포함한다",
+              "distance": 0.46630674600601196,
+              "relevance": 0.533693253993988,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 16,
+              "title": "건축물의 분양에 관한 법률",
+              "doc_type": "법률",
+              "article_number": "제10조",
+              "article_title": "벌칙",
+              "distance": 0.47071248292922974,
+              "relevance": 0.5292875170707703,
+              "matches_expected_article": true
+            },
+            {
+              "rank": 17,
+              "title": "공동주택관리법 시행령",
+              "doc_type": "시행령",
+              "article_number": "제29조의3",
+              "article_title": "사업주체의 어린이집 등의 임대계약 체결",
+              "distance": 0.4712170958518982,
+              "relevance": 0.5287829041481018,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 18,
+              "title": "민간임대주택에 관한 특별법 시행령",
+              "doc_type": "시행령",
+              "article_number": "제10조",
+              "article_title": "주택임대관리업자의 업무 범위",
+              "distance": 0.47420793771743774,
+              "relevance": 0.5257920622825623,
+              "matches_expected_article": true
+            },
+            {
+              "rank": 19,
+              "title": "민간임대주택에 관한 특별법 시행령",
+              "doc_type": "시행령",
+              "article_number": "제7조",
+              "article_title": "주택임대관리업의 등록기준",
+              "distance": 0.47424691915512085,
+              "relevance": 0.5257530808448792,
+              "matches_expected_article": false
+            },
+            {
+              "rank": 20,
+              "title": "부동산 거래신고 등에 관한 법률 시행규칙",
+              "doc_type": "시행규칙",
+              "article_number": "제10조",
+              "article_title": "토지현황사진의 보관",
+              "distance": 0.47870302200317383,
+              "relevance": 0.5212969779968262,
+              "matches_expected_article": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

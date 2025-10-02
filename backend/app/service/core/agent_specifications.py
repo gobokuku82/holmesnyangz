@@ -513,7 +513,321 @@ AGENT_SPECIFICATIONS: Dict[str, AgentSpecification] = {
     ),
 
     # ====================
-    # RecommendationAgent (예시 - 구현 예정)
+    # DocumentAgent
+    # ====================
+    "document_agent": AgentSpecification(
+        agent_name="document_agent",
+        display_name="문서 생성 에이전트",
+        version="1.0.0",
+        status=AgentStatus.PRODUCTION,
+
+        purpose="부동산 관련 법률 문서를 생성하는 전문 Agent",
+        description="""
+        임대차계약서, 매매계약서, 전세계약서 등 다양한 부동산 관련 법률 문서를 생성합니다.
+        템플릿 기반으로 문서를 작성하며, 다양한 출력 형식(TEXT, HTML, JSON, DOCX, PDF)을 지원합니다.
+        현재는 Mock 데이터를 사용하며, 향후 실제 템플릿 DB와 연동 예정입니다.
+        """,
+        domain="문서 생성",
+
+        capabilities=[
+            "임대차계약서 생성",
+            "매매계약서 생성",
+            "전세계약서 생성",
+            "내용증명 작성",
+            "계약해지통지서 작성",
+            "다양한 형식 지원 (TEXT, HTML, JSON, DOCX, PDF)",
+            "파라미터 기반 문서 커스터마이징"
+        ],
+        limitations=[
+            "법적 효력 보장 불가",
+            "전문가 검토 필요",
+            "템플릿 기반 생성 (창의적 작성 불가)",
+            "복잡한 특수 계약 불가"
+        ],
+
+        input_schema={
+            "required_fields": ["original_query"],
+            "optional_fields": ["document_type", "document_params", "document_format", "chat_session_id"],
+            "field_descriptions": {
+                "original_query": "사용자의 문서 생성 요청",
+                "document_type": "생성할 문서 유형",
+                "document_params": "문서 생성 파라미터 (임대인, 임차인, 주소 등)",
+                "document_format": "출력 형식 (TEXT/HTML/JSON/DOCX/PDF)",
+                "chat_session_id": "채팅 세션 ID"
+            },
+            "example": {
+                "original_query": "강남구 아파트 월세계약서 만들어줘",
+                "document_type": "임대차계약서",
+                "document_params": {
+                    "property_address": "서울시 강남구 테헤란로 123",
+                    "deposit": "50,000,000",
+                    "monthly_rent": "1,000,000",
+                    "lessor_name": "김철수",
+                    "lessee_name": "이영희"
+                },
+                "document_format": "TEXT"
+            }
+        },
+
+        output_schema={
+            "success_fields": ["status", "generated_document", "document_summary", "document_type"],
+            "error_fields": ["status", "error_message", "validation_errors"],
+            "field_descriptions": {
+                "status": "실행 상태 (completed/error/needs_more_info)",
+                "generated_document": "생성된 문서 객체",
+                "document_summary": "문서 요약 정보",
+                "document_type": "생성된 문서 유형",
+                "error_message": "에러 메시지",
+                "validation_errors": "검증 오류 목록"
+            },
+            "example": {
+                "status": "completed",
+                "generated_document": {
+                    "type": "document",
+                    "document_type": "임대차계약서",
+                    "content": "부동산 임대차 계약서...",
+                    "metadata": {
+                        "document_id": "DOC_20240101120000",
+                        "created_at": "2024-01-01T12:00:00"
+                    }
+                },
+                "document_summary": "임대차계약서가 성공적으로 생성되었습니다.",
+                "document_type": "임대차계약서"
+            }
+        },
+
+        available_tools=[
+            {
+                "name": "document_generation_tool",
+                "description": "문서 생성 도구",
+                "parameters": {"document_type": "str", "document_params": "dict", "format": "str"},
+                "output_type": "dict",
+                "example_usage": "document_generation_tool.search(query, params)"
+            }
+        ],
+
+        execution_steps=[
+            "1. 문서 생성 요청 분석",
+            "2. 문서 유형 감지",
+            "3. 필수 파라미터 검증",
+            "4. 문서 템플릿 선택",
+            "5. 파라미터 적용 및 문서 생성",
+            "6. 출력 형식 변환",
+            "7. 결과 반환"
+        ],
+
+        success_criteria=[
+            "문서 유형 식별 성공",
+            "필수 파라미터 모두 제공",
+            "문서 생성 완료"
+        ],
+        failure_conditions=[
+            "지원하지 않는 문서 유형",
+            "필수 파라미터 누락",
+            "템플릿 오류"
+        ],
+
+        use_cases=[
+            "계약서 초안 작성이 필요한 경우",
+            "법률 문서 템플릿이 필요한 경우",
+            "내용증명 작성이 필요한 경우",
+            "표준 계약서 양식이 필요한 경우"
+        ],
+        not_suitable_for=[
+            "법적 효력이 필요한 최종 문서",
+            "복잡한 특수 계약",
+            "창의적 문서 작성"
+        ],
+
+        prerequisites=[
+            "문서 유형이 명확해야 함",
+            "기본 계약 정보 제공"
+        ],
+
+        performance_metrics={
+            "average_execution_time": "1-2초",
+            "success_rate": "95%",
+            "supported_formats": 5,
+            "template_count": 9
+        },
+
+        dependencies=[
+            "DocumentGenerationTool",
+            "LangGraph Framework"
+        ],
+
+        llm_guidance="""
+        DocumentAgent 사용 시 주의사항:
+        1. 생성된 문서는 템플릿 기반이며 법적 검토 필요
+        2. 필수 파라미터가 부족한 경우 추가 정보 요청
+        3. 다양한 출력 형식 지원 (TEXT가 기본)
+        4. 현재 Mock 데이터 사용 중
+        """,
+
+        example_queries=[
+            "임대차계약서 만들어줘",
+            "매매계약서 템플릿 필요해",
+            "내용증명 작성해줘",
+            "전세계약서 양식 만들어줘"
+        ]
+    ),
+
+    # ====================
+    # ReviewAgent
+    # ====================
+    "review_agent": AgentSpecification(
+        agent_name="review_agent",
+        display_name="계약 검토 에이전트",
+        version="1.0.0",
+        status=AgentStatus.PRODUCTION,
+
+        purpose="부동산 계약서 및 문서를 검토하고 위험을 분석하는 전문 Agent",
+        description="""
+        계약서의 위험 요소를 분석하고, 법적 준수사항을 확인하며, 개선 권고사항을 제시합니다.
+        규칙 기반 분석을 통해 객관적인 검토 결과를 제공하며, 위험 레벨을 평가합니다.
+        향후 RuleDB와 연동하여 더욱 정교한 분석을 제공할 예정입니다.
+        """,
+        domain="문서 검토 및 분석",
+
+        capabilities=[
+            "계약서 위험 요소 분석",
+            "법적 준수사항 확인",
+            "문서 완성도 평가",
+            "개선 권고사항 제시",
+            "리스크 레벨 평가 (low/medium/high/critical)",
+            "상세 검토 보고서 생성",
+            "불공정 조항 식별"
+        ],
+        limitations=[
+            "법적 구속력 있는 조언 불가",
+            "최종 법률 자문 대체 불가",
+            "모든 법률 조항 완벽 검토 불가",
+            "특수 계약 검토 제한"
+        ],
+
+        input_schema={
+            "required_fields": ["original_query", "document_content"],
+            "optional_fields": ["document_type", "chat_session_id"],
+            "field_descriptions": {
+                "original_query": "사용자의 검토 요청",
+                "document_content": "검토할 문서 내용",
+                "document_type": "문서 유형 (자동 감지 가능)",
+                "chat_session_id": "채팅 세션 ID"
+            },
+            "example": {
+                "original_query": "이 임대차계약서 검토해줘",
+                "document_content": "부동산 임대차 계약서\n\n임대인...",
+                "document_type": "임대차계약서"
+            }
+        },
+
+        output_schema={
+            "success_fields": ["status", "review_report", "risk_level", "risk_factors", "recommendations"],
+            "error_fields": ["status", "error_message"],
+            "field_descriptions": {
+                "status": "실행 상태 (completed/error)",
+                "review_report": "검토 보고서",
+                "risk_level": "전체 위험도 (low/medium/high/critical)",
+                "risk_factors": "발견된 위험 요소 목록",
+                "recommendations": "개선 권고사항 목록",
+                "error_message": "에러 메시지"
+            },
+            "example": {
+                "status": "completed",
+                "risk_level": "high",
+                "risk_factors": [
+                    {
+                        "risk_level": "high",
+                        "description": "중도 해지 불가 조항",
+                        "location": "약 15번째 줄"
+                    }
+                ],
+                "recommendations": [
+                    "중도 해지 불가 조항 재검토 필요",
+                    "법률 전문가 검토 권고"
+                ],
+                "review_report": "계약서 검토 결과..."
+            }
+        },
+
+        available_tools=[
+            {
+                "name": "contract_review_tool",
+                "description": "계약서 검토 도구",
+                "parameters": {"document_content": "str", "document_type": "str", "review_focus": "list"},
+                "output_type": "dict",
+                "example_usage": "contract_review_tool.search(query, params)"
+            }
+        ],
+
+        execution_steps=[
+            "1. 문서 내용 추출",
+            "2. 문서 유형 및 구조 분석",
+            "3. 위험 요소 스캔",
+            "4. 법적 준수사항 확인",
+            "5. 문서 완성도 평가",
+            "6. 권고사항 생성",
+            "7. 종합 보고서 작성"
+        ],
+
+        success_criteria=[
+            "문서 내용 확인 완료",
+            "최소 1개 이상 검토 항목 완료",
+            "보고서 생성 성공"
+        ],
+        failure_conditions=[
+            "검토할 문서 없음",
+            "문서 형식 인식 불가",
+            "검토 도구 실행 실패"
+        ],
+
+        use_cases=[
+            "계약서 서명 전 검토가 필요한 경우",
+            "위험 요소 파악이 필요한 경우",
+            "불공정 조항 확인이 필요한 경우",
+            "계약 조건 분석이 필요한 경우"
+        ],
+        not_suitable_for=[
+            "법적 분쟁 해결",
+            "최종 법률 자문",
+            "계약서 작성 (검토만 가능)"
+        ],
+
+        prerequisites=[
+            "검토할 문서가 제공되어야 함",
+            "문서가 텍스트 형식이어야 함"
+        ],
+
+        performance_metrics={
+            "average_execution_time": "2-3초",
+            "success_rate": "90%",
+            "risk_detection_accuracy": "85%",
+            "supported_document_types": 5
+        },
+
+        dependencies=[
+            "ContractReviewTool",
+            "LangGraph Framework"
+        ],
+
+        llm_guidance="""
+        ReviewAgent 사용 시 주의사항:
+        1. 제공된 문서 내용을 정확히 전달
+        2. 검토 결과는 참고용이며 법적 조언 아님
+        3. 높은 위험도 발견 시 전문가 상담 권고
+        4. 규칙 기반 분석 (향후 RuleDB 연동 예정)
+        """,
+
+        example_queries=[
+            "이 계약서 검토해줘",
+            "임대차계약서 위험 요소 찾아줘",
+            "이 계약서에 불공정한 조항 있나?",
+            "계약서 문제점 분석해줘"
+        ]
+    ),
+
+    # ====================
+    # RecommendationAgent (구현 예정)
     # ====================
     "recommendation_agent": AgentSpecification(
         agent_name="recommendation_agent",

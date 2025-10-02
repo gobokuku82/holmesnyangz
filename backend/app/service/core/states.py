@@ -269,6 +269,94 @@ class DocumentState(BaseState):
     export_format: Optional[str]  # Export format
 
 
+# ============ Document Generation Agent State ============
+
+class DocumentAgentState(TypedDict):
+    """State for document generation agent"""
+
+    # ========== Session Identifiers ==========
+    chat_session_id: str
+    chat_thread_id: Optional[str]
+    db_session_id: Optional[int]
+
+    # ========== Input ==========
+    original_query: str                      # User's original request
+    document_type: str                       # 계약서, 신청서, 통지서 등
+    document_params: Dict[str, Any]          # Document generation parameters
+    template_id: Optional[str]               # Template ID if using predefined template
+
+    # ========== Processing ==========
+    selected_tool: Optional[str]             # Selected document tool
+    tool_parameters: Dict[str, Any]          # Tool-specific parameters
+
+    # ========== Output ==========
+    generated_document: Optional[Dict[str, Any]]  # Generated document content
+    document_format: str                     # PDF, DOCX, HTML, TEXT
+    document_metadata: Dict[str, Any]        # Metadata about the document
+
+    # ========== Shared Context ==========
+    shared_context: Annotated[Dict[str, Any], merge_dicts]
+    collection_keywords: List[str]           # Keywords for document generation
+
+    # ========== Status Tracking ==========
+    status: str                              # pending, generating, completed, failed
+    errors: Annotated[List[str], add]
+    confidence_score: float
+
+    # ========== TODO Management ==========
+    todos: Annotated[List[Dict[str, Any]], merge_todos]
+    todo_counter: int
+    parent_todo_id: Optional[str]
+
+
+# ============ Contract Review Agent State ============
+
+class ReviewAgentState(TypedDict):
+    """State for contract review agent"""
+
+    # ========== Session Identifiers ==========
+    chat_session_id: str
+    chat_thread_id: Optional[str]
+    db_session_id: Optional[int]
+
+    # ========== Input ==========
+    original_query: str                      # User's original request
+    document_content: str                    # Document to review
+    document_type: str                       # Type of contract/document
+    review_criteria: List[str]               # Specific review criteria
+
+    # ========== Processing ==========
+    selected_tool: Optional[str]             # Selected review tool
+    tool_parameters: Dict[str, Any]          # Tool-specific parameters
+    use_rule_db: bool                        # Whether to use RuleDB for review
+
+    # ========== Review Results ==========
+    review_results: Dict[str, Any]           # Detailed review results
+    risk_factors: Annotated[List[Dict[str, Any]], add]  # Identified risk factors
+    missing_clauses: List[str]               # Missing required clauses
+    problematic_clauses: List[Dict[str, Any]]  # Problematic clauses found
+    recommendations: Annotated[List[str], add]  # Recommendations
+
+    # ========== Compliance Check ==========
+    compliance_check: Dict[str, bool]        # Legal compliance checklist
+    legal_references: List[Dict[str, Any]]   # Referenced laws/regulations
+
+    # ========== Shared Context ==========
+    shared_context: Annotated[Dict[str, Any], merge_dicts]
+    collection_keywords: List[str]           # Keywords from the document
+
+    # ========== Status Tracking ==========
+    status: str                              # pending, reviewing, completed, failed
+    errors: Annotated[List[str], add]
+    confidence_score: float
+    risk_level: str                          # low, medium, high
+
+    # ========== TODO Management ==========
+    todos: Annotated[List[Dict[str, Any]], merge_todos]
+    todo_counter: int
+    parent_todo_id: Optional[str]
+
+
 # ============ New Real Estate Main Orchestrator State ============
 
 class RealEstateMainState(TypedDict):

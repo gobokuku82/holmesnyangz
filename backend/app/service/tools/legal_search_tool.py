@@ -16,6 +16,9 @@ from sentence_transformers import SentenceTransformer
 sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 from config import Config
 
+# Import legal_query_helper
+from .legal_query_helper import LegalQueryHelper
+
 
 class LegalSearchTool(BaseTool):
     """
@@ -37,7 +40,12 @@ class LegalSearchTool(BaseTool):
         try:
             # Get paths from Config
             chroma_path = str(Config.LEGAL_PATHS["chroma_db"])
+            sqlite_path = str(Config.LEGAL_PATHS["sqlite_db"])
             embedding_model_path = str(Config.LEGAL_PATHS["embedding_model"])
+
+            # Initialize SQLite metadata helper
+            self.metadata_helper = LegalQueryHelper(sqlite_path)
+            self.logger.info(f"SQLite DB loaded: {sqlite_path}")
 
             # Initialize ChromaDB
             self.chroma_client = chromadb.PersistentClient(
@@ -92,16 +100,47 @@ class LegalSearchTool(BaseTool):
         if article_query:
             self.logger.info(f"Specific article query detected: {article_query}")
 
-            # Try ChromaDB direct metadata filtering first
-            try:
-                # Method 1: Direct ChromaDB metadata filtering with partial matching
-                results = self._search_specific_article_chromadb(
-                    law_title=article_query['law_title'],
-                    article_number=article_query['article_number']
+            # First check if law exists in SQL DB
+            law_title = article_query['law_title']
+            article_number = article_query['article_number']
+
+            if not self.metadata_helper.check_law_exists(law_title):
+                self.logger.info(f"Law '{law_title}' not found in database")
+                # Return empty results with a note in data
+                return self.format_results(
+                    data=[{
+                        "type": "error",
+                        "message": f"법률 '{law_title}'을(를) 데이터베이스에서 찾을 수 없습니다.",
+                        "law_title": law_title,
+                        "article_number": article_number
+                    }],
+                    total_count=0,
+                    query=query
                 )
 
-                if results and results['ids'][0]:
-                    self.logger.info(f"Found {len(results['ids'][0])} results via ChromaDB metadata filtering")
+            # Try SQL lookup first for chunk IDs
+            try:
+                chunk_ids = self.metadata_helper.get_article_chunk_ids(
+                    title=law_title,
+                    article_number=article_number
+                )
+
+                if chunk_ids:
+                    self.logger.info(f"Found {len(chunk_ids)} chunks via SQL direct lookup")
+                    # Direct get from ChromaDB (no vector search needed)
+                    results = self.collection.get(
+                        ids=chunk_ids,
+                        include=['documents', 'metadatas']
+                    )
+
+                    # Convert get() results to query() format for consistency
+                    results = {
+                        'ids': [results['ids']],
+                        'documents': [results['documents']],
+                        'metadatas': [results['metadatas']],
+                        'distances': [[0.0] * len(results['ids'])]  # Perfect match (distance=0)
+                    }
+
                     formatted_data = self._format_chromadb_results(results)
 
                     return self.format_results(
@@ -110,10 +149,26 @@ class LegalSearchTool(BaseTool):
                         query=query
                     )
                 else:
-                    self.logger.info("No results from ChromaDB metadata filtering, trying enhanced vector search")
+                    self.logger.info(f"Article {article_number} not found in law {law_title}")
+
+                    # Try ChromaDB metadata filtering as fallback
+                    results = self._search_specific_article_chromadb(
+                        law_title=law_title,
+                        article_number=article_number
+                    )
+
+                    if results and results['ids'][0]:
+                        self.logger.info(f"Found {len(results['ids'][0])} results via ChromaDB metadata filtering")
+                        formatted_data = self._format_chromadb_results(results)
+
+                        return self.format_results(
+                            data=formatted_data,
+                            total_count=len(formatted_data),
+                            query=query
+                        )
 
             except Exception as e:
-                self.logger.warning(f"ChromaDB metadata filtering failed: {e}")
+                self.logger.warning(f"SQL/ChromaDB lookup failed: {e}")
 
             # Method 2: Enhanced vector search for specific article
             try:
@@ -162,11 +217,11 @@ class LegalSearchTool(BaseTool):
             self.logger.info("All specific article methods failed, falling back to standard vector search")
 
         # Standard path: Vector search with metadata filtering
-        filter_dict = self._build_filter_dict(
+        # Use SQL metadata helper for building filter
+        filter_dict = self.metadata_helper.build_chromadb_filter(
             doc_type=doc_type,
             category=category,
-            is_tenant_protection=is_tenant_protection,
-            is_tax_related=is_tax_related
+            exclude_deleted=True
         )
 
         self.logger.debug(f"Filter dict: {filter_dict}")
@@ -419,7 +474,7 @@ class LegalSearchTool(BaseTool):
         return None
 
     def _format_chromadb_results(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """ChromaDB 결과를 표준 포맷으로 변환"""
+        """ChromaDB 결과를 표준 포맷으로 변환 + SQL 메타데이터 보강"""
         if not results['ids'][0]:
             return []
 
@@ -452,6 +507,21 @@ class LegalSearchTool(BaseTool):
                 "number": metadata.get('number'),  # Law number
                 "source_file": metadata.get('source_file')
             }
+
+            # Enrich with SQL metadata (total articles, law number, etc.)
+            if title != 'N/A':
+                try:
+                    law_info = self.metadata_helper.get_law_by_title(title, fuzzy=True)
+                    if law_info:
+                        formatted_item['total_articles'] = law_info.get('total_articles')
+                        formatted_item['law_number'] = law_info.get('law_number')
+                        formatted_item['last_article'] = law_info.get('last_article')
+                        # Override enforcement_date from SQL if available (more accurate)
+                        if law_info.get('enforcement_date'):
+                            formatted_item['enforcement_date'] = law_info['enforcement_date']
+                except Exception as e:
+                    # If SQL query fails, continue without enrichment
+                    self.logger.debug(f"SQL enrichment failed for {title}: {e}")
 
             formatted_data.append(formatted_item)
 
