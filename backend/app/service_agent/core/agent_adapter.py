@@ -5,7 +5,7 @@ Agent Adapter - 기존 Agent들을 Registry 시스템에 통합
 
 import logging
 from typing import Dict, Any, Optional, Type
-from app.service.core.agent_registry import AgentRegistry, AgentCapabilities
+from app.service_agent.core.agent_registry import AgentRegistry, AgentCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -18,17 +18,16 @@ class AgentAdapter:
     @staticmethod
     def register_existing_agents():
         """
-        모든 기존 Agent들을 Registry에 등록
+        Team-based 아키텍처를 위한 팀/에이전트 등록
         """
-        logger.info("Registering existing agents to Registry...")
+        logger.info("Registering teams to Registry...")
 
-        # SearchAgent 등록
+        # SearchTeam 등록 (가상 에이전트로 등록)
         try:
-            from app.service.agents.search_agent import SearchAgent
-
+            # 팀을 가상 에이전트로 등록하여 PlanningAgent가 인식할 수 있도록 함
             capabilities = AgentCapabilities(
-                name="search_agent",
-                description="법률, 부동산, 대출 정보를 검색하는 Agent",
+                name="search_team",
+                description="법률, 부동산, 대출 정보를 검색하는 팀",
                 input_types=["query", "keywords"],
                 output_types=["legal_search", "real_estate_search", "loan_search"],
                 required_tools=[
@@ -39,96 +38,78 @@ class AgentAdapter:
                 team="search"
             )
 
+            # 팀을 더미 클래스로 등록 (실제 팀 수퍼바이저는 별도로 인스턴스화됨)
+            class SearchTeamPlaceholder:
+                pass
+
             AgentRegistry.register(
-                name="search_agent",
-                agent_class=SearchAgent,
+                name="search_team",
+                agent_class=SearchTeamPlaceholder,
                 team="search",
                 capabilities=capabilities,
                 priority=10,
                 enabled=True
             )
-            logger.info("SearchAgent registered successfully")
+            logger.info("SearchTeam registered successfully")
 
-        except ImportError as e:
-            logger.error(f"Failed to register SearchAgent: {e}")
+        except Exception as e:
+            logger.error(f"Failed to register SearchTeam: {e}")
 
-        # AnalysisAgent 등록
+        # AnalysisTeam 등록
         try:
-            from app.service.agents.analysis_agent import AnalysisAgent
-
             capabilities = AgentCapabilities(
-                name="analysis_agent",
-                description="수집된 데이터를 분석하고 보고서를 생성하는 Agent",
+                name="analysis_team",
+                description="수집된 데이터를 분석하고 보고서를 생성하는 팀",
                 input_types=["collected_data", "analysis_type"],
                 output_types=["report", "insights", "recommendations"],
                 required_tools=["analysis_tools"],
                 team="analysis"
             )
 
+            class AnalysisTeamPlaceholder:
+                pass
+
             AgentRegistry.register(
-                name="analysis_agent",
-                agent_class=AnalysisAgent,
+                name="analysis_team",
+                agent_class=AnalysisTeamPlaceholder,
                 team="analysis",
                 capabilities=capabilities,
                 priority=5,
                 enabled=True
             )
-            logger.info("AnalysisAgent registered successfully")
+            logger.info("AnalysisTeam registered successfully")
 
-        except ImportError as e:
-            logger.error(f"Failed to register AnalysisAgent: {e}")
+        except Exception as e:
+            logger.error(f"Failed to register AnalysisTeam: {e}")
 
-        # DocumentAgent 등록
+        # DocumentTeam 등록
         try:
-            from app.service.agents.document_agent import DocumentAgent
-
             capabilities = AgentCapabilities(
-                name="document_agent",
-                description="부동산 관련 법률 문서를 생성하는 Agent",
+                name="document_team",
+                description="부동산 관련 법률 문서를 생성하는 팀",
                 input_types=["document_type", "document_params"],
                 output_types=["generated_document"],
                 required_tools=["document_generation_tool"],
                 team="document"
             )
 
+            class DocumentTeamPlaceholder:
+                pass
+
             AgentRegistry.register(
-                name="document_agent",
-                agent_class=DocumentAgent,
+                name="document_team",
+                agent_class=DocumentTeamPlaceholder,
                 team="document",
                 capabilities=capabilities,
                 priority=3,
                 enabled=True
             )
-            logger.info("DocumentAgent registered successfully")
+            logger.info("DocumentTeam registered successfully")
 
-        except ImportError as e:
-            logger.error(f"Failed to register DocumentAgent: {e}")
+        except Exception as e:
+            logger.error(f"Failed to register DocumentTeam: {e}")
 
-        # ReviewAgent 등록
-        try:
-            from app.service.agents.review_agent import ReviewAgent
-
-            capabilities = AgentCapabilities(
-                name="review_agent",
-                description="계약서 및 문서를 검토하고 위험을 분석하는 Agent",
-                input_types=["document_content", "review_type"],
-                output_types=["risk_factors", "recommendations"],
-                required_tools=["contract_review_tool"],
-                team="document"
-            )
-
-            AgentRegistry.register(
-                name="review_agent",
-                agent_class=ReviewAgent,
-                team="document",
-                capabilities=capabilities,
-                priority=3,
-                enabled=True
-            )
-            logger.info("ReviewAgent registered successfully")
-
-        except ImportError as e:
-            logger.error(f"Failed to register ReviewAgent: {e}")
+        # 나중에 추가할 팀들을 위한 플레이스홀더
 
         logger.info(f"Registration complete. Registered agents: {AgentRegistry.list_agents()}")
         logger.info(f"Teams: {AgentRegistry.list_teams()}")

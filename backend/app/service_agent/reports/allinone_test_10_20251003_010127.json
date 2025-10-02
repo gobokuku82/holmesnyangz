@@ -1,0 +1,177 @@
+{
+  "test_info": {
+    "total_queries": 10,
+    "success_count": 0,
+    "failed_count": 10,
+    "total_time": 61.181711196899414,
+    "average_time": 6.118171119689942,
+    "by_category": {
+      "법률": 3,
+      "시세": 2,
+      "대출": 2,
+      "복합": 3
+    }
+  },
+  "results": [
+    {
+      "query_id": "legal_01",
+      "category": "법률",
+      "query": "전세금 5% 인상이 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT",
+      "timestamp": "2025-10-03T01:00:25.890842",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 7.33850622177124,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "legal_02",
+      "category": "법률",
+      "query": "보증금 반환 안 받으면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT",
+      "timestamp": "2025-10-03T01:00:33.432653",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 5.083036661148071,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "legal_03",
+      "category": "법률",
+      "query": "소액임차인 최우선변제금액은 얼마인가요?",
+      "expected_intent": "LEGAL_CONSULT",
+      "timestamp": "2025-10-03T01:00:38.719207",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 6.681281805038452,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "market_01",
+      "category": "시세",
+      "query": "강남구 아파트 시세 알려주세요",
+      "expected_intent": "MARKET_INFO",
+      "timestamp": "2025-10-03T01:00:45.606869",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 4.979500770568848,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "market_02",
+      "category": "시세",
+      "query": "서초구 전세 평균 가격은?",
+      "expected_intent": "MARKET_INFO",
+      "timestamp": "2025-10-03T01:00:50.797974",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 5.095483064651489,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "loan_01",
+      "category": "대출",
+      "query": "주택담보대출 금리 비교해주세요",
+      "expected_intent": "LOAN_INFO",
+      "timestamp": "2025-10-03T01:00:56.106710",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 7.33494234085083,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "loan_02",
+      "category": "대출",
+      "query": "전세자금대출 조건은?",
+      "expected_intent": "LOAN_INFO",
+      "timestamp": "2025-10-03T01:01:03.651721",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 5.157759666442871,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "complex_01",
+      "category": "복합",
+      "query": "강남 아파트 매매가격과 관련 법률 알려주세요",
+      "expected_intent": "COMPREHENSIVE",
+      "timestamp": "2025-10-03T01:01:09.014233",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 6.878559112548828,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "complex_02",
+      "category": "복합",
+      "query": "전세 대출 받을 때 주의사항과 금리는?",
+      "expected_intent": "COMPREHENSIVE",
+      "timestamp": "2025-10-03T01:01:16.101243",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 4.835115432739258,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    },
+    {
+      "query_id": "complex_03",
+      "category": "복합",
+      "query": "서초구 아파트 시세와 대출 한도 알려주세요",
+      "expected_intent": "COMPREHENSIVE",
+      "timestamp": "2025-10-03T01:01:21.150854",
+      "status": "failed",
+      "error": "Object of type datetime is not JSON serializable",
+      "execution_time": 5.706689357757568,
+      "process_steps": [
+        {
+          "step": "1. Initial State Created",
+          "time": 0
+        }
+      ]
+    }
+  ]
+}

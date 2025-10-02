@@ -1,557 +1,611 @@
 {
-  "total_count": 90,
+  "total": 100,
   "categories": {
-    "특정조항검색": 15,
-    "시맨틱검색": 20,
-    "메타데이터필터링": 7,
-    "임차인보호조항": 5,
-    "복합검색": 9,
-    "실전사례": 10,
-    "법률용어": 7,
-    "공인중개사": 6,
-    "특수상황": 5,
-    "절차방법": 6
+    "legal": 25,
+    "market": 25,
+    "loan": 20,
+    "complex": 30
   },
   "queries": [
     {
-      "id": 1,
-      "query": "주택임대차보호법 제1조",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_01",
+      "category": "legal",
+      "query": "전세금 5% 인상이 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 2,
-      "query": "주택임대차보호법 제2조",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_02",
+      "category": "legal",
+      "query": "보증금 반환 안 받으면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 3,
-      "query": "주택임대차보호법 제3조",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_03",
+      "category": "legal",
+      "query": "소액임차인 최우선변제금액은 얼마인가요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 4,
-      "query": "주택임대차보호법 제4조 대항력",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_04",
+      "category": "legal",
+      "query": "전세 계약 중 집주인이 바뀌면 어떻게 되나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 5,
-      "query": "주택임대차보호법 제5조 우선변제권",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_05",
+      "category": "legal",
+      "query": "임대차보호법 적용 범위가 어떻게 되나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 6,
-      "query": "주택임대차보호법 제6조 계약갱신요구권",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_06",
+      "category": "legal",
+      "query": "월세를 전세로 바꿀 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 7,
-      "query": "주택임대차보호법 제7조 차임 증액",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_07",
+      "category": "legal",
+      "query": "전세권 설정 비용은 얼마나 드나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 8,
-      "query": "주택임대차보호법 제8조 확정일자",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_08",
+      "category": "legal",
+      "query": "임대인이 집 수리를 안 해주면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 9,
-      "query": "민법 제618조 임대차",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_09",
+      "category": "legal",
+      "query": "묵시적 갱신 조건이 뭔가요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 10,
-      "query": "민법 제622조 임차인의 의무",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_10",
+      "category": "legal",
+      "query": "확정일자 받는 방법 알려주세요",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 11,
-      "query": "민법 제626조 임대인의 의무",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_11",
+      "category": "legal",
+      "query": "전세 사기 예방 방법 알려주세요",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 12,
-      "query": "민법 제627조 보증금 반환",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_12",
+      "category": "legal",
+      "query": "임차권등기명령 신청 조건은?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 13,
-      "query": "공인중개사법 제10조",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_13",
+      "category": "legal",
+      "query": "계약금 돌려받을 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 14,
-      "query": "공인중개사법 제25조 중개보수",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_14",
+      "category": "legal",
+      "query": "중개수수료는 누가 내나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 15,
-      "query": "공인중개사법 제30조 손해배상",
-      "category": "특정조항검색",
-      "expected_strategy": "SQLite 직접 조회"
+      "query_id": "legal_15",
+      "category": "legal",
+      "query": "전입신고 언제까지 해야 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 16,
-      "query": "전세금 5% 인상 제한",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_16",
+      "category": "legal",
+      "query": "재개발 지역 전세 계약 주의사항은?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 17,
-      "query": "전세 보증금은 얼마까지 올릴 수 있나요",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_17",
+      "category": "legal",
+      "query": "다가구주택도 임대차보호법 적용되나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 18,
-      "query": "전세 계약 갱신할 때 임대료 인상률",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_18",
+      "category": "legal",
+      "query": "전세 계약서에 특약 넣을 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 19,
-      "query": "전세금 반환 시기",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_19",
+      "category": "legal",
+      "query": "임대인 동의 없이 전대 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 20,
-      "query": "전세 계약 종료 후 보증금 돌려받기",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_20",
+      "category": "legal",
+      "query": "보증금 반환 소송 절차는?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 21,
-      "query": "월세 인상 한도",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_21",
+      "category": "legal",
+      "query": "전세보증보험 가입 의무인가요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 22,
-      "query": "월세를 전세로 전환할 수 있나요",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_22",
+      "category": "legal",
+      "query": "계약 해지 통보는 언제 해야 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 23,
-      "query": "월세 계약 갱신 거부",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_23",
+      "category": "legal",
+      "query": "상가 임대차보호법도 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 24,
-      "query": "임대차 계약 갱신 요구권",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_24",
+      "category": "legal",
+      "query": "월세 연체 시 법적 조치는?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 25,
-      "query": "2년 계약 만료 후 재계약",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "legal_25",
+      "category": "legal",
+      "query": "전세금 증액 제한이 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
     },
     {
-      "id": 26,
-      "query": "계약 갱신 거부 사유",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_01",
+      "category": "market",
+      "query": "강남구 아파트 시세 알려주세요",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 27,
-      "query": "임대인이 계약 갱신을 거부하는 경우",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_02",
+      "category": "market",
+      "query": "서초구 전세 매물 있나요?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 28,
-      "query": "임대차 보증금 반환 청구",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_03",
+      "category": "market",
+      "query": "송파구 아파트 값 어떻게 되나요?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 29,
-      "query": "보증금 반환 지연 이자",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_04",
+      "category": "market",
+      "query": "마포구 전세 시세가 궁금해요",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 30,
-      "query": "임대인이 보증금을 안 돌려줄 때",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_05",
+      "category": "market",
+      "query": "용산구 아파트 매매가 추이는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 31,
-      "query": "소액 보증금 우선변제",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_06",
+      "category": "market",
+      "query": "강동구 빌라 전세 시세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 32,
-      "query": "전입신고와 대항력",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_07",
+      "category": "market",
+      "query": "성북구 원룸 월세 얼마인가요?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 33,
-      "query": "임차권 등기명령",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_08",
+      "category": "market",
+      "query": "은평구 신축 아파트 가격은?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 34,
-      "query": "대항력이 발생하는 시점",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_09",
+      "category": "market",
+      "query": "광진구 재개발 지역 시세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 35,
-      "query": "확정일자 받는 방법",
-      "category": "시맨틱검색",
-      "expected_strategy": "ChromaDB 벡터 검색"
+      "query_id": "market_10",
+      "category": "market",
+      "query": "노원구 전세 급매물 있나요?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 36,
-      "query": "주택임대차보호법 시행령",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_11",
+      "category": "market",
+      "query": "강서구 오피스텔 시세 알려주세요",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 37,
-      "query": "주택임대차보호법 시행규칙",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_12",
+      "category": "market",
+      "query": "관악구 투룸 전세 가격은?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 38,
-      "query": "공인중개사법 시행령",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_13",
+      "category": "market",
+      "query": "동작구 아파트 시세 상승률은?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 39,
-      "query": "민법 임대차 규정",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_14",
+      "category": "market",
+      "query": "중랑구 빌라 매매 시세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 40,
-      "query": "임대차 관련 법률",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_15",
+      "category": "market",
+      "query": "성동구 역세권 전세 시세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 41,
-      "query": "전세 월세 관련 규정",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_16",
+      "category": "market",
+      "query": "양천구 신축 빌라 가격은?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 42,
-      "query": "매매 분양 관련 법률",
-      "category": "메타데이터필터링",
-      "expected_strategy": "SQLite 필터 + 벡터 검색"
+      "query_id": "market_17",
+      "category": "market",
+      "query": "구로구 다가구 월세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 43,
-      "query": "임차인 보호 조항",
-      "category": "임차인보호조항",
-      "expected_strategy": "is_tenant_protection 필터"
+      "query_id": "market_18",
+      "category": "market",
+      "query": "금천구 원룸 시세 얼마인가요?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 44,
-      "query": "임차인 권리 보호",
-      "category": "임차인보호조항",
-      "expected_strategy": "is_tenant_protection 필터"
+      "query_id": "market_19",
+      "category": "market",
+      "query": "영등포구 오피스텔 전세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 45,
-      "query": "임차인에게 유리한 법",
-      "category": "임차인보호조항",
-      "expected_strategy": "is_tenant_protection 필터"
+      "query_id": "market_20",
+      "category": "market",
+      "query": "동대문구 아파트 실거래가는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 46,
-      "query": "세입자 보호 규정",
-      "category": "임차인보호조항",
-      "expected_strategy": "is_tenant_protection 필터"
+      "query_id": "market_21",
+      "category": "market",
+      "query": "강남 대치동 학군 아파트 시세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 47,
-      "query": "임대차 약자 보호",
-      "category": "임차인보호조항",
-      "expected_strategy": "is_tenant_protection 필터"
+      "query_id": "market_22",
+      "category": "market",
+      "query": "서초 반포 아파트 가격 추이는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 48,
-      "query": "주택임대차보호법에서 전세금 인상 제한 조항",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "market_23",
+      "category": "market",
+      "query": "송파 잠실 신축 아파트 분양가는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 49,
-      "query": "민법상 임차인의 수선 의무",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "market_24",
+      "category": "market",
+      "query": "마포 상암동 아파트 전세는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 50,
-      "query": "공인중개사법상 중개수수료 상한",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "market_25",
+      "category": "market",
+      "query": "용산 이촌동 아파트 매매가는?",
+      "expected_intent": "MARKET_INQUIRY"
     },
     {
-      "id": 51,
-      "query": "임대차 계약에서 임차인이 알아야 할 권리",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_01",
+      "category": "loan",
+      "query": "주택담보대출 금리 비교해주세요",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 52,
-      "query": "전세 계약 시 주의사항",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_02",
+      "category": "loan",
+      "query": "전세자금대출 조건이 어떻게 되나요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 53,
-      "query": "월세 계약서 필수 기재사항",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_03",
+      "category": "loan",
+      "query": "신혼부부 대출 한도는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 54,
-      "query": "소액임차인 우선변제권 요건",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_04",
+      "category": "loan",
+      "query": "디딤돌대출 신청 방법 알려주세요",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 55,
-      "query": "임대차 계약 해지 사유와 절차",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_05",
+      "category": "loan",
+      "query": "보금자리론 금리가 얼마인가요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 56,
-      "query": "보증금 반환청구권 행사 방법",
-      "category": "복합검색",
-      "expected_strategy": "하이브리드 (메타데이터 + 벡터)"
+      "query_id": "loan_06",
+      "category": "loan",
+      "query": "LTV 비율이 뭔가요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 57,
-      "query": "집주인이 갑자기 나가라고 하면",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_07",
+      "category": "loan",
+      "query": "DSR 규제가 뭔가요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 58,
-      "query": "전세금을 20% 올려달라고 하는데",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_08",
+      "category": "loan",
+      "query": "중도상환수수료 없는 대출은?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 59,
-      "query": "계약서에 확정일자가 없으면",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_09",
+      "category": "loan",
+      "query": "버팀목전세자금 자격 조건은?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 60,
-      "query": "전입신고를 늦게 했는데 괜찮나요",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_10",
+      "category": "loan",
+      "query": "청년전세대출 한도 얼마인가요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 61,
-      "query": "임대인이 집을 팔았는데 계약은 유효한가요",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_11",
+      "category": "loan",
+      "query": "주택구입자금 대출 서류는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 62,
-      "query": "보증금을 못 받고 이사 가야 하나요",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_12",
+      "category": "loan",
+      "query": "전세보증금 대출 금리는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 63,
-      "query": "중개사가 수수료를 더 받으려고 해요",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_13",
+      "category": "loan",
+      "query": "생애최초 주택구입 대출 조건은?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 64,
-      "query": "계약 만료 6개월 전 통보받았어요",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_14",
+      "category": "loan",
+      "query": "아파트 담보대출 한도는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 65,
-      "query": "전세 사기 피해 예방 방법",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_15",
+      "category": "loan",
+      "query": "대환대출 받을 수 있나요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 66,
-      "query": "임대차 분쟁 해결 절차",
-      "category": "실전사례",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "loan_16",
+      "category": "loan",
+      "query": "이자 납입 방식 비교해주세요",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 67,
-      "query": "대항력이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "loan_17",
+      "category": "loan",
+      "query": "고정금리와 변동금리 차이는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 68,
-      "query": "우선변제권이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "loan_18",
+      "category": "loan",
+      "query": "대출 갈아타기 하면 이득인가요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 69,
-      "query": "확정일자란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "loan_19",
+      "category": "loan",
+      "query": "신용점수 낮으면 대출 못 받나요?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 70,
-      "query": "임차권 등기명령이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "loan_20",
+      "category": "loan",
+      "query": "집단대출과 개별대출 차이는?",
+      "expected_intent": "LOAN_CONSULT"
     },
     {
-      "id": 71,
-      "query": "소액임차인이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "complex_01",
+      "category": "complex",
+      "query": "강남 아파트 매매가와 대출 한도 알려주세요",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 72,
-      "query": "계약갱신요구권이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "complex_02",
+      "category": "complex",
+      "query": "서초 전세 계약 시 법적 주의사항과 금리는?",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 73,
-      "query": "차임 증액청구권이란",
-      "category": "법률용어",
-      "expected_strategy": "벡터 검색"
+      "query_id": "complex_03",
+      "category": "complex",
+      "query": "송파구 아파트 시세와 전세 대출 비교",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 74,
-      "query": "공인중개사 중개수수료 계산",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_04",
+      "category": "complex",
+      "query": "전세 계약하려는데 시세랑 법률 자문 필요해요",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 75,
-      "query": "중개보수 상한액",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_05",
+      "category": "complex",
+      "query": "강남구 신축 매매 시 대출과 세금 알려주세요",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 76,
-      "query": "중개사 의무사항",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_06",
+      "category": "complex",
+      "query": "전세에서 월세 전환 시 시세와 법적 절차는?",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 77,
-      "query": "부동산 중개 계약서 작성",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_07",
+      "category": "complex",
+      "query": "재개발 지역 투자 시 법률과 시세 분석",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 78,
-      "query": "중개사 과실 손해배상",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_08",
+      "category": "complex",
+      "query": "생애최초 아파트 구입 대출과 시세 상담",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 79,
-      "query": "중개수수료는 누가 내나요",
-      "category": "공인중개사",
-      "expected_strategy": "메타데이터 + 벡터"
+      "query_id": "complex_09",
+      "category": "complex",
+      "query": "전세 사기 예방법과 보증보험 비교",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 80,
-      "query": "재개발 지역 임대차 계약",
-      "category": "특수상황",
-      "expected_strategy": "복합 검색"
+      "query_id": "complex_10",
+      "category": "complex",
+      "query": "마포구 전세 계약서 작성과 금리 비교",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 81,
-      "query": "다가구 주택 임대차",
-      "category": "특수상황",
-      "expected_strategy": "복합 검색"
+      "query_id": "complex_11",
+      "category": "complex",
+      "query": "용산 아파트 갈아타기 시 대출과 세금",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 82,
-      "query": "상가 임대차와 주택 임대차 차이",
-      "category": "특수상황",
-      "expected_strategy": "복합 검색"
+      "query_id": "complex_12",
+      "category": "complex",
+      "query": "강동구 빌라 매매 시 법적 리스크와 시세",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 83,
-      "query": "전세권 설정 등기",
-      "category": "특수상황",
-      "expected_strategy": "복합 검색"
+      "query_id": "complex_13",
+      "category": "complex",
+      "query": "신혼부부 전세 대출과 계약 주의사항",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 84,
-      "query": "임대차 계약 무효 사유",
-      "category": "특수상황",
-      "expected_strategy": "복합 검색"
+      "query_id": "complex_14",
+      "category": "complex",
+      "query": "성북구 재건축 아파트 투자 상담",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 85,
-      "query": "임대차 계약서 작성 방법",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_15",
+      "category": "complex",
+      "query": "청년 전세대출과 임대차보호법 적용",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 86,
-      "query": "확정일자 받는 절차",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_16",
+      "category": "complex",
+      "query": "은평구 신축 분양과 중도금 대출",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 87,
-      "query": "전입신고 방법",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_17",
+      "category": "complex",
+      "query": "다가구주택 매매 시 법률과 대출 조건",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 88,
-      "query": "임차권 등기명령 신청",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_18",
+      "category": "complex",
+      "query": "광진구 역세권 투자 리스크 분석",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 89,
-      "query": "보증금 반환 소송 절차",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_19",
+      "category": "complex",
+      "query": "전세금 반환보증보험과 대출 연계",
+      "expected_intent": "COMPREHENSIVE"
     },
     {
-      "id": 90,
-      "query": "임대차 분쟁조정 신청",
-      "category": "절차방법",
-      "expected_strategy": "시맨틱 검색"
+      "query_id": "complex_20",
+      "category": "complex",
+      "query": "노원구 아파트 증여 시 세금과 법률",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_21",
+      "category": "complex",
+      "query": "관악구 원룸 임대사업 시작하려는데 조언",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_22",
+      "category": "complex",
+      "query": "동작구 오피스텔 투자 수익률 분석",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_23",
+      "category": "complex",
+      "query": "중랑구 다세대 매매 법률 리스크는?",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_24",
+      "category": "complex",
+      "query": "성동구 상가주택 복합 매매 상담",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_25",
+      "category": "complex",
+      "query": "양천구 재건축 조합원 자격과 대출",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_26",
+      "category": "complex",
+      "query": "구로구 지식산업센터 투자 분석",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_27",
+      "category": "complex",
+      "query": "금천구 원룸텔 임대수익 계산",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_28",
+      "category": "complex",
+      "query": "영등포 오피스텔 갭투자 리스크",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_29",
+      "category": "complex",
+      "query": "동대문구 상가 임대차 법률 상담",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_30",
+      "category": "complex",
+      "query": "강서구 아파트 경매 입찰 전략",
+      "expected_intent": "COMPREHENSIVE"
     }
   ]
 }

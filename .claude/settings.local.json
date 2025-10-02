@@ -3,7 +3,17 @@
     "allow": [
       "Bash(\"..\\..\\..\\venv\\Scripts\\python.exe\" test_mock_data.py)",
       "Bash(\"..\\..\\..\\venv\\Scripts\\python.exe\" generate_allinone_queries.py)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(python:*)",
+      "Bash(timeout 30 python allinone_test_10.py)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(../../../venv/Scripts/python test_single_query.py)",
+      "Bash(../../../venv/Scripts/python allinone_test_10.py)",
+      "Bash(rm:*)",
+      "Bash(../../../venv/Scripts/python generate_100_queries.py)",
+      "Bash(../../../venv/Scripts/python allinone_test_100.py)",
+      "Bash(../../../venv/Scripts/python -c \"\nimport json\nfrom pathlib import Path\n\n# 20개만 추출\nwith open(''test_queries_100.json'', ''r'', encoding=''utf-8'') as f:\n    data = json.load(f)\n    \nsample = {\n    ''total'': 20,\n    ''categories'': {''legal'': 5, ''market'': 5, ''loan'': 5, ''complex'': 5},\n    ''queries'': data[''queries''][:20]\n}\n\nwith open(''test_queries_20.json'', ''w'', encoding=''utf-8'') as f:\n    json.dump(sample, f, ensure_ascii=False, indent=2)\n\nprint(''Created test_queries_20.json with 20 queries'')\n\")",
+      "Bash(../../../venv/Scripts/python -c \"\nimport asyncio\nimport sys\nsys.path.insert(0, ''''C:/kdy/projects/holmesnayangs/bera_v001/holmesnyangz/backend'''')\nfrom app.service_agent.allinone_test_100 import ComprehensiveTestRunner\n\nasync def test_20():\n    runner = ComprehensiveTestRunner()\n    runner.load_queries(''''test_queries_20.json'''')\n    await runner.initialize_supervisor()\n    await runner.run_all_tests()\n    runner.save_reports()\n\nasyncio.run(test_20())\n\")"
     ],
     "deny": [],
     "ask": []

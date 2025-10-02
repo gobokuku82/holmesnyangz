@@ -1,0 +1,131 @@
+{
+  "total": 20,
+  "categories": {
+    "legal": 5,
+    "market": 5,
+    "loan": 5,
+    "complex": 5
+  },
+  "queries": [
+    {
+      "query_id": "legal_01",
+      "category": "legal",
+      "query": "전세금 5% 인상이 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_02",
+      "category": "legal",
+      "query": "보증금 반환 안 받으면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_03",
+      "category": "legal",
+      "query": "소액임차인 최우선변제금액은 얼마인가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_04",
+      "category": "legal",
+      "query": "전세 계약 중 집주인이 바뀌면 어떻게 되나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_05",
+      "category": "legal",
+      "query": "임대차보호법 적용 범위가 어떻게 되나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_06",
+      "category": "legal",
+      "query": "월세를 전세로 바꿀 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_07",
+      "category": "legal",
+      "query": "전세권 설정 비용은 얼마나 드나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_08",
+      "category": "legal",
+      "query": "임대인이 집 수리를 안 해주면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_09",
+      "category": "legal",
+      "query": "묵시적 갱신 조건이 뭔가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_10",
+      "category": "legal",
+      "query": "확정일자 받는 방법 알려주세요",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_11",
+      "category": "legal",
+      "query": "전세 사기 예방 방법 알려주세요",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_12",
+      "category": "legal",
+      "query": "임차권등기명령 신청 조건은?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_13",
+      "category": "legal",
+      "query": "계약금 돌려받을 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_14",
+      "category": "legal",
+      "query": "중개수수료는 누가 내나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_15",
+      "category": "legal",
+      "query": "전입신고 언제까지 해야 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_16",
+      "category": "legal",
+      "query": "재개발 지역 전세 계약 주의사항은?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_17",
+      "category": "legal",
+      "query": "다가구주택도 임대차보호법 적용되나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_18",
+      "category": "legal",
+      "query": "전세 계약서에 특약 넣을 수 있나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_19",
+      "category": "legal",
+      "query": "임대인 동의 없이 전대 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_20",
+      "category": "legal",
+      "query": "보증금 반환 소송 절차는?",
+      "expected_intent": "LEGAL_CONSULT"
+    }
+  ]
+}

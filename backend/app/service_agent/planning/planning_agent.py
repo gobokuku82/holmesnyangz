@@ -294,20 +294,23 @@ class PlanningAgent:
         )
 
     def _suggest_agents(self, intent_type: IntentType) -> List[str]:
-        """의도에 따른 Agent 추천"""
+        """의도에 따른 Agent 추천 (Team 기반 아키텍처용)"""
+        # Team 이름으로 매핑 (agent -> team)
         agent_mapping = {
-            IntentType.LEGAL_CONSULT: ["search_agent"],
-            IntentType.MARKET_INQUIRY: ["search_agent", "analysis_agent"],
-            IntentType.LOAN_CONSULT: ["search_agent", "analysis_agent"],
-            IntentType.CONTRACT_CREATION: ["document_agent"],
-            IntentType.CONTRACT_REVIEW: ["review_agent"],
-            IntentType.COMPREHENSIVE: ["search_agent", "analysis_agent"],
-            IntentType.RISK_ANALYSIS: ["search_agent", "analysis_agent", "review_agent"],
-            IntentType.UNCLEAR: ["search_agent"],
+            IntentType.LEGAL_CONSULT: ["search_team"],  # 법률 DB 검색
+            IntentType.MARKET_INQUIRY: ["search_team", "analysis_team"],  # 시세 조회 + 분석
+            IntentType.LOAN_CONSULT: ["search_team", "analysis_team"],  # 대출 상품 검색 + 분석
+            IntentType.CONTRACT_CREATION: ["document_team"],  # 문서 생성
+            IntentType.CONTRACT_REVIEW: ["analysis_team"],  # 계약서 분석 (review -> analysis)
+            IntentType.COMPREHENSIVE: ["search_team", "analysis_team"],  # 종합 상담
+            IntentType.RISK_ANALYSIS: ["search_team", "analysis_team"],  # 리스크 분석
+            IntentType.UNCLEAR: ["search_team"],  # 불명확한 경우 기본 검색
             IntentType.IRRELEVANT: [],
             IntentType.ERROR: []
         }
-        return agent_mapping.get(intent_type, ["search_agent"])
+        result = agent_mapping.get(intent_type, ["search_team"])
+        logger.debug(f"Suggested teams for {intent_type.value}: {result}")
+        return result
 
     async def create_execution_plan(
         self,
@@ -331,13 +334,24 @@ class PlanningAgent:
             available_agents = AgentRegistry.list_agents(enabled_only=True)
 
         # 추천 Agent 중 사용 가능한 것만 필터링
+        logger.debug(f"Suggested agents: {intent.suggested_agents}")
+        logger.debug(f"Available agents: {available_agents}")
+
         selected_agents = [
             agent for agent in intent.suggested_agents
             if agent in available_agents
         ]
 
-        if not selected_agents and "search_agent" in available_agents:
-            selected_agents = ["search_agent"]
+        # Team 기반 아키텍처를 위한 폴백
+        if not selected_agents:
+            # Team 이름으로 시도
+            if "search_team" in available_agents:
+                selected_agents = ["search_team"]
+            # 기존 agent 이름으로 폴백
+            elif "search_agent" in available_agents:
+                selected_agents = ["search_agent"]
+
+        logger.info(f"Selected agents/teams for execution: {selected_agents}")
 
         # 실행 단계 생성
         steps = self._create_execution_steps(selected_agents, intent)

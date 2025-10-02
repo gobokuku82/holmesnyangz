@@ -12,6 +12,14 @@ from datetime import datetime
 from typing import Dict, Any, List
 import time
 
+
+class DateTimeEncoder(json.JSONEncoder):
+    """JSON Encoder that handles datetime objects"""
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
 # Path setup
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
@@ -149,26 +157,71 @@ class AllInOneTest:
                 "answer_length": len(answer_text)
             })
 
-            result.update({
-                "status": "success",
-                "execution_time": execution_time,
-                "actual_intent": analyzed_intent.get('intent_type'),
-                "intent_confidence": analyzed_intent.get('confidence', 0),
-                "teams_executed": completed_teams,
-                "response_preview": answer_text[:200],
-                "full_response": final_response,
-                "process_steps": process_steps
-            })
+            # Extract only serializable data and handle potential datetime objects
+            def make_serializable(obj):
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+                elif isinstance(obj, dict):
+                    return {k: make_serializable(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [make_serializable(item) for item in obj]
+                else:
+                    return obj
+
+            serializable_response = {
+                "answer": answer_text,
+                "sources": make_serializable(final_response.get('sources', [])) if isinstance(final_response, dict) else [],
+                "metadata": make_serializable(final_response.get('metadata', {})) if isinstance(final_response, dict) else {}
+            }
+
+            # Safely update result with JSON-serializable data
+            try:
+                # Test JSON serialization before updating
+                test_data = {
+                    "status": "success",
+                    "execution_time": execution_time,
+                    "actual_intent": analyzed_intent.get('intent_type'),
+                    "intent_confidence": analyzed_intent.get('confidence', 0),
+                    "teams_executed": completed_teams,
+                    "response_preview": answer_text[:200] if answer_text else "",
+                    "full_response": serializable_response,
+                    "process_steps": process_steps
+                }
+                # Test serialization
+                json.dumps(test_data, cls=DateTimeEncoder)
+                # If successful, update result
+                result.update(test_data)
+            except Exception as json_error:
+                # Fallback to minimal success result
+                result.update({
+                    "status": "success",
+                    "execution_time": execution_time,
+                    "actual_intent": str(analyzed_intent.get('intent_type', 'unknown')),
+                    "teams_executed": list(completed_teams) if completed_teams else [],
+                    "response_preview": "Response generated but serialization failed"
+                })
 
             print(f"  [OK] {execution_time:.2f}s | Intent: {analyzed_intent.get('intent_type', 'N/A')} | Teams: {', '.join(completed_teams)}")
 
         except Exception as e:
-            result.update({
-                "status": "failed",
-                "error": str(e),
-                "execution_time": time.time() - start_time,
-                "process_steps": process_steps
-            })
+            # Try to create a JSON-safe error result
+            try:
+                result.update({
+                    "status": "failed",
+                    "error": str(e),
+                    "execution_time": time.time() - start_time,
+                    "process_steps": process_steps
+                })
+            except:
+                # Fallback if even the error handling fails
+                result = {
+                    "query_id": query_id,
+                    "category": category,
+                    "query": query,
+                    "status": "failed",
+                    "error": "JSON serialization error",
+                    "execution_time": time.time() - start_time
+                }
             print(f"  [FAIL] {e}")
 
         return result
@@ -227,7 +280,7 @@ class AllInOneTest:
                     "by_category": self.stats['by_category']
                 },
                 "results": self.results
-            }, f, ensure_ascii=False, indent=2)
+            }, f, ensure_ascii=False, indent=2, cls=DateTimeEncoder)
 
         print(f"\n[4/4] JSON Report: {json_file.name}")
 

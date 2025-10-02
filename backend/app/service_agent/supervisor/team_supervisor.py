@@ -16,17 +16,17 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service.core.separated_states import (
+from app.service_agent.core.separated_states import (
     MainSupervisorState,
     SharedState,
     StateManager,
     PlanningState
 )
-from app.service.core.context import LLMContext, create_default_llm_context
-from app.service.agents.planning_agent import PlanningAgent, IntentType, ExecutionStrategy
-from app.service.teams import SearchTeamSupervisor, DocumentTeamSupervisor, AnalysisTeamSupervisor
-from app.service.core.agent_registry import AgentRegistry
-from app.service.core.agent_adapter import initialize_agent_system
+from app.service_agent.core.context import LLMContext, create_default_llm_context
+from app.service_agent.planning.planning_agent import PlanningAgent, IntentType, ExecutionStrategy
+from app.service_agent.teams import SearchTeamSupervisor, DocumentTeamSupervisor, AnalysisTeamSupervisor
+from app.service_agent.core.agent_registry import AgentRegistry
+from app.service_agent.core.agent_adapter import initialize_agent_system
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +109,11 @@ class TeamBasedSupervisor:
 
     def _route_after_planning(self, state: MainSupervisorState) -> str:
         """계획 후 라우팅"""
-        if state.get("planning_state", {}).get("execution_steps"):
+        planning_state = state.get("planning_state")
+        if planning_state and planning_state.get("execution_steps"):
+            logger.info(f"[TeamSupervisor] Routing to execute - {len(planning_state['execution_steps'])} steps found")
             return "execute"
+        logger.info("[TeamSupervisor] No execution steps found, routing to respond")
         return "respond"
 
     async def initialize_node(self, state: MainSupervisorState) -> MainSupervisorState:
@@ -194,11 +197,19 @@ class TeamBasedSupervisor:
         state["active_teams"] = list(active_teams)
 
         logger.info(f"[TeamSupervisor] Plan created: {len(planning_state['execution_steps'])} steps, {len(active_teams)} teams")
+
+        # 디버그: execution_steps 내용 로깅
+        for step in planning_state["execution_steps"]:
+            logger.debug(f"  Step: agent={step.get('agent_name')}, team={step.get('team')}, priority={step.get('priority')}")
+
+        if not planning_state["execution_steps"]:
+            logger.warning("[TeamSupervisor] WARNING: No execution steps created in planning phase!")
+
         return state
 
     def _get_team_for_agent(self, agent_name: str) -> str:
         """Agent가 속한 팀 찾기"""
-        from app.service.core.agent_adapter import AgentAdapter
+        from app.service_agent.core.agent_adapter import AgentAdapter
 
         dependencies = AgentAdapter.get_agent_dependencies(agent_name)
         return dependencies.get("team", "search")
@@ -405,6 +416,18 @@ class TeamBasedSupervisor:
         logger.info("[TeamSupervisor] Response generation complete")
         return state
 
+    def _safe_json_dumps(self, obj: Any) -> str:
+        """Safely convert object to JSON string, handling datetime objects"""
+        from datetime import datetime
+
+        def json_serial(obj):
+            """JSON serializer for objects not serializable by default json code"""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
+        return json.dumps(obj, default=json_serial, ensure_ascii=False, indent=2)
+
     async def _generate_llm_response(self, state: MainSupervisorState) -> Dict:
         """LLM을 사용한 응답 생성"""
         query = state.get("query", "")
@@ -491,7 +514,7 @@ class TeamBasedSupervisor:
 - 핵심 키워드: {', '.join(intent_info.get('keywords', []))}
 
 ## 수집된 정보:
-{json.dumps(aggregated, ensure_ascii=False, indent=2)[:4000]}
+{self._safe_json_dumps(aggregated)[:4000]}
 
 위 정보를 바탕으로 구조화된 답변을 JSON 형식으로 작성하세요."""
 
