@@ -15,7 +15,13 @@
       "Bash(findstr:*)",
       "Bash(timeout:*)",
       "Bash(tasklist)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(for file in core/*.py)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
