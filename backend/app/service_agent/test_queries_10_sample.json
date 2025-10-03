@@ -1,0 +1,71 @@
+{
+  "total": 10,
+  "categories": {
+    "legal": 3,
+    "market": 3,
+    "loan": 2,
+    "complex": 2
+  },
+  "queries": [
+    {
+      "query_id": "legal_01",
+      "category": "legal",
+      "query": "전세금 5% 인상이 가능한가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_02",
+      "category": "legal",
+      "query": "보증금 반환 안 받으면 어떻게 하나요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "legal_03",
+      "category": "legal",
+      "query": "소액임차인 최우선변제금액은 얼마인가요?",
+      "expected_intent": "LEGAL_CONSULT"
+    },
+    {
+      "query_id": "market_01",
+      "category": "market",
+      "query": "강남구 아파트 시세 알려주세요",
+      "expected_intent": "MARKET_INQUIRY"
+    },
+    {
+      "query_id": "market_02",
+      "category": "market",
+      "query": "서초구 전세 매물 있나요?",
+      "expected_intent": "MARKET_INQUIRY"
+    },
+    {
+      "query_id": "market_03",
+      "category": "market",
+      "query": "송파구 아파트 값 어떻게 되나요?",
+      "expected_intent": "MARKET_INQUIRY"
+    },
+    {
+      "query_id": "loan_01",
+      "category": "loan",
+      "query": "주택담보대출 금리 비교해주세요",
+      "expected_intent": "LOAN_CONSULT"
+    },
+    {
+      "query_id": "loan_02",
+      "category": "loan",
+      "query": "전세자금대출 조건이 어떻게 되나요?",
+      "expected_intent": "LOAN_CONSULT"
+    },
+    {
+      "query_id": "complex_01",
+      "category": "complex",
+      "query": "강남 아파트 매매가와 대출 한도 알려주세요",
+      "expected_intent": "COMPREHENSIVE"
+    },
+    {
+      "query_id": "complex_02",
+      "category": "complex",
+      "query": "서초 전세 계약 시 법적 주의사항과 금리는?",
+      "expected_intent": "COMPREHENSIVE"
+    }
+  ]
+}

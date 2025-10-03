@@ -1924,3 +1924,115 @@
 2025-10-03 07:14:51,645 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregating results
 2025-10-03 07:14:51,645 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregation complete: 1/0 succeeded
 2025-10-03 07:14:51,645 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Generating response
+2025-10-03 07:15:00,682 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:00,683 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Response generation complete
+2025-10-03 07:15:00,787 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Initializing
+2025-10-03 07:15:00,787 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Planning phase
+2025-10-03 07:15:00,787 - app.service_agent.planning.planning_agent - INFO - Analyzing intent for query: 다가구주택도 임대차보호법 적용되나요?...
+2025-10-03 07:15:04,182 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:04,195 - app.service_agent.planning.planning_agent - INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['다가구주택', '임대차보호법', '적용'], 'entities': {'location': None, 'price': None, 'contract_type': None, 'date': None, 'area': None}, 'reasoning': "질문에서 '임대차보호법'과 관련된 법률적 내용을 묻고 있으며, 이는 부동산 관련 법률 상담에 해당합니다. '다가구주택'이라는 특정 유형의 부동산이 언급되어 있어 법률적 적용 여부에 대한 질문으로 판단하였습니다."}
+2025-10-03 07:15:04,195 - app.service_agent.planning.planning_agent - INFO - Creating execution plan for intent: 법률상담
+2025-10-03 07:15:04,195 - app.service_agent.planning.planning_agent - INFO - Selected agents/teams for execution: ['search_team']
+2025-10-03 07:15:04,195 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Plan created: 1 steps, 1 teams
+2025-10-03 07:15:04,195 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Routing to execute - 1 steps found
+2025-10-03 07:15:04,196 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing teams
+2025-10-03 07:15:04,196 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing 1 teams sequentially
+2025-10-03 07:15:04,197 - app.service_agent.teams.search_team - INFO - [SearchTeam] Preparing search
+2025-10-03 07:15:04,197 - app.service_agent.teams.search_team - INFO - [SearchTeam] Search scope: ['legal']
+2025-10-03 07:15:04,197 - app.service_agent.teams.search_team - INFO - [SearchTeam] Routing search
+2025-10-03 07:15:04,198 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing searches
+2025-10-03 07:15:04,198 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing legal search
+2025-10-03 07:15:04,198 - tool.legal_search - INFO - Searching legal DB - query: , doc_type: None, category: None
+2025-10-03 07:15:04,268 - app.service_agent.teams.search_team - INFO - [SearchTeam] Legal search completed: 10 results
+2025-10-03 07:15:04,268 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregating results
+2025-10-03 07:15:04,268 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregated 10 results from 1 sources
+2025-10-03 07:15:04,269 - app.service_agent.teams.search_team - INFO - [SearchTeam] Finalizing
+2025-10-03 07:15:04,269 - app.service_agent.teams.search_team - INFO - [SearchTeam] Completed with status: completed
+2025-10-03 07:15:04,269 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Team 'search' completed
+2025-10-03 07:15:04,270 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregating results
+2025-10-03 07:15:04,270 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregation complete: 1/0 succeeded
+2025-10-03 07:15:04,270 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Generating response
+2025-10-03 07:15:12,556 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:12,556 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Response generation complete
+2025-10-03 07:15:12,670 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Initializing
+2025-10-03 07:15:12,671 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Planning phase
+2025-10-03 07:15:12,671 - app.service_agent.planning.planning_agent - INFO - Analyzing intent for query: 전세 계약서에 특약 넣을 수 있나요?...
+2025-10-03 07:15:16,672 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:16,677 - app.service_agent.planning.planning_agent - INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['전세', '계약서', '특약'], 'entities': {'location': '', 'price': '', 'contract_type': '전세', 'date': '', 'area': '', '기타_추출된_엔티티': ''}, 'reasoning': "질문에서 '전세 계약서'와 '특약'이라는 법률 관련 키워드가 포함되어 있어, 법률 상담이 필요한 상황으로 판단했습니다. 전세 계약서에 특약을 넣는 것이 가능한지에 대한 법률적 질문이므로 LEGAL_CONSULT로 분류했습니다."}
+2025-10-03 07:15:16,677 - app.service_agent.planning.planning_agent - INFO - Creating execution plan for intent: 법률상담
+2025-10-03 07:15:16,678 - app.service_agent.planning.planning_agent - INFO - Selected agents/teams for execution: ['search_team']
+2025-10-03 07:15:16,678 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Plan created: 1 steps, 1 teams
+2025-10-03 07:15:16,678 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Routing to execute - 1 steps found
+2025-10-03 07:15:16,678 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing teams
+2025-10-03 07:15:16,679 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing 1 teams sequentially
+2025-10-03 07:15:16,679 - app.service_agent.teams.search_team - INFO - [SearchTeam] Preparing search
+2025-10-03 07:15:16,679 - app.service_agent.teams.search_team - INFO - [SearchTeam] Search scope: ['legal']
+2025-10-03 07:15:16,679 - app.service_agent.teams.search_team - INFO - [SearchTeam] Routing search
+2025-10-03 07:15:16,680 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing searches
+2025-10-03 07:15:16,680 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing legal search
+2025-10-03 07:15:16,680 - tool.legal_search - INFO - Searching legal DB - query: , doc_type: None, category: None
+2025-10-03 07:15:16,742 - app.service_agent.teams.search_team - INFO - [SearchTeam] Legal search completed: 10 results
+2025-10-03 07:15:16,743 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregating results
+2025-10-03 07:15:16,744 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregated 10 results from 1 sources
+2025-10-03 07:15:16,744 - app.service_agent.teams.search_team - INFO - [SearchTeam] Finalizing
+2025-10-03 07:15:16,744 - app.service_agent.teams.search_team - INFO - [SearchTeam] Completed with status: completed
+2025-10-03 07:15:16,745 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Team 'search' completed
+2025-10-03 07:15:16,745 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregating results
+2025-10-03 07:15:16,745 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregation complete: 1/0 succeeded
+2025-10-03 07:15:16,745 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Generating response
+2025-10-03 07:15:28,344 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:28,350 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Response generation complete
+2025-10-03 07:15:28,453 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Initializing
+2025-10-03 07:15:28,453 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Planning phase
+2025-10-03 07:15:28,453 - app.service_agent.planning.planning_agent - INFO - Analyzing intent for query: 임대인 동의 없이 전대 가능한가요?...
+2025-10-03 07:15:32,122 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:32,134 - app.service_agent.planning.planning_agent - INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['임대인', '동의', '전대'], 'entities': {'location': None, 'price': None, 'contract_type': None, 'date': None, 'area': None}, 'reasoning': "질문에서 '임대인', '동의', '전대'라는 법률 관련 키워드가 포함되어 있어, 임대차 계약의 법적 권리와 의무에 대한 질문으로 판단했습니다. 따라서 LEGAL_CONSULT 카테고리로 분류하였습니다."}
+2025-10-03 07:15:32,134 - app.service_agent.planning.planning_agent - INFO - Creating execution plan for intent: 법률상담
+2025-10-03 07:15:32,134 - app.service_agent.planning.planning_agent - INFO - Selected agents/teams for execution: ['search_team']
+2025-10-03 07:15:32,134 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Plan created: 1 steps, 1 teams
+2025-10-03 07:15:32,134 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Routing to execute - 1 steps found
+2025-10-03 07:15:32,135 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing teams
+2025-10-03 07:15:32,135 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing 1 teams sequentially
+2025-10-03 07:15:32,136 - app.service_agent.teams.search_team - INFO - [SearchTeam] Preparing search
+2025-10-03 07:15:32,136 - app.service_agent.teams.search_team - INFO - [SearchTeam] Search scope: ['legal']
+2025-10-03 07:15:32,136 - app.service_agent.teams.search_team - INFO - [SearchTeam] Routing search
+2025-10-03 07:15:32,137 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing searches
+2025-10-03 07:15:32,137 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing legal search
+2025-10-03 07:15:32,137 - tool.legal_search - INFO - Searching legal DB - query: , doc_type: None, category: None
+2025-10-03 07:15:32,202 - app.service_agent.teams.search_team - INFO - [SearchTeam] Legal search completed: 10 results
+2025-10-03 07:15:32,202 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregating results
+2025-10-03 07:15:32,203 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregated 10 results from 1 sources
+2025-10-03 07:15:32,203 - app.service_agent.teams.search_team - INFO - [SearchTeam] Finalizing
+2025-10-03 07:15:32,203 - app.service_agent.teams.search_team - INFO - [SearchTeam] Completed with status: completed
+2025-10-03 07:15:32,203 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Team 'search' completed
+2025-10-03 07:15:32,204 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregating results
+2025-10-03 07:15:32,204 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregation complete: 1/0 succeeded
+2025-10-03 07:15:32,204 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Generating response
+2025-10-03 07:15:40,296 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:40,302 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Response generation complete
+2025-10-03 07:15:40,407 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Initializing
+2025-10-03 07:15:40,407 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Planning phase
+2025-10-03 07:15:40,407 - app.service_agent.planning.planning_agent - INFO - Analyzing intent for query: 보증금 반환 소송 절차는?...
+2025-10-03 07:15:44,459 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-03 07:15:44,463 - app.service_agent.planning.planning_agent - INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['보증금', '반환', '소송', '절차'], 'entities': {'location': '', 'price': '', 'contract_type': '', 'date': '', 'area': '', '기타_추출된_엔티티': ''}, 'reasoning': "질문에서 '보증금 반환'과 '소송 절차'라는 법률 관련 키워드가 포함되어 있어, 법률 상담이 필요한 상황으로 판단했습니다. 보증금 반환과 관련된 법적 절차에 대한 정보가 요구되고 있습니다."}
+2025-10-03 07:15:44,463 - app.service_agent.planning.planning_agent - INFO - Creating execution plan for intent: 법률상담
+2025-10-03 07:15:44,463 - app.service_agent.planning.planning_agent - INFO - Selected agents/teams for execution: ['search_team']
+2025-10-03 07:15:44,464 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Plan created: 1 steps, 1 teams
+2025-10-03 07:15:44,464 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Routing to execute - 1 steps found
+2025-10-03 07:15:44,465 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing teams
+2025-10-03 07:15:44,465 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Executing 1 teams sequentially
+2025-10-03 07:15:44,465 - app.service_agent.teams.search_team - INFO - [SearchTeam] Preparing search
+2025-10-03 07:15:44,465 - app.service_agent.teams.search_team - INFO - [SearchTeam] Search scope: ['legal']
+2025-10-03 07:15:44,466 - app.service_agent.teams.search_team - INFO - [SearchTeam] Routing search
+2025-10-03 07:15:44,466 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing searches
+2025-10-03 07:15:44,466 - app.service_agent.teams.search_team - INFO - [SearchTeam] Executing legal search
+2025-10-03 07:15:44,466 - tool.legal_search - INFO - Searching legal DB - query: , doc_type: None, category: None
+2025-10-03 07:15:44,535 - app.service_agent.teams.search_team - INFO - [SearchTeam] Legal search completed: 10 results
+2025-10-03 07:15:44,536 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregating results
+2025-10-03 07:15:44,536 - app.service_agent.teams.search_team - INFO - [SearchTeam] Aggregated 10 results from 1 sources
+2025-10-03 07:15:44,536 - app.service_agent.teams.search_team - INFO - [SearchTeam] Finalizing
+2025-10-03 07:15:44,536 - app.service_agent.teams.search_team - INFO - [SearchTeam] Completed with status: completed
+2025-10-03 07:15:44,537 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Team 'search' completed
+2025-10-03 07:15:44,537 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregating results
+2025-10-03 07:15:44,537 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Aggregation complete: 1/0 succeeded
+2025-10-03 07:15:44,538 - app.service_agent.supervisor.team_supervisor - INFO - [TeamSupervisor] Generating response
