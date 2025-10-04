@@ -58,7 +58,7 @@ service_agent는 **Team-based Multi-Agent 아키텍처**의 완전한 구현체�
 
 ```
 service_agent/
-├── core/                          # 핵심 인프라
+├── foundation/                    # 핵심 기반 인프라 (구 core)
 │   ├── agent_adapter.py           # Agent Registry 통합 어댑터
 │   ├── agent_registry.py          # 중앙 Agent 레지스트리 (Singleton)
 │   ├── separated_states.py        # 팀별 독립 State 정의
@@ -66,35 +66,41 @@ service_agent/
 │   ├── context.py                 # Context 관리
 │   └── __init__.py
 │
-├── teams/                         # 팀 Supervisor (3개 팀)
-│   ├── search_team.py             # SearchTeamSupervisor
-│   ├── document_team.py           # DocumentTeamSupervisor
-│   ├── analysis_team.py           # AnalysisTeamSupervisor
-│   └── __init__.py
-│
-├── planning/                      # 계획 수립
-│   ├── planning_agent.py          # PlanningAgent
-│   └── __init__.py
-│
 ├── supervisor/                    # 메인 조정자
 │   ├── team_supervisor.py         # TeamBasedSupervisor ← 핵심!
 │   └── __init__.py
 │
-├── tools/                         # 검색 도구
-│   ├── hybrid_legal_search.py     # 하이브리드 법률 검색 (ChromaDB + SQLite)
+├── cognitive_agents/              # 사고/계획 에이전트 (구 planning)
+│   ├── planning_agent.py          # PlanningAgent
+│   └── __init__.py
+│
+├── execution_agents/              # 실행 에이전트 (구 teams)
+│   ├── search_executor.py         # SearchExecutor (구 SearchTeamSupervisor)
+│   ├── document_executor.py       # DocumentExecutor (구 DocumentTeamSupervisor)
+│   ├── analysis_executor.py       # AnalysisExecutor (구 AnalysisTeamSupervisor)
+│   └── __init__.py
+│
+├── llm_manager/                   # LLM 관리 (신설)
+│   ├── llm_service.py             # LLM 호출 서비스
+│   ├── prompt_manager.py          # 프롬프트 관리
+│   └── __init__.py
+│
+├── tools/                         # 실행 도구 (구 tools)
+│   ├── hybrid_legal_search.py     # ✅ 하이브리드 법률 검색 (ChromaDB + SQLite, 비동기 지원)
 │   ├── market_data_tool.py        # 부동산 시세 검색
 │   ├── loan_data_tool.py          # 대출 상품 검색
 │   └── __init__.py
 │
-├── models/                        # 임베딩 모델 (현재 비어있음)
-│   └── KURE_v1/                   # 한국 법률 임베딩 모델 (예정)
+├── models/                        # 임베딩 모델
+│   └── KURE_v1/                   # 한국 법률 임베딩 모델
 │
 ├── tests/                         # 테스트 파일
 │   ├── test_hybrid_legal_search.py
-│   └── test_search_team_legal.py
+│   └── test_search_executor.py
 │
 ├── reports/                       # 아키텍처 문서
-│   └── ARCHITECTURE_COMPLETE.md   # 본 문서
+│   ├── ARCHITECTURE_COMPLETE.md   # 본 문서
+│   └── SYSTEM_FLOW_COMPLETE.md
 │
 ├── 테스트 스크립트들              # 다양한 테스트 파일들
 │   ├── allinone_test_*.py         # 통합 테스트 (5/10/25/50/100 쿼리)
@@ -111,7 +117,7 @@ service_agent/
 
 **주요 변경사항:**
 - ❌ `guides/` 디렉토리는 **존재하지 않음** (기존 보고서의 오류)
-- ✅ `core/config.py` - 시스템 설정 파일 (DB 경로, Model 경로, Timeout 설정 등)
+- ✅ `foundation/config.py` - 시스템 설정 파일 (DB 경로, Model 경로, Timeout 설정 등)
 - ✅ `tools/` - 실제 검색 도구들이 위치
 - ✅ `models/` - 임베딩 모델 디렉토리 (현재는 빈 폴더)
 - ✅ `tests/` - 별도 테스트 디렉토리 존재
@@ -2177,7 +2183,7 @@ async def stream_execution(self, query, session_id):
 
 **현상:**
 - 보고서에 `guides/` 디렉토리가 있다고 기술되어 있으나 **실제로 존재하지 않음**
-- `core/config.py`가 "고도화를 위한 참고자료"로 잘못 분류됨
+- `foundation/config.py`가 "고도화를 위한 참고자료"로 잘못 분류됨
 
 **영향:**
 - 신규 개발자가 코드베이스를 이해하는데 혼란
@@ -2192,7 +2198,7 @@ async def stream_execution(self, query, session_id):
 #### 🟡 **문제점 2: models/ 디렉토리가 비어있음**
 
 **현상:**
-- `core/config.py`에서 `LEGAL_PATHS["embedding_model"]`이 `models/KURE_v1`을 참조
+- `foundation/config.py`에서 `LEGAL_PATHS["embedding_model"]`이 `models/KURE_v1`을 참조
 - 하지만 `models/` 디렉토리가 **비어있음**
 
 **영향:**
@@ -2216,7 +2222,7 @@ async def stream_execution(self, query, session_id):
 
 **현상:**
 - `AgentRegistry`에 등록되어야 할 실제 Agent 클래스들(`SearchAgent`, `AnalysisAgent`, `DocumentAgent`, `ReviewAgent`)의 구현체가 `service_agent/` 디렉토리에 **없음**
-- `teams/` 내의 Supervisor들은 `AgentAdapter.execute_agent_dynamic()`을 호출하지만 실제 Agent는 다른 경로에 존재할 가능성
+- `execution_agents/` 내의 Supervisor들은 `AgentAdapter.execute_agent_dynamic()`을 호출하지만 실제 Agent는 다른 경로에 존재할 가능성
 
 **영향:**
 - Agent 실행 시 "Agent not found" 에러 발생 가능
@@ -2236,7 +2242,7 @@ async def stream_execution(self, query, session_id):
 #### 🟡 **문제점 4: 중복된 PlanningAgent**
 
 **현상:**
-- `planning/planning_agent.py` 파일 존재
+- `cognitive_agents/planning_agent.py` 파일 존재
 - 보고서에는 `guides/agents/planning_agent.py`도 언급
 - 하나는 실제 구현, 하나는 참고자료일 가능성
 
@@ -2245,7 +2251,7 @@ async def stream_execution(self, query, session_id):
 - 코드 중복 가능성
 
 **해결 방안:**
-- `planning/planning_agent.py`가 실제 사용되는 버전임을 확인
+- `cognitive_agents/planning_agent.py`가 실제 사용되는 버전임을 확인
 - 중복 파일이 있다면 제거 또는 명확히 구분
 
 ---

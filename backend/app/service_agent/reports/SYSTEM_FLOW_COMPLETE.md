@@ -50,9 +50,9 @@
 | **AgentRegistry** | Agent 등록/관리/검색 | ❌ 규칙 기반 |
 | **AgentAdapter** | Agent 동적 실행 | ❌ 규칙 기반 |
 | **TeamBasedSupervisor** | 팀 조정 및 데이터 전달 | ❌ 오케스트레이션 |
-| **SearchTeam** | 법률/시장/대출 검색 | ❌ Tool 호출만 |
-| **AnalysisTeam** | 데이터 분석 | ⚠️ 선택적 LLM |
-| **DocumentTeam** | 문서 생성/검토 | ✅ LLM 사용 |
+| **SearchExecutor** | 법률/시장/대출 검색 | ❌ Tool 호출만 |
+| **AnalysisExecutor** | 데이터 분석 | ⚠️ 선택적 LLM |
+| **DocumentExecutor** | 문서 생성/검토 | ✅ LLM 사용 |
 | **Response Generator** | 최종 답변 생성 | ✅ LLM 사용 (GPT-4o-mini) |
 
 ---
@@ -115,7 +115,7 @@
 │                  Team Execution Layer                         │
 │                                                               │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
-│  │ SearchTeam   │   │ AnalysisTeam │   │ DocumentTeam │   │
+│  │ SearchExecutor   │   │ AnalysisExecutor │   │ DocumentExecutor │   │
 │  │              │   │              │   │              │   │
 │  │ [Tool 호출]  │→  │ [데이터 분석] │→  │ [LLM 호출]  │   │
 │  │ Legal DB     │   │ 패턴 인식    │   │ 문서 생성    │   │
@@ -148,7 +148,7 @@
 
 1. **PlanningAgent** (Intent 분석) - 필수
 2. **Response Generator** (답변 생성) - 필수
-3. **DocumentTeam** (문서 생성) - 선택적 (Intent에 따라)
+3. **DocumentExecutor** (문서 생성) - 선택적 (Intent에 따라)
 
 ---
 
@@ -302,7 +302,7 @@ def get_agents_for_intent(intent_type: str) -> List[str]:
 
 **선택된 Agent**:
 ```python
-["search_team"]  # MARKET_INQUIRY → SearchTeam만 실행
+["search_team"]  # MARKET_INQUIRY → SearchExecutor만 실행
 ```
 
 #### Step 2-3: 실행 전략 결정
@@ -390,9 +390,9 @@ async def execute_teams_node(self, state: MainSupervisorState):
     return state
 ```
 
-#### Step 3-2: SearchTeam 실행
+#### Step 3-2: SearchExecutor 실행
 
-**SearchTeam 서브그래프 워크플로우**
+**SearchExecutor 서브그래프 워크플로우**
 
 ```
 prepare → route → search → aggregate → finalize
@@ -401,7 +401,7 @@ prepare → route → search → aggregate → finalize
 ##### 3-2-1: prepare_search_node
 
 ```python
-async def prepare_search_node(self, state: SearchTeamState):
+async def prepare_search_node(self, state: SearchExecutorState):
     """
     검색 준비
     - LLM 사용 없음
@@ -432,7 +432,7 @@ async def prepare_search_node(self, state: SearchTeamState):
 ##### 3-2-2: route_search_node
 
 ```python
-def _route_decision(self, state: SearchTeamState) -> str:
+def _route_decision(self, state: SearchExecutorState) -> str:
     """
     검색 실행 여부 결정
     - LLM 사용 없음
@@ -448,7 +448,7 @@ def _route_decision(self, state: SearchTeamState) -> str:
 **Tool 호출 (LLM 사용 없음)**
 
 ```python
-async def execute_search_node(self, state: SearchTeamState):
+async def execute_search_node(self, state: SearchExecutorState):
     """
     실제 검색 수행
     - LLM 사용 없음
@@ -487,7 +487,7 @@ async def execute_search_node(self, state: SearchTeamState):
 ##### 3-2-4: aggregate_results_node
 
 ```python
-async def aggregate_results_node(self, state: SearchTeamState):
+async def aggregate_results_node(self, state: SearchExecutorState):
     """
     결과 통합
     - LLM 사용 없음
@@ -514,7 +514,7 @@ async def aggregate_results_node(self, state: SearchTeamState):
 ##### 3-2-5: finalize_node
 
 ```python
-async def finalize_node(self, state: SearchTeamState):
+async def finalize_node(self, state: SearchExecutorState):
     """
     최종 정리
     - LLM 사용 없음
@@ -528,7 +528,7 @@ async def finalize_node(self, state: SearchTeamState):
     return state
 ```
 
-**SearchTeam 최종 결과**:
+**SearchExecutor 최종 결과**:
 ```python
 {
     "team_name": "search",
@@ -836,7 +836,7 @@ async def generate_response_node(self, state: MainSupervisorState):
 
 #### LLM 호출 #3: 문서 생성 (선택적)
 
-**위치**: `DocumentTeam` → `DocumentAgent`
+**위치**: `DocumentExecutor` → `DocumentAgent`
 
 **조건**: Intent가 `CONTRACT_CREATION` 또는 `COMPREHENSIVE`일 때
 
@@ -889,10 +889,10 @@ intent_agent_mapping = {
 }
 ```
 
-### 5.3 Agent → Tool 매핑 (SearchTeam 예시)
+### 5.3 Agent → Tool 매핑 (SearchExecutor 예시)
 
 ```python
-# SearchTeam 내부
+# SearchExecutor 내부
 search_scope_tool_mapping = {
     "legal": "legal_search_tool",      # Legal DB
     "real_estate": "market_data_tool",  # Market DB
@@ -927,7 +927,7 @@ if "loan" in search_scope:
 **핵심**: `shared_context`를 통한 명시적 데이터 전달
 
 ```
-SearchTeam
+SearchExecutor
     ↓
     결과: aggregated_results
     ↓
@@ -935,7 +935,7 @@ StateManager.merge_team_results()
     ↓
     main_state["shared_context"]["search_results"] = aggregated_results
     ↓
-AnalysisTeam
+AnalysisExecutor
     ↓
     입력: shared_context["search_results"]
     ↓
@@ -945,7 +945,7 @@ StateManager.merge_team_results()
     ↓
     main_state["shared_context"]["analysis_report"] = analysis_report
     ↓
-DocumentTeam
+DocumentExecutor
     ↓
     입력: shared_context["search_results"] + shared_context["analysis_report"]
 ```
@@ -1036,7 +1036,7 @@ async def _execute_teams_parallel(
 
 #### 데이터 흐름
 
-**Step 1: SearchTeam**
+**Step 1: SearchExecutor**
 
 입력:
 ```python
@@ -1070,7 +1070,7 @@ main_state["shared_context"]["search_results"] = {
 
 ---
 
-**Step 2: AnalysisTeam** (SearchTeam 결과 사용)
+**Step 2: AnalysisExecutor** (SearchExecutor 결과 사용)
 
 입력:
 ```python
@@ -1120,7 +1120,7 @@ main_state["shared_context"]["analysis_report"] = {
 
 ---
 
-**Step 3: DocumentTeam** (SearchTeam + AnalysisTeam 결과 사용)
+**Step 3: DocumentExecutor** (SearchExecutor + AnalysisExecutor 결과 사용)
 
 입력:
 ```python
@@ -1191,15 +1191,15 @@ main_state["shared_context"]["analysis_report"] = {
 Intent + Entities (dict)
     ↓ [규칙] AgentAdapter
 Agent 목록 (list)
-    ↓ [실행] SearchTeam
+    ↓ [실행] SearchExecutor
 DB 검색 결과 (list[dict])
     ↓ [규칙] StateManager
 shared_context["search_results"] (dict)
-    ↓ [실행] AnalysisTeam
+    ↓ [실행] AnalysisExecutor
 분석 보고서 (dict)
     ↓ [규칙] StateManager
 shared_context["analysis_report"] (dict)
-    ↓ [실행] DocumentTeam + LLM
+    ↓ [실행] DocumentExecutor + LLM
 최종 문서 (markdown string)
     ↓ [LLM] Response Generator
 사용자 친화적 답변 (string)
@@ -1225,7 +1225,7 @@ shared_context["analysis_report"] (dict)
    - Selected: `["search_team"]`
    - Strategy: `SEQUENTIAL`
 
-3. **SearchTeam 실행**
+3. **SearchExecutor 실행**
    - Scope: `["legal"]`
    - Tool: `legal_search_tool`
    - Results: 법률 조항 10건 검색
@@ -1248,13 +1248,13 @@ shared_context["analysis_report"] (dict)
    - Intent: `COMPREHENSIVE`
    - Agents: `["search_team", "analysis_team", "document_team"]`
 
-2. **SearchTeam** (Tool 호출)
+2. **SearchExecutor** (Tool 호출)
    - Market DB 검색: 10건
 
-3. **AnalysisTeam** (데이터 분석)
+3. **AnalysisExecutor** (데이터 분석)
    - 평균 가격, 트렌드 계산
 
-4. **DocumentTeam** (LLM #3)
+4. **DocumentExecutor** (LLM #3)
    - 투자 추천서 생성
 
 5. **Response Generation** (LLM #4)
@@ -1365,7 +1365,7 @@ class NewTool:
     def search(self, ...):
         pass
 
-# 2. SearchTeam에 등록
+# 2. SearchExecutor에 등록
 self.new_tool = NewTool()
 
 # 3. 검색 범위에 추가
@@ -1380,13 +1380,13 @@ if "new_scope" in search_scope:
 | 컴포넌트 | 파일 경로 |
 |----------|----------|
 | **TeamBasedSupervisor** | `supervisor/team_supervisor.py` |
-| **PlanningAgent** | `planning/planning_agent.py` |
-| **AgentRegistry** | `core/agent_registry.py` |
-| **AgentAdapter** | `core/agent_adapter.py` |
-| **SearchTeam** | `teams/search_team.py` |
-| **AnalysisTeam** | `teams/analysis_team.py` |
-| **DocumentTeam** | `teams/document_team.py` |
-| **StateManager** | `core/separated_states.py` |
+| **PlanningAgent** | `cognitive_agents/planning_agent.py` |
+| **AgentRegistry** | `foundation/agent_registry.py` |
+| **AgentAdapter** | `foundation/agent_adapter.py` |
+| **SearchExecutor** | `execution_agents/search_team.py` |
+| **AnalysisExecutor** | `execution_agents/analysis_team.py` |
+| **DocumentExecutor** | `execution_agents/document_team.py` |
+| **StateManager** | `foundation/separated_states.py` |
 
 ---
 
