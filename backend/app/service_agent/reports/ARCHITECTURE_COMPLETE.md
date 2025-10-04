@@ -58,38 +58,63 @@ service_agent는 **Team-based Multi-Agent 아키텍처**의 완전한 구현체�
 
 ```
 service_agent/
-├── core/                          # 핵심 인프라 (3개 파일)
+├── core/                          # 핵심 인프라
 │   ├── agent_adapter.py           # Agent Registry 통합 어댑터
 │   ├── agent_registry.py          # 중앙 Agent 레지스트리 (Singleton)
-│   └── separated_states.py        # 팀별 독립 State 정의
+│   ├── separated_states.py        # 팀별 독립 State 정의
+│   ├── config.py                  # ✅ 설정파일 (DB경로, Model설정, Timeout 등)
+│   ├── context.py                 # Context 관리
+│   └── __init__.py
 │
 ├── teams/                         # 팀 Supervisor (3개 팀)
 │   ├── search_team.py             # SearchTeamSupervisor
 │   ├── document_team.py           # DocumentTeamSupervisor
-│   └── analysis_team.py           # AnalysisTeamSupervisor
+│   ├── analysis_team.py           # AnalysisTeamSupervisor
+│   └── __init__.py
 │
 ├── planning/                      # 계획 수립
-│   └── planning_agent.py          # PlanningAgent
+│   ├── planning_agent.py          # PlanningAgent
+│   └── __init__.py
 │
 ├── supervisor/                    # 메인 조정자
-│   └── team_supervisor.py         # TeamBasedSupervisor ← 핵심!
+│   ├── team_supervisor.py         # TeamBasedSupervisor ← 핵심!
+│   └── __init__.py
 │
-├── guides/                        # 참고 자료
-│   ├── agents/                    # 개별 Agent 구현체들
-│   │   ├── planning_agent.py
-│   │   ├── search_agent.py
-│   │   ├── analysis_agent.py
-│   │   ├── document_agent.py
-│   │   └── review_agent.py
-│   └── core/                      # 추가 core 모듈들
-│       ├── context.py
-│       ├── config.py
-│       ├── states.py
-│       └── todo_types.py
+├── tools/                         # 검색 도구
+│   ├── hybrid_legal_search.py     # 하이브리드 법률 검색 (ChromaDB + SQLite)
+│   ├── market_data_tool.py        # 부동산 시세 검색
+│   ├── loan_data_tool.py          # 대출 상품 검색
+│   └── __init__.py
 │
-└── reports/                       # 문서
-    └── ARCHITECTURE_COMPLETE.md   # 본 문서
+├── models/                        # 임베딩 모델 (현재 비어있음)
+│   └── KURE_v1/                   # 한국 법률 임베딩 모델 (예정)
+│
+├── tests/                         # 테스트 파일
+│   ├── test_hybrid_legal_search.py
+│   └── test_search_team_legal.py
+│
+├── reports/                       # 아키텍처 문서
+│   └── ARCHITECTURE_COMPLETE.md   # 본 문서
+│
+├── 테스트 스크립트들              # 다양한 테스트 파일들
+│   ├── allinone_test_*.py         # 통합 테스트 (5/10/25/50/100 쿼리)
+│   ├── hn_agent_*.py              # Agent 테스트
+│   ├── test_*.py                  # 개별 테스트
+│   └── run_legal_test.py          # 법률 검색 테스트
+│
+├── 테스트 데이터                  # 테스트용 JSON 파일들
+│   ├── test_queries_*.json
+│   └── allinone_test_queries.json
+│
+└── __init__.py
 ```
+
+**주요 변경사항:**
+- ❌ `guides/` 디렉토리는 **존재하지 않음** (기존 보고서의 오류)
+- ✅ `core/config.py` - 시스템 설정 파일 (DB 경로, Model 경로, Timeout 설정 등)
+- ✅ `tools/` - 실제 검색 도구들이 위치
+- ✅ `models/` - 임베딩 모델 디렉토리 (현재는 빈 폴더)
+- ✅ `tests/` - 별도 테스트 디렉토리 존재
 
 ---
 
@@ -2117,7 +2142,7 @@ async def stream_execution(self, query, session_id):
 
 ---
 
-## 📝 Part 11: 결론 및 다음 단계
+## 📝 Part 11: 현재 시스템 문제점 및 개선 방향
 
 ### 11.1 현재 달성된 것
 
@@ -2146,22 +2171,218 @@ async def stream_execution(self, query, session_id):
 - 모듈화된 설계
 - 명확한 책임 분리
 
-### 11.2 개선 필요 사항
+### 11.2 발견된 주요 문제점
 
-🔄 **LangGraph 0.6 최신 기능**
-- Context API 미활용
-- Checkpointer 부재
+#### 🔴 **문제점 1: 실제 구현과 문서의 불일치**
+
+**현상:**
+- 보고서에 `guides/` 디렉토리가 있다고 기술되어 있으나 **실제로 존재하지 않음**
+- `core/config.py`가 "고도화를 위한 참고자료"로 잘못 분류됨
+
+**영향:**
+- 신규 개발자가 코드베이스를 이해하는데 혼란
+- 문서의 신뢰도 저하
+
+**해결:**
+- ✅ 본 보고서에서 폴더 구조 수정 완료
+- 실제 구현과 100% 일치하도록 업데이트
+
+---
+
+#### 🟡 **문제점 2: models/ 디렉토리가 비어있음**
+
+**현상:**
+- `core/config.py`에서 `LEGAL_PATHS["embedding_model"]`이 `models/KURE_v1`을 참조
+- 하지만 `models/` 디렉토리가 **비어있음**
+
+**영향:**
+- 법률 검색 임베딩 기능 사용 불가
+- 하이브리드 검색의 벡터 검색 기능 미작동 가능성
+
+**현재 상황:**
+```python
+# config.py:48
+"embedding_model": BASE_DIR / "app" / "service_agent" / "models" / "KURE_v1"
+```
+
+**해결 방안:**
+1. **단기:** 임베딩 모델 파일 누락 경고 로그 추가
+2. **중기:** KURE_v1 모델 다운로드 및 배치
+3. **장기:** 모델 자동 다운로드 스크립트 작성
+
+---
+
+#### 🟡 **문제점 3: Agent 구현체 누락**
+
+**현상:**
+- `AgentRegistry`에 등록되어야 할 실제 Agent 클래스들(`SearchAgent`, `AnalysisAgent`, `DocumentAgent`, `ReviewAgent`)의 구현체가 `service_agent/` 디렉토리에 **없음**
+- `teams/` 내의 Supervisor들은 `AgentAdapter.execute_agent_dynamic()`을 호출하지만 실제 Agent는 다른 경로에 존재할 가능성
+
+**영향:**
+- Agent 실행 시 "Agent not found" 에러 발생 가능
+- 팀 Supervisor가 제대로 작동하지 않을 수 있음
+
+**예상 위치:**
+- `backend/app/service/agents/` 경로에 실제 구현체가 있을 가능성
+- Import 경로 불일치 문제
+
+**해결 방안:**
+1. 실제 Agent 구현체 위치 확인
+2. `AgentAdapter.register_existing_agents()` 메서드에서 올바른 경로로 import
+3. 또는 Agent 구현체를 `service_agent/agents/`로 이동
+
+---
+
+#### 🟡 **문제점 4: 중복된 PlanningAgent**
+
+**현상:**
+- `planning/planning_agent.py` 파일 존재
+- 보고서에는 `guides/agents/planning_agent.py`도 언급
+- 하나는 실제 구현, 하나는 참고자료일 가능성
+
+**영향:**
+- 어떤 것이 실제로 사용되는지 불명확
+- 코드 중복 가능성
+
+**해결 방안:**
+- `planning/planning_agent.py`가 실제 사용되는 버전임을 확인
+- 중복 파일이 있다면 제거 또는 명확히 구분
+
+---
+
+#### 🟡 **문제점 5: Import 경로 혼란**
+
+**현상:**
+```python
+# search_team.py:19
+from app.service.core.separated_states import SearchTeamState
+# → app.service.core (X)
+
+# planning_agent.py:19
+from app.service_agent.core.agent_registry import AgentRegistry
+# → app.service_agent.core (O)
+```
+
+**영향:**
+- Import 에러 발생 가능성
+- `app.service` vs `app.service_agent` 혼용
+
+**해결 방안:**
+1. 모든 파일에서 일관되게 `app.service_agent`로 통일
+2. `search_team.py:19` 수정 필요
+
+---
+
+#### 🔴 **문제점 6: LangGraph 0.6 최신 기능 미활용**
+
+**현상:**
+- Context API 미사용
+- Checkpointer 설정되어 있지 않음 (config에는 enable_checkpointing=True 있으나 실제 미구현)
 - Interrupt/Command 없음
 
-🔄 **고급 Planning**
-- DAG 실행 미구현
-- 적응형 전략 없음
-- 동적 Agent 매핑 단순
+**영향:**
+- 장시간 실행 작업 중단 시 처음부터 재시작
+- 사용자 확인 단계 없음
+- 실행 이력 추적 불가
 
-🔄 **모니터링 및 관찰성**
-- 실행 추적 부족
+**해결 방안:**
+- Part 10의 고도화 계획 참조
+- LangGraph 0.6 기능 단계적 도입
+
+---
+
+#### 🟠 **문제점 7: 에러 처리 및 로깅 부족**
+
+**현상:**
+- 팀 실패 시 로그만 남기고 계속 진행
+- 부분 실패 시 사용자에게 어떤 팀이 실패했는지 명확히 전달 안됨
 - 메트릭 수집 없음
-- 로깅 개선 필요
+
+**영향:**
+- 디버깅 어려움
+- 프로덕션 환경에서 문제 추적 불가
+
+**해결 방안:**
+1. 구조화된 로깅 도입 (structlog)
+2. 메트릭 수집 (Prometheus + Grafana)
+3. 분산 추적 (OpenTelemetry)
+
+---
+
+### 11.3 개선 필요 사항 (우선순위별)
+
+#### 🔴 **P0 (긴급) - 즉시 수정 필요**
+
+1. **Import 경로 통일**
+   - `search_team.py` import 수정
+   - 모든 파일에서 `app.service_agent` 사용
+
+2. **Agent 구현체 위치 확인 및 수정**
+   - 실제 Agent 파일 찾기
+   - `AgentAdapter` import 경로 수정
+
+3. **임베딩 모델 누락 처리**
+   - 모델 없을 때 fallback 로직 추가
+   - 에러 대신 경고 로그
+
+---
+
+#### 🟡 **P1 (높음) - 1-2주 내 개선**
+
+1. **Checkpointer 실제 구현**
+   ```python
+   from langgraph.checkpoint.sqlite import SqliteSaver
+
+   checkpointer = SqliteSaver(Config.get_checkpoint_path("supervisor", session_id))
+   app = workflow.compile(checkpointer=checkpointer)
+   ```
+
+2. **에러 처리 강화**
+   - 팀별 재시도 로직
+   - 사용자 친화적 에러 메시지
+   - 부분 실패 시 결과 포맷
+
+3. **테스트 코드 정리**
+   - 테스트 파일들을 `tests/` 디렉토리로 이동
+   - 중복 제거
+
+---
+
+#### 🟢 **P2 (중간) - 1개월 내 개선**
+
+1. **LangGraph 0.6 Context API**
+   ```python
+   @dataclass
+   class ServiceContext(Context):
+       llm_model: str
+       user_id: str
+       session_id: str
+   ```
+
+2. **모니터링 및 관찰성**
+   - 구조화된 로깅
+   - 메트릭 수집
+   - 대시보드 구축
+
+3. **DAG 실행 엔진**
+   - 복잡한 의존성 처리
+   - 동적 병렬화
+
+---
+
+#### 🔵 **P3 (낮음) - 장기 개선**
+
+1. **Streaming 지원**
+   - 실시간 실행 상태 스트리밍
+   - 프론트엔드 연동
+
+2. **적응형 Planning**
+   - 실행 중 계획 조정
+   - 실패 시 대체 전략
+
+3. **캐싱 전략**
+   - 검색 결과 캐싱
+   - 분석 결과 재사용
 
 ### 11.3 단계별 고도화 로드맵
 
@@ -2191,13 +2412,250 @@ async def stream_execution(self, query, session_id):
 
 ### 11.4 결론
 
-service_agent는 **이미 완성도 높은 Team-based Multi-Agent 아키텍처**를 갖추고 있습니다. TeamBasedSupervisor를 통한 팀 간 완벽한 소통, Planning Agent의 지능적 의도 분석, AgentRegistry의 동적 Agent 관리, 그리고 SeparatedStates를 통한 State 격리까지 모든 핵심 기능이 구현되어 있습니다.
+service_agent는 **잘 설계된 Team-based Multi-Agent 아키텍처**를 갖추고 있습니다. TeamBasedSupervisor를 통한 팀 간 소통, Planning Agent의 의도 분석, AgentRegistry의 동적 Agent 관리, 그리고 SeparatedStates를 통한 State 격리까지 핵심 설계가 완료되었습니다.
 
-다음 단계는 LangGraph 0.6의 최신 기능(Context API, Checkpointer, Interrupt/Command)을 통합하고, Planning을 고도화(DAG 실행, 적응형 전략)하여 **Production-Ready Enterprise Multi-Agent System**으로 발전시키는 것입니다.
+**그러나 다음과 같은 개선이 필요합니다:**
+
+1. **즉시 수정 (P0)**
+   - Import 경로 통일 (`app.service` → `app.service_agent`)
+   - Agent 구현체 위치 확인 및 연결
+   - 임베딩 모델 누락 처리
+
+2. **단기 개선 (P1)**
+   - Checkpointer 실제 구현
+   - 에러 처리 강화
+   - 테스트 코드 정리
+
+3. **중장기 개선 (P2-P3)**
+   - LangGraph 0.6 최신 기능 통합
+   - 모니터링 및 관찰성 구축
+   - DAG 실행, Streaming, 캐싱 등 고급 기능
+
+이러한 개선을 단계적으로 수행하여 **Production-Ready Enterprise Multi-Agent System**으로 발전시킬 수 있습니다.
 
 ---
 
-**문서 버전**: 2.0 (통합 완전판)
-**최종 수정일**: 2025-01-02
-**다음 리뷰**: 2025-02-01
-**상태**: PRODUCTION READY ✅
+## 📊 Part 12: 시스템 흐름도 (Mermaid)
+
+### 12.1 전체 아키텍처 흐름도
+
+```mermaid
+graph TB
+    User[사용자 쿼리] --> Supervisor[TeamBasedSupervisor]
+
+    Supervisor --> Init[1. initialize_node<br/>세션 초기화]
+    Init --> Planning[2. planning_node<br/>PlanningAgent]
+
+    Planning --> IntentAnalysis{의도 분석<br/>LLM/패턴}
+    IntentAnalysis --> ExecPlan[실행 계획 생성<br/>Agent 선택<br/>전략 결정]
+
+    ExecPlan --> Execute[3. execute_teams_node]
+
+    Execute --> Strategy{실행 전략}
+    Strategy -->|Sequential| SeqExec[순차 실행]
+    Strategy -->|Parallel| ParExec[병렬 실행]
+
+    SeqExec --> SearchTeam[SearchTeam]
+    SeqExec --> AnalysisTeam[AnalysisTeam]
+    SeqExec --> DocumentTeam[DocumentTeam]
+
+    ParExec --> SearchTeam
+    ParExec --> AnalysisTeam
+    ParExec --> DocumentTeam
+
+    SearchTeam --> SearchResult[검색 결과]
+    AnalysisTeam --> AnalysisResult[분석 결과]
+    DocumentTeam --> DocumentResult[문서 결과]
+
+    SearchResult --> Merge[StateManager<br/>결과 병합]
+    AnalysisResult --> Merge
+    DocumentResult --> Merge
+
+    Merge --> Aggregate[4. aggregate_results_node<br/>통합 결과 생성]
+    Aggregate --> Response[5. generate_response_node<br/>사용자 응답]
+
+    Response --> User
+
+    style Supervisor fill:#e1f5ff
+    style Planning fill:#fff4e1
+    style SearchTeam fill:#e8f5e9
+    style AnalysisTeam fill:#fce4ec
+    style DocumentTeam fill:#f3e5f5
+    style Merge fill:#fff9c4
+```
+
+### 12.2 SearchTeam 내부 흐름도
+
+```mermaid
+graph LR
+    Start([START]) --> Prepare[prepare_search_node<br/>키워드 추출<br/>검색 범위 설정]
+
+    Prepare --> Route[route_search_node<br/>병렬/순차 결정]
+
+    Route --> Decision{검색 범위<br/>확인}
+    Decision -->|있음| Search[execute_search_node]
+    Decision -->|없음| Finalize
+
+    Search --> Legal[법률 검색<br/>LegalSearchTool<br/>ChromaDB+SQLite]
+    Search --> RealEstate[부동산 검색<br/>MarketDataTool]
+    Search --> Loan[대출 검색<br/>LoanDataTool]
+
+    Legal --> Aggregate[aggregate_results_node<br/>결과 통합]
+    RealEstate --> Aggregate
+    Loan --> Aggregate
+
+    Aggregate --> Finalize[finalize_node<br/>상태 정리]
+    Finalize --> End([END])
+
+    style Prepare fill:#e8f5e9
+    style Search fill:#c8e6c9
+    style Legal fill:#a5d6a7
+    style RealEstate fill:#81c784
+    style Loan fill:#66bb6a
+    style Aggregate fill:#fff9c4
+```
+
+### 12.3 데이터 흐름도
+
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant Sup as TeamBasedSupervisor
+    participant Plan as PlanningAgent
+    participant Search as SearchTeam
+    participant Analysis as AnalysisTeam
+    participant Document as DocumentTeam
+    participant State as StateManager
+
+    User->>Sup: 쿼리 요청
+    Sup->>Sup: initialize_node()
+    Sup->>Plan: analyze_intent(query)
+    Plan-->>Sup: IntentResult
+
+    Sup->>Plan: create_execution_plan(intent)
+    Plan-->>Sup: ExecutionPlan
+
+    Sup->>Sup: execute_teams_node()
+
+    Note over Sup,Search: 순차 실행 시작
+
+    Sup->>Search: execute(shared_state)
+    Search->>Search: 법률/부동산/대출 검색
+    Search-->>Sup: SearchTeamState
+
+    Sup->>State: merge_team_results("search", result)
+    State-->>Sup: shared_context 업데이트
+
+    Sup->>Analysis: execute(shared_state + search_results)
+    Analysis->>Analysis: 데이터 분석
+    Analysis-->>Sup: AnalysisTeamState
+
+    Sup->>State: merge_team_results("analysis", result)
+    State-->>Sup: shared_context 업데이트
+
+    Sup->>Document: execute(shared_state + analysis_report)
+    Document->>Document: 문서 생성 + 검토
+    Document-->>Sup: DocumentTeamState
+
+    Sup->>State: merge_team_results("document", result)
+
+    Sup->>Sup: aggregate_results_node()
+    Sup->>Sup: generate_response_node()
+    Sup-->>User: 최종 응답
+```
+
+### 12.4 Agent Registry 패턴
+
+```mermaid
+classDiagram
+    class AgentRegistry {
+        -_instance: AgentRegistry
+        -_agents: Dict~str, AgentMetadata~
+        -_teams: Dict~str, List~str~~
+        +register(name, agent_class, team, capabilities)
+        +get_agent(name) AgentMetadata
+        +create_agent(name, kwargs) Agent
+        +list_agents(team, enabled_only) List~str~
+        +find_agents_by_capability() List~str~
+    }
+
+    class AgentMetadata {
+        +agent_class: Type
+        +team: str
+        +capabilities: AgentCapabilities
+        +priority: int
+        +enabled: bool
+    }
+
+    class AgentCapabilities {
+        +name: str
+        +description: str
+        +input_types: List~str~
+        +output_types: List~str~
+        +required_tools: List~str~
+        +team: str
+    }
+
+    class AgentAdapter {
+        +register_existing_agents()
+        +execute_agent_dynamic(name, input)
+        +get_agents_for_intent(intent) List~str~
+        +get_agent_dependencies(name) Dict
+    }
+
+    class SearchAgent {
+        +execute()
+    }
+
+    class AnalysisAgent {
+        +execute()
+    }
+
+    class DocumentAgent {
+        +execute()
+    }
+
+    AgentRegistry "1" --> "*" AgentMetadata : manages
+    AgentMetadata "1" --> "1" AgentCapabilities : has
+    AgentAdapter ..> AgentRegistry : uses
+    AgentAdapter ..> SearchAgent : creates
+    AgentAdapter ..> AnalysisAgent : creates
+    AgentAdapter ..> DocumentAgent : creates
+```
+
+### 12.5 State 분리 아키텍처
+
+```mermaid
+graph TB
+    MainState[MainSupervisorState<br/>전체 상태 관리] --> SharedContext[shared_context<br/>팀 간 데이터 전달]
+
+    MainState --> TeamResults[team_results<br/>팀별 실행 결과]
+
+    SharedContext --> SearchState[SearchTeamState<br/>검색 팀 독립 상태]
+    SharedContext --> AnalysisState[AnalysisTeamState<br/>분석 팀 독립 상태]
+    SharedContext --> DocumentState[DocumentTeamState<br/>문서 팀 독립 상태]
+
+    TeamResults --> SearchResult[search: {...}]
+    TeamResults --> AnalysisResult[analysis: {...}]
+    TeamResults --> DocumentResult[document: {...}]
+
+    SearchState --> SearchData[legal_results<br/>real_estate_results<br/>loan_results<br/>aggregated_results]
+
+    AnalysisState --> AnalysisData[metrics<br/>insights<br/>report<br/>recommendations]
+
+    DocumentState --> DocumentData[document_content<br/>review_result<br/>final_document]
+
+    style MainState fill:#e1f5ff
+    style SharedContext fill:#fff4e1
+    style SearchState fill:#e8f5e9
+    style AnalysisState fill:#fce4ec
+    style DocumentState fill:#f3e5f5
+```
+
+---
+
+**문서 버전**: 3.0 (완전 개정판 - 실제 구조 반영)
+**최종 수정일**: 2025-10-04
+**작성자**: Claude Code Analysis
+**다음 리뷰**: 2025-11-04
+**상태**: ⚠️ NEEDS IMPROVEMENT (P0 이슈 해결 필요)

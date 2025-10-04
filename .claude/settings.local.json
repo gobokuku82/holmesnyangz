@@ -3,7 +3,8 @@
     "allow": [
       "Bash(../../../venv/Scripts/python:*)",
       "Bash(python -c \"import json; data=json.load(open(''test_queries_100.json'', encoding=''utf-8'')); print(f''Total: {data[\"\"total\"\"]}''); print(f''Queries: {len(data[\"\"queries\"\"])}'')\")",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []
