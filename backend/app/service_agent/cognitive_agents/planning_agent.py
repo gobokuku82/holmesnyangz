@@ -161,13 +161,20 @@ class PlanningAgent:
                 logger.warning(f"Unknown intent type from LLM: {intent_str}, using UNCLEAR")
                 intent_type = IntentType.UNCLEAR
 
+            # Agent 선택 (LLM 사용)
+            suggested_agents = await self._suggest_agents(
+                intent_type=intent_type,
+                query=query,
+                keywords=result.get("keywords", [])
+            )
+
             return IntentResult(
                 intent_type=intent_type,
                 confidence=result.get("confidence", 0.5),
                 keywords=result.get("keywords", []),
                 reasoning=result.get("reasoning", ""),
                 entities=result.get("entities", {}),
-                suggested_agents=self._suggest_agents(intent_type),
+                suggested_agents=suggested_agents,
                 fallback=False
             )
 
@@ -175,7 +182,7 @@ class PlanningAgent:
             logger.error(f"LLM intent analysis failed: {e}")
             raise
 
-    def _analyze_with_patterns(self, query: str, context: Optional[Dict]) -> IntentResult:
+    async def _analyze_with_patterns(self, query: str, context: Optional[Dict]) -> IntentResult:
         """패턴 매칭 기반 의도 분석"""
         detected_intents = {}
         found_keywords = []
@@ -199,33 +206,186 @@ class PlanningAgent:
             intent_type = IntentType.UNCLEAR
             confidence = 0.0
 
+        # Agent 선택 (패턴 매칭 시에도 async 호출)
+        suggested_agents = await self._suggest_agents(intent_type, query, found_keywords)
+
         return IntentResult(
             intent_type=intent_type,
             confidence=confidence,
             keywords=found_keywords,
             reasoning="Pattern-based analysis",
-            suggested_agents=self._suggest_agents(intent_type),
+            suggested_agents=suggested_agents,
             fallback=True
         )
 
-    def _suggest_agents(self, intent_type: IntentType) -> List[str]:
-        """의도에 따른 Agent 추천 (Team 기반 아키텍처용)"""
-        # Team 이름으로 매핑 (agent -> team)
-        agent_mapping = {
-            IntentType.LEGAL_CONSULT: ["search_team"],  # 법률 DB 검색
-            IntentType.MARKET_INQUIRY: ["search_team", "analysis_team"],  # 시세 조회 + 분석
-            IntentType.LOAN_CONSULT: ["search_team", "analysis_team"],  # 대출 상품 검색 + 분석
-            IntentType.CONTRACT_CREATION: ["document_team"],  # 문서 생성
-            IntentType.CONTRACT_REVIEW: ["analysis_team"],  # 계약서 분석 (review -> analysis)
-            IntentType.COMPREHENSIVE: ["search_team", "analysis_team"],  # 종합 상담
-            IntentType.RISK_ANALYSIS: ["search_team", "analysis_team"],  # 리스크 분석
-            IntentType.UNCLEAR: ["search_team"],  # 불명확한 경우 기본 검색
-            IntentType.IRRELEVANT: [],
-            IntentType.ERROR: []
+    async def _suggest_agents(
+        self,
+        intent_type: IntentType,
+        query: str,
+        keywords: List[str]
+    ) -> List[str]:
+        """
+        LLM 기반 Agent 추천 - 다층 Fallback 전략
+
+        Args:
+            intent_type: 분석된 의도 타입
+            query: 원본 쿼리
+            keywords: 추출된 키워드
+
+        Returns:
+            추천 Agent 목록
+        """
+        # === 1차: Primary LLM으로 Agent 선택 ===
+        if self.llm_service:
+            try:
+                agents = await self._select_agents_with_llm(
+                    intent_type=intent_type,
+                    query=query,
+                    keywords=keywords,
+                    attempt=1
+                )
+                if agents:
+                    logger.info(f"✅ Primary LLM selected agents: {agents}")
+                    return agents
+            except Exception as e:
+                logger.warning(f"⚠️ Primary LLM agent selection failed: {e}")
+
+        # === 2차: Simplified prompt retry ===
+        if self.llm_service:
+            try:
+                agents = await self._select_agents_with_llm_simple(
+                    intent_type=intent_type,
+                    query=query
+                )
+                if agents:
+                    logger.info(f"✅ Simplified LLM selected agents: {agents}")
+                    return agents
+            except Exception as e:
+                logger.warning(f"⚠️ Simplified LLM agent selection failed: {e}")
+
+        # === 3차: Safe default agents (모든 작업 처리 가능한 조합) ===
+        logger.error("⚠️ All LLM attempts failed, using safe default agents")
+
+        # Intent에 따른 안전한 기본값
+        safe_defaults = {
+            IntentType.LEGAL_CONSULT: ["search_team"],
+            IntentType.MARKET_INQUIRY: ["search_team", "analysis_team"],
+            IntentType.LOAN_CONSULT: ["search_team", "analysis_team"],
+            IntentType.CONTRACT_CREATION: ["document_team"],
+            IntentType.CONTRACT_REVIEW: ["search_team", "analysis_team"],
+            IntentType.COMPREHENSIVE: ["search_team", "analysis_team"],
+            IntentType.RISK_ANALYSIS: ["search_team", "analysis_team"],
+            IntentType.UNCLEAR: ["search_team", "analysis_team"],  # 포괄적 대응
+            IntentType.IRRELEVANT: ["search_team"],
+            IntentType.ERROR: ["search_team", "analysis_team"]
         }
-        result = agent_mapping.get(intent_type, ["search_team"])
-        logger.debug(f"Suggested teams for {intent_type.value}: {result}")
+
+        result = safe_defaults.get(intent_type, ["search_team", "analysis_team"])
+        logger.info(f"Safe default agents for {intent_type.value}: {result}")
         return result
+
+    async def _select_agents_with_llm(
+        self,
+        intent_type: IntentType,
+        query: str,
+        keywords: List[str],
+        attempt: int = 1
+    ) -> List[str]:
+        """
+        LLM을 사용한 Agent 선택 (상세 버전)
+
+        Args:
+            intent_type: 의도 타입
+            query: 원본 쿼리
+            keywords: 키워드 목록
+            attempt: 시도 횟수
+
+        Returns:
+            선택된 Agent 목록
+        """
+        # 사용 가능한 Agent 정보 수집
+        available_agents = {
+            "search_team": {
+                "name": "search_team",
+                "capabilities": "법률 검색, 부동산 시세 조회, 대출 상품 검색",
+                "tools": ["legal_search", "market_data", "loan_data"],
+                "use_cases": ["법률 상담", "시세 조회", "대출 정보"]
+            },
+            "analysis_team": {
+                "name": "analysis_team",
+                "capabilities": "데이터 분석, 리스크 평가, 인사이트 생성, 추천",
+                "tools": ["data_analyzer", "risk_evaluator"],
+                "use_cases": ["시장 분석", "리스크 평가", "투자 분석"]
+            },
+            "document_team": {
+                "name": "document_team",
+                "capabilities": "계약서 작성, 문서 생성, 문서 검토",
+                "tools": ["document_generator", "contract_reviewer"],
+                "use_cases": ["계약서 작성", "문서 검토"]
+            }
+        }
+
+        try:
+            result = await self.llm_service.complete_json_async(
+                prompt_name="agent_selection",
+                variables={
+                    "query": query,
+                    "intent_type": intent_type.value,
+                    "keywords": keywords,
+                    "available_agents": available_agents,
+                    "attempt": attempt
+                },
+                temperature=0.1 if attempt == 1 else 0.3  # 재시도 시 더 유연하게
+            )
+
+            selected = result.get("selected_agents", [])
+            reasoning = result.get("reasoning", "")
+
+            logger.info(f"LLM agent selection reasoning: {reasoning}")
+
+            # 유효성 검사
+            valid_agents = [a for a in selected if a in available_agents]
+
+            if not valid_agents:
+                logger.warning("LLM returned no valid agents")
+                return []
+
+            return valid_agents
+
+        except Exception as e:
+            logger.error(f"LLM agent selection failed: {e}")
+            raise
+
+    async def _select_agents_with_llm_simple(
+        self,
+        intent_type: IntentType,
+        query: str
+    ) -> List[str]:
+        """
+        LLM을 사용한 Agent 선택 (간소화 버전)
+        Primary 실패 시 더 간단한 프롬프트로 재시도
+        """
+        try:
+            result = await self.llm_service.complete_json_async(
+                prompt_name="agent_selection_simple",
+                variables={
+                    "query": query,
+                    "intent_type": intent_type.value
+                },
+                temperature=0.3
+            )
+
+            selected = result.get("agents", [])
+
+            # 간단한 유효성 검사
+            valid_teams = ["search_team", "analysis_team", "document_team"]
+            valid_agents = [a for a in selected if a in valid_teams]
+
+            return valid_agents
+
+        except Exception as e:
+            logger.error(f"Simple LLM agent selection failed: {e}")
+            raise
 
     async def create_execution_plan(
         self,
