@@ -99,10 +99,23 @@ class Config:
         "api_key": os.getenv("OPENAI_API_KEY"),
         "organization": os.getenv("OPENAI_ORG_ID"),
         "models": {
-            "intent": "gpt-4o-mini",      # Intent analysis
-            "planning": "gpt-4o-mini",     # Execution planning
-            "search": "gpt-4o-mini",       # Search planning
-            "analysis": "gpt-4o"           # Data analysis
+            # Cognitive prompts
+            "intent_analysis": "gpt-4o-mini",      # Intent analysis
+            "plan_generation": "gpt-4o-mini",      # Execution planning
+
+            # Execution prompts
+            "keyword_extraction": "gpt-4o-mini",   # Keyword extraction for search
+            "insight_generation": "gpt-4o",        # Insight generation from analysis
+            "response_synthesis": "gpt-4o-mini",   # Response synthesis
+
+            # Common prompts
+            "error_response": "gpt-4o-mini",       # Error response generation
+
+            # Legacy mappings (backward compatibility)
+            "intent": "gpt-4o-mini",
+            "planning": "gpt-4o-mini",
+            "search": "gpt-4o-mini",
+            "analysis": "gpt-4o"
         },
         "default_params": {
             "temperature": 0.3,

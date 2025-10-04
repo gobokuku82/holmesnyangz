@@ -50,7 +50,7 @@ class TeamBasedSupervisor:
         initialize_agent_system(auto_register=True)
 
         # Planning Agent
-        self.planning_agent = PlanningAgent(self._get_llm_client())
+        self.planning_agent = PlanningAgent(llm_context=llm_context)
 
         # 팀 초기화
         self.teams = {
@@ -400,7 +400,7 @@ class TeamBasedSupervisor:
         state["current_phase"] = "response_generation"
 
         # LLM을 사용한 자연어 응답 생성
-        if self.planning_agent.llm_client:
+        if self.planning_agent.llm_service:
             response = await self._generate_llm_response(state)
         else:
             response = self._generate_simple_response(state)
@@ -519,17 +519,16 @@ class TeamBasedSupervisor:
 위 정보를 바탕으로 구조화된 답변을 JSON 형식으로 작성하세요."""
 
         try:
-            response = self.planning_agent.llm_client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
+            # LLMService를 통한 응답 생성
+            answer = await self.planning_agent.llm_service.complete_async(
+                prompt_name="response_synthesis",
+                variables={
+                    "query": query,
+                    "analysis_result": self._safe_json_dumps(aggregated)[:4000]
+                },
                 temperature=0.3,
                 max_tokens=1000
             )
-
-            answer = response.choices[0].message.content
 
             return {
                 "type": "answer",

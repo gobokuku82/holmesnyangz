@@ -6,7 +6,9 @@
       "Bash(python:*)",
       "Bash(tree:*)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(mkdir:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

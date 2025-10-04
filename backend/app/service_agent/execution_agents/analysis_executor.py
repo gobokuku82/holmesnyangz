@@ -25,6 +25,7 @@ from app.service_agent.foundation.separated_states import (
 )
 from app.service_agent.foundation.agent_registry import AgentRegistry
 from app.service_agent.foundation.agent_adapter import AgentAdapter
+from app.service_agent.llm_manager import LLMService
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class AnalysisExecutor:
             llm_context: LLM 컨텍스트
         """
         self.llm_context = llm_context
+        self.llm_service = LLMService(llm_context=llm_context) if llm_context else None
         self.team_name = "analysis"
 
         # Agent 초기화
@@ -328,93 +330,24 @@ class AnalysisExecutor:
         return state
 
     async def _generate_insights_with_llm(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
-        """LLM을 사용한 인사이트 생성"""
-        from openai import OpenAI
-
+        """LLM을 사용한 인사이트 생성 (LLMService 사용)"""
         # 분석 데이터 준비
         raw_analysis = state.get("raw_analysis", {})
         analysis_type = state.get("analysis_type", "comprehensive")
         query = state.get("shared_context", {}).get("query", "")
 
-        system_prompt = """당신은 부동산 데이터 분석 전문가입니다.
-수집된 데이터를 분석하여 의미 있는 인사이트와 실행 가능한 추천사항을 제공하세요.
-
-## 분석 타입별 가이드:
-
-### comprehensive (종합 분석)
-- 전반적인 상황 파악
-- 주요 트렌드 및 패턴 식별
-- 다각도 관점에서 분석
-- 장단점 모두 고려
-
-### market (시장 분석)
-- 가격 트렌드 분석
-- 수요/공급 상황 파악
-- 시장 전망 제시
-- 투자 타이밍 평가
-
-### risk (리스크 분석)
-- 잠재적 위험 요소 식별
-- 위험도 수준 평가
-- 완화 방안 제시
-- 주의사항 안내
-
-### comparison (비교 분석)
-- 옵션 간 비교
-- 장단점 대비
-- 최적 선택지 추천
-- 의사결정 기준 제시
-
-## 응답 형식:
-{
-    "insights": [
-        {
-            "type": "key_finding | trend | risk | opportunity | recommendation",
-            "title": "인사이트 제목 (한줄)",
-            "description": "상세 설명 (2-3문장)",
-            "confidence": 0.0~1.0,
-            "importance": "high | medium | low",
-            "supporting_evidence": ["근거1", "근거2"],
-            "recommendations": ["추천사항1", "추천사항2"]
-        }
-    ],
-    "overall_assessment": "전체적인 평가 (2-3문장)",
-    "key_takeaways": ["핵심 포인트1", "핵심 포인트2", "핵심 포인트3"]
-}
-
-## 인사이트 작성 가이드:
-- 구체적이고 실행 가능한 내용
-- 전문 용어 사용 시 간단한 설명 추가
-- 숫자와 데이터로 뒷받침
-- 긍정적/부정적 측면 균형있게 제시
-- 사용자가 실제로 활용할 수 있는 추천사항"""
-
         try:
-            client = OpenAI(api_key=self.llm_context.api_key)
-
-            # 분석 데이터를 컨텍스트로 전달
-            user_prompt = f"""## 사용자 질문:
-{query}
-
-## 분석 타입:
-{analysis_type}
-
-## 수집된 데이터:
-{json.dumps(raw_analysis, ensure_ascii=False, indent=2)}
-
-위 데이터를 바탕으로 의미 있는 인사이트를 생성해주세요."""
-
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.3,
-                response_format={"type": "json_object"}
+            # LLMService를 통한 인사이트 생성
+            result = await self.llm_service.complete_json_async(
+                prompt_name="insight_generation",
+                variables={
+                    "query": query,
+                    "analysis_type": analysis_type,
+                    "raw_analysis": json.dumps(raw_analysis, ensure_ascii=False, indent=2)
+                },
+                temperature=0.3
             )
 
-            result = json.loads(response.choices[0].message.content)
             logger.info(f"LLM Insight Generation: {len(result.get('insights', []))} insights generated")
 
             # LLM 응답을 AnalysisInsight 객체로 변환
