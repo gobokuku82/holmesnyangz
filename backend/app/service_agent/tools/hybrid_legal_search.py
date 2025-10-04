@@ -29,6 +29,9 @@ import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
+# Config import 추가
+from app.service_agent.foundation.config import Config
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,23 +44,24 @@ class HybridLegalSearch:
 
     def __init__(
         self,
-        sqlite_db_path: str,
-        chroma_db_path: str,
-        embedding_model_path: str,
+        sqlite_db_path: Optional[str] = None,
+        chroma_db_path: Optional[str] = None,
+        embedding_model_path: Optional[str] = None,
         collection_name: str = "korean_legal_documents"
     ):
         """
-        초기화
+        초기화 - Config를 사용하여 경로 자동 설정
 
         Args:
-            sqlite_db_path: SQLite DB 경로
-            chroma_db_path: ChromaDB 경로
-            embedding_model_path: 임베딩 모델 경로
+            sqlite_db_path: SQLite DB 경로 (None이면 Config에서 가져옴)
+            chroma_db_path: ChromaDB 경로 (None이면 Config에서 가져옴)
+            embedding_model_path: 임베딩 모델 경로 (None이면 Config에서 가져옴)
             collection_name: ChromaDB 컬렉션 이름
         """
-        self.sqlite_db_path = sqlite_db_path
-        self.chroma_db_path = chroma_db_path
-        self.embedding_model_path = embedding_model_path
+        # Config에서 경로 가져오기
+        self.sqlite_db_path = sqlite_db_path or str(Config.LEGAL_PATHS["sqlite_db"])
+        self.chroma_db_path = chroma_db_path or str(Config.LEGAL_PATHS["chroma_db"])
+        self.embedding_model_path = embedding_model_path or str(Config.LEGAL_PATHS["embedding_model"])
         self.collection_name = collection_name
 
         # 초기화
@@ -434,6 +438,98 @@ class HybridLegalSearch:
         if hasattr(self, 'sqlite_conn'):
             self.sqlite_conn.close()
             logger.info("SQLite connection closed")
+
+    # =========================================================================
+    # 비동기 지원 메서드 (search_executor 호환)
+    # =========================================================================
+
+    async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        통합 검색 메서드 - search_executor와 호환
+
+        Args:
+            query: 검색 쿼리
+            params: 검색 파라미터
+                - mode: 검색 모드 ('hybrid', 'vector', 'specific')
+                - limit: 결과 개수
+                - doc_type: 문서 타입
+                - category: 카테고리
+                - is_tenant_protection: 임차인 보호 조항 필터
+                - is_tax_related: 세금 관련 조항 필터
+
+        Returns:
+            검색 결과 (status, data, count, query 포함)
+        """
+        params = params or {}
+        mode = params.get('mode', 'hybrid')
+
+        try:
+            # 검색 모드에 따라 적절한 메서드 호출
+            if mode == 'hybrid':
+                results = self.hybrid_search(
+                    query=query,
+                    limit=params.get('limit', 10),
+                    doc_type=params.get('doc_type'),
+                    category=params.get('category'),
+                    is_tenant_protection=params.get('is_tenant_protection'),
+                    is_tax_related=params.get('is_tax_related')
+                )
+            elif mode == 'vector':
+                vector_results = self.vector_search(
+                    query=query,
+                    n_results=params.get('limit', 10),
+                    where_filters=params.get('where_filters')
+                )
+                # vector_search 결과를 표준 형식으로 변환
+                results = []
+                for i, doc_id in enumerate(vector_results.get("ids", [])):
+                    results.append({
+                        "doc_id": doc_id,
+                        "content": vector_results["documents"][i] if i < len(vector_results.get("documents", [])) else "",
+                        "metadata": vector_results["metadatas"][i] if i < len(vector_results.get("metadatas", [])) else {},
+                        "relevance_score": 1 - vector_results["distances"][i] if i < len(vector_results.get("distances", [])) else 0
+                    })
+            elif mode == 'specific':
+                # 특정 조문 검색 (예: "주택임대차보호법 제7조")
+                import re
+                pattern = r'(.+?)\s*제(\d+)조(?:의(\d+))?'
+                match = re.search(pattern, query)
+
+                if match:
+                    law_title = match.group(1).strip()
+                    article_num = match.group(2)
+                    sub_num = match.group(3)
+                    article_number = f"제{article_num}조" + (f"의{sub_num}" if sub_num else "")
+
+                    result = self.search_specific_article(law_title, article_number)
+                    results = [result] if result else []
+                else:
+                    results = []
+            else:
+                # 기본: hybrid 검색
+                results = self.hybrid_search(
+                    query=query,
+                    limit=params.get('limit', 10)
+                )
+
+            return {
+                "status": "success",
+                "data": results,
+                "count": len(results),
+                "total_count": len(results),
+                "query": query,
+                "mode": mode
+            }
+
+        except Exception as e:
+            logger.error(f"Search failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "data": [],
+                "count": 0,
+                "query": query
+            }
 
 
 # =========================================================================

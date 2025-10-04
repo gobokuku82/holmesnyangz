@@ -50,21 +50,21 @@ class SearchExecutor:
         self.loan_data_tool = None
 
         try:
-            from app.service.tools.legal_search_tool import LegalSearchTool
-            self.legal_search_tool = LegalSearchTool()
-            logger.info("LegalSearchTool initialized successfully")
+            from app.service_agent.tools.hybrid_legal_search import HybridLegalSearch
+            self.legal_search_tool = HybridLegalSearch()
+            logger.info("HybridLegalSearch initialized successfully")
         except Exception as e:
-            logger.warning(f"LegalSearchTool initialization failed: {e}")
+            logger.warning(f"HybridLegalSearch initialization failed: {e}")
 
         try:
-            from app.service_agent.primitives.market_data_tool import MarketDataTool
+            from app.service_agent.tools.market_data_tool import MarketDataTool
             self.market_data_tool = MarketDataTool()
             logger.info("MarketDataTool initialized successfully")
         except Exception as e:
             logger.warning(f"MarketDataTool initialization failed: {e}")
 
         try:
-            from app.service_agent.primitives.loan_data_tool import LoanDataTool
+            from app.service_agent.tools.loan_data_tool import LoanDataTool
             self.loan_data_tool = LoanDataTool()
             logger.info("LoanDataTool initialized successfully")
         except Exception as e:
