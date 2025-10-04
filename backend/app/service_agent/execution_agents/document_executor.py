@@ -1,6 +1,6 @@
 """
-Document Team Supervisor - 문서 생성 및 검토를 관리하는 서브그래프
-문서 생성 → 검토 파이프라인을 구현
+Document Executor - 문서 생성 및 검토 실행 Agent
+문서 생성 → 검토 파이프라인을 실행
 """
 
 import logging
@@ -14,23 +14,23 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service.core.separated_states import (
+from app.service_agent.foundation.separated_states import (
     DocumentTeamState,
     DocumentTemplate,
     DocumentContent,
     ReviewResult,
     SharedState
 )
-from app.service.core.agent_registry import AgentRegistry
-from app.service.core.agent_adapter import AgentAdapter
+from app.service_agent.foundation.agent_registry import AgentRegistry
+from app.service_agent.foundation.agent_adapter import AgentAdapter
 
 logger = logging.getLogger(__name__)
 
 
-class DocumentTeamSupervisor:
+class DocumentExecutor:
     """
-    문서 팀 Supervisor
-    DocumentAgent와 ReviewAgent를 관리하여 문서 생성-검토 파이프라인 구현
+    문서 실행 Agent
+    문서 생성-검토 파이프라인 실행
     """
 
     def __init__(self, llm_context=None):
@@ -472,7 +472,7 @@ class DocumentTeamSupervisor:
 # 테스트 코드
 if __name__ == "__main__":
     async def test_document_team():
-        from app.service.core.separated_states import StateManager
+        from app.service_agent.foundation.separated_states import StateManager
 
         # DocumentTeam 초기화
         doc_team = DocumentTeamSupervisor()

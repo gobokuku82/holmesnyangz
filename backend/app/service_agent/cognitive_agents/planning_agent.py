@@ -16,8 +16,8 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service_agent.core.agent_registry import AgentRegistry
-from app.service_agent.core.agent_adapter import AgentAdapter
+from app.service_agent.foundation.agent_registry import AgentRegistry
+from app.service_agent.foundation.agent_adapter import AgentAdapter
 
 logger = logging.getLogger(__name__)
 

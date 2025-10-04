@@ -22,8 +22,8 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from app.service_agent.supervisor.team_supervisor import TeamBasedSupervisor
-from app.service_agent.core.separated_states import MainSupervisorState
-from app.service_agent.core.context import create_default_llm_context
+from app.service_agent.foundation.separated_states import MainSupervisorState
+from app.service_agent.foundation.context import create_default_llm_context
 
 
 class Colors:

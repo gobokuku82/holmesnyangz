@@ -5,7 +5,7 @@ Agent Adapter - 기존 Agent들을 Registry 시스템에 통합
 
 import logging
 from typing import Dict, Any, Optional, Type
-from app.service_agent.core.agent_registry import AgentRegistry, AgentCapabilities
+from app.service_agent.foundation.agent_registry import AgentRegistry, AgentCapabilities
 
 logger = logging.getLogger(__name__)
 

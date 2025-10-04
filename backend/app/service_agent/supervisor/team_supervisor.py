@@ -16,17 +16,17 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service_agent.core.separated_states import (
+from app.service_agent.foundation.separated_states import (
     MainSupervisorState,
     SharedState,
     StateManager,
     PlanningState
 )
-from app.service_agent.core.context import LLMContext, create_default_llm_context
-from app.service_agent.planning.planning_agent import PlanningAgent, IntentType, ExecutionStrategy
-from app.service_agent.teams import SearchTeamSupervisor, DocumentTeamSupervisor, AnalysisTeamSupervisor
-from app.service_agent.core.agent_registry import AgentRegistry
-from app.service_agent.core.agent_adapter import initialize_agent_system
+from app.service_agent.foundation.context import LLMContext, create_default_llm_context
+from app.service_agent.cognitive_agents.planning_agent import PlanningAgent, IntentType, ExecutionStrategy
+from app.service_agent.execution_agents import SearchExecutor, DocumentExecutor, AnalysisExecutor
+from app.service_agent.foundation.agent_registry import AgentRegistry
+from app.service_agent.foundation.agent_adapter import initialize_agent_system
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +54,9 @@ class TeamBasedSupervisor:
 
         # 팀 초기화
         self.teams = {
-            "search": SearchTeamSupervisor(llm_context=llm_context),
-            "document": DocumentTeamSupervisor(llm_context=llm_context),
-            "analysis": AnalysisTeamSupervisor(llm_context=llm_context)
+            "search": SearchExecutor(llm_context=llm_context),
+            "document": DocumentExecutor(llm_context=llm_context),
+            "analysis": AnalysisExecutor(llm_context=llm_context)
         }
 
         # 워크플로우 구성
@@ -209,7 +209,7 @@ class TeamBasedSupervisor:
 
     def _get_team_for_agent(self, agent_name: str) -> str:
         """Agent가 속한 팀 찾기"""
-        from app.service_agent.core.agent_adapter import AgentAdapter
+        from app.service_agent.foundation.agent_adapter import AgentAdapter
 
         dependencies = AgentAdapter.get_agent_dependencies(agent_name)
         return dependencies.get("team", "search")

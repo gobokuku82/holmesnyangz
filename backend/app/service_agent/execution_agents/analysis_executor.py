@@ -1,5 +1,5 @@
 """
-Analysis Team Supervisor - 데이터 분석을 관리하는 서브그래프
+Analysis Executor - 데이터 분석 실행 Agent
 수집된 데이터를 분석하여 인사이트와 추천사항을 생성
 """
 
@@ -15,7 +15,7 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service.core.separated_states import (
+from app.service_agent.foundation.separated_states import (
     AnalysisTeamState,
     AnalysisInput,
     AnalysisMetrics,
@@ -23,16 +23,16 @@ from app.service.core.separated_states import (
     AnalysisReport,
     SharedState
 )
-from app.service.core.agent_registry import AgentRegistry
-from app.service.core.agent_adapter import AgentAdapter
+from app.service_agent.foundation.agent_registry import AgentRegistry
+from app.service_agent.foundation.agent_adapter import AgentAdapter
 
 logger = logging.getLogger(__name__)
 
 
-class AnalysisTeamSupervisor:
+class AnalysisExecutor:
     """
-    분석 팀 Supervisor
-    AnalysisAgent를 관리하여 데이터 분석 및 보고서 생성
+    분석 실행 Agent
+    데이터 분석 및 보고서 생성 작업을 실행
     """
 
     def __init__(self, llm_context=None):
@@ -689,7 +689,7 @@ class AnalysisTeamSupervisor:
 # 테스트 코드
 if __name__ == "__main__":
     async def test_analysis_team():
-        from app.service.core.separated_states import StateManager
+        from app.service_agent.foundation.separated_states import StateManager
 
         # AnalysisTeam 초기화
         analysis_team = AnalysisTeamSupervisor()

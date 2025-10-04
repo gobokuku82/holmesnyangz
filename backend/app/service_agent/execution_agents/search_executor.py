@@ -1,5 +1,5 @@
 """
-Search Team Supervisor - 검색 관련 Agent들을 관리하는 서브그래프
+Search Executor - 검색 실행 Agent
 법률, 부동산, 대출 검색을 병렬/순차적으로 수행
 """
 
@@ -16,17 +16,17 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.service.core.separated_states import SearchTeamState, SearchKeywords, SharedState
-from app.service.core.agent_registry import AgentRegistry
-from app.service.core.agent_adapter import AgentAdapter
+from app.service_agent.foundation.separated_states import SearchTeamState, SearchKeywords, SharedState
+from app.service_agent.foundation.agent_registry import AgentRegistry
+from app.service_agent.foundation.agent_adapter import AgentAdapter
 
 logger = logging.getLogger(__name__)
 
 
-class SearchTeamSupervisor:
+class SearchExecutor:
     """
-    검색 팀 Supervisor
-    법률, 부동산, 대출 검색 Agent들을 관리하고 조정
+    검색 실행 Agent
+    법률, 부동산, 대출 검색 작업을 실행
     """
 
     def __init__(self, llm_context=None):
@@ -55,14 +55,14 @@ class SearchTeamSupervisor:
             logger.warning(f"LegalSearchTool initialization failed: {e}")
 
         try:
-            from app.service_agent.tools.market_data_tool import MarketDataTool
+            from app.service_agent.primitives.market_data_tool import MarketDataTool
             self.market_data_tool = MarketDataTool()
             logger.info("MarketDataTool initialized successfully")
         except Exception as e:
             logger.warning(f"MarketDataTool initialization failed: {e}")
 
         try:
-            from app.service_agent.tools.loan_data_tool import LoanDataTool
+            from app.service_agent.primitives.loan_data_tool import LoanDataTool
             self.loan_data_tool = LoanDataTool()
             logger.info("LoanDataTool initialized successfully")
         except Exception as e:
@@ -579,7 +579,7 @@ class SearchTeamSupervisor:
 # 테스트 코드
 if __name__ == "__main__":
     async def test_search_team():
-        from app.service.core.separated_states import StateManager
+        from app.service_agent.foundation.separated_states import StateManager
 
         # SearchTeam 초기화
         search_team = SearchTeamSupervisor()
