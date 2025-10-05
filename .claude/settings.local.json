@@ -15,7 +15,8 @@
       "Bash(venv/Scripts/python:*)",
       "Bash(taskkill:*)",
       "Bash(tee:*)",
-      "Bash(venv\\Scripts\\python:*)"
+      "Bash(venv\\Scripts\\python:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

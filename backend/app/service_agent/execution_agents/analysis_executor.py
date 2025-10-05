@@ -5,6 +5,7 @@ Analysis Executor - 데이터 분석 실행 Agent
 
 import logging
 import json
+import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from langgraph.graph import StateGraph, START, END
@@ -23,8 +24,6 @@ from app.service_agent.foundation.separated_states import (
     AnalysisReport,
     SharedState
 )
-from app.service_agent.foundation.agent_registry import AgentRegistry
-from app.service_agent.foundation.agent_adapter import AgentAdapter
 from app.service_agent.llm_manager import LLMService
 
 logger = logging.getLogger(__name__)
@@ -37,18 +36,10 @@ class AnalysisExecutor:
     """
 
     def __init__(self, llm_context=None):
-        """
-        초기화
-
-        Args:
-            llm_context: LLM 컨텍스트
-        """
+        """초기화"""
         self.llm_context = llm_context
         self.llm_service = LLMService(llm_context=llm_context) if llm_context else None
         self.team_name = "analysis"
-
-        # Agent 초기화
-        self.available_agents = self._initialize_agents()
 
         # 분석 메서드 매핑
         self.analysis_methods = {
@@ -61,17 +52,6 @@ class AnalysisExecutor:
         # 서브그래프 구성
         self.app = None
         self._build_subgraph()
-
-    def _initialize_agents(self) -> Dict[str, bool]:
-        """사용 가능한 Agent 확인"""
-        agent_types = ["analysis_agent"]
-        available = {}
-
-        for agent_name in agent_types:
-            available[agent_name] = agent_name in AgentRegistry.list_agents(enabled_only=True)
-
-        logger.info(f"AnalysisTeam available agents: {available}")
-        return available
 
     def _build_subgraph(self):
         """서브그래프 구성"""
@@ -88,17 +68,7 @@ class AnalysisExecutor:
         # 엣지 구성
         workflow.add_edge(START, "prepare")
         workflow.add_edge("prepare", "preprocess")
-
-        # 전처리 필요 여부
-        workflow.add_conditional_edges(
-            "preprocess",
-            self._needs_preprocessing,
-            {
-                "analyze": "analyze",
-                "skip": "analyze"
-            }
-        )
-
+        workflow.add_edge("preprocess", "analyze")
         workflow.add_edge("analyze", "generate_insights")
         workflow.add_edge("generate_insights", "create_report")
         workflow.add_edge("create_report", "finalize")
@@ -107,199 +77,131 @@ class AnalysisExecutor:
         self.app = workflow.compile()
         logger.info("AnalysisTeam subgraph built successfully")
 
-    def _needs_preprocessing(self, state: AnalysisTeamState) -> str:
-        """전처리 필요 여부 확인"""
-        # 현재는 항상 분석으로 진행
-        return "analyze"
-
     async def prepare_analysis_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
-        """
-        분석 준비 노드
-        입력 데이터 확인 및 분석 타입 결정
-        """
+        """분석 준비 노드"""
         logger.info("[AnalysisTeam] Preparing analysis")
 
         state["team_name"] = self.team_name
         state["status"] = "in_progress"
         state["start_time"] = datetime.now()
         state["analysis_status"] = "preparing"
-        state["analysis_progress"] = 0.0
+        state["analysis_progress"] = {"current": "prepare", "percent": 0.0}
 
-        # 분석 타입 설정
         if not state.get("analysis_type"):
             state["analysis_type"] = "comprehensive"
-
-        # 입력 데이터 준비
-        if not state.get("input_data"):
-            state["input_data"] = self._prepare_input_data(state)
-
-        # 분석 메서드 선택
-        state["analysis_method"] = state.get("analysis_type", "comprehensive")
 
         logger.info(f"[AnalysisTeam] Analysis type: {state['analysis_type']}")
         return state
 
-    def _prepare_input_data(self, state: AnalysisTeamState) -> List[AnalysisInput]:
-        """입력 데이터 준비"""
-        input_data = []
-        shared_context = state.get("shared_context", {})
-
-        # 기본 입력 데이터 생성
-        input_data.append(AnalysisInput(
-            data_source="context",
-            data_type="query",
-            raw_data={"query": shared_context.get("query", "")},
-            preprocessing_required=False
-        ))
-
-        return input_data
-
     async def preprocess_data_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
-        """
-        데이터 전처리 노드
-        필요한 경우 데이터 정제 및 변환
-        """
+        """데이터 전처리 노드"""
         logger.info("[AnalysisTeam] Preprocessing data")
 
         state["preprocessing_status"] = "in_progress"
-        state["analysis_progress"] = 0.1
+        state["analysis_progress"] = {"current": "preprocess", "percent": 0.1}
 
-        # 전처리가 필요한 데이터 처리
+        # 입력 데이터를 그대로 전달
         preprocessed = {}
         for input_item in state.get("input_data", []):
-            if input_item.get("preprocessing_required"):
-                # 데이터 정제 로직
-                preprocessed[input_item["data_source"]] = self._preprocess_item(input_item)
-            else:
-                preprocessed[input_item["data_source"]] = input_item["raw_data"]
+            preprocessed[input_item["data_source"]] = input_item.get("data", input_item.get("raw_data", {}))
 
         state["preprocessed_data"] = preprocessed
         state["preprocessing_status"] = "completed"
-        state["analysis_progress"] = 0.2
+        state["analysis_progress"] = {"current": "preprocess", "percent": 0.2}
 
         return state
 
-    def _preprocess_item(self, input_item: AnalysisInput) -> Dict:
-        """개별 데이터 전처리"""
-        # 간단한 전처리 로직
-        data = input_item.get("raw_data", {})
-
-        # 숫자 추출, 정규화 등
-        if input_item.get("data_type") == "numeric":
-            # 숫자 데이터 정규화
-            pass
-
-        return data
-
     async def analyze_data_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
         """
-        데이터 분석 노드
-        AnalysisAgent 호출
+        실제 데이터 분석 노드
+        analysis_tools를 사용하여 실제 분석 수행
         """
-        logger.info("[AnalysisTeam] Analyzing data")
+        logger.info("[AnalysisTeam] Analyzing data with analysis_tools")
 
         state["analysis_status"] = "analyzing"
-        state["analysis_progress"] = 0.3
-
-        if not self.available_agents.get("analysis_agent"):
-            # AnalysisAgent가 없으면 모의 분석
-            state["raw_analysis"] = self._mock_analysis(state)
-            state["analysis_status"] = "completed"
-            state["analysis_progress"] = 0.6
-            return state
-
-        # AnalysisAgent 입력 준비
-        analysis_input = {
-            "analysis_type": state.get("analysis_type", "comprehensive"),
-            "input_data": state.get("preprocessed_data", {}),
-            "query": state.get("shared_context", {}).get("query", ""),
-            "original_query": state.get("shared_context", {}).get("original_query", ""),
-            "chat_session_id": state.get("shared_context", {}).get("session_id", ""),
-            "shared_context": {},
-            "todos": [],
-            "todo_counter": 0
-        }
+        state["analysis_progress"] = {"current": "analyze", "percent": 0.3}
 
         try:
-            # AnalysisAgent 실행
-            result = await AgentAdapter.execute_agent_dynamic(
-                "analysis_agent",
-                analysis_input,
-                self.llm_context
+            from app.service_agent.tools.analysis_tools import (
+                MarketAnalyzer, TrendAnalyzer, RiskAssessor
             )
 
-            if result.get("status") in ["completed", "success"]:
-                data = result.get("collected_data", {})
+            preprocessed_data = state.get("preprocessed_data", {})
+            query = state.get("shared_context", {}).get("query", "")
 
-                # 분석 결과 저장
-                state["raw_analysis"] = data.get("analysis", {})
+            results = {}
 
-                # 메트릭 추출
-                if "metrics" in data:
-                    state["metrics"] = self._parse_metrics(data["metrics"])
+            # 1. 시장 분석
+            market_analyzer = MarketAnalyzer()
+            results["market"] = await market_analyzer.execute(preprocessed_data)
+            logger.info("[AnalysisTools] Market analysis completed")
 
-                state["analysis_status"] = "completed"
-                state["analysis_progress"] = 0.6
-            else:
-                state["analysis_status"] = "failed"
-                state["error"] = result.get("error", "Analysis failed")
+            # 2. 트렌드 분석
+            trend_analyzer = TrendAnalyzer()
+            results["trend"] = await trend_analyzer.execute(preprocessed_data)
+            logger.info("[AnalysisTools] Trend analysis completed")
+
+            # 3. 리스크 평가
+            risk_assessor = RiskAssessor()
+            results["risk"] = await risk_assessor.execute(preprocessed_data)
+            logger.info("[AnalysisTools] Risk assessment completed")
+
+            # 4. 맞춤 분석 (전세금 인상률 등)
+            results["custom"] = self._perform_custom_analysis(query, preprocessed_data)
+            if results["custom"]["type"] != "general":
+                logger.info(f"[CustomAnalysis] {results['custom']['type']} performed")
+
+            # 결과 저장
+            state["raw_analysis"] = results
+            state["analysis_status"] = "completed"
+            state["analysis_progress"] = {"current": "analyze", "percent": 0.6}
 
         except Exception as e:
-            logger.error(f"Analysis failed: {e}")
+            logger.error(f"Analysis failed: {e}", exc_info=True)
             state["analysis_status"] = "failed"
             state["error"] = str(e)
 
         return state
 
-    def _mock_analysis(self, state: AnalysisTeamState) -> Dict:
-        """모의 분석 (테스트용)"""
-        analysis_type = state.get("analysis_type", "comprehensive")
+    def _perform_custom_analysis(self, query: str, data: Dict) -> Dict:
+        """쿼리 기반 맞춤 분석"""
 
-        if analysis_type == "market":
+        # 전세금 인상 관련 쿼리 감지
+        if "전세금" in query and any(x in query for x in ["올", "인상", "올려"]):
+            return self._analyze_rent_increase(query, data)
+
+        return {"type": "general"}
+
+    def _analyze_rent_increase(self, query: str, data: Dict) -> Dict:
+        """전세금 인상률 계산"""
+
+        # 쿼리에서 금액 추출 (예: "3억을 10억으로")
+        amounts = re.findall(r'(\d+)억', query)
+
+        if len(amounts) >= 2:
+            old_amount = float(amounts[0])
+            new_amount = float(amounts[1])
+            increase_rate = ((new_amount - old_amount) / old_amount) * 100
+
             return {
-                "market_trend": "상승",
-                "average_price": "5억",
-                "volatility": "낮음",
-                "recommendation": "투자 적기"
-            }
-        elif analysis_type == "risk":
-            return {
-                "risk_level": "중간",
-                "risk_factors": ["금리 상승", "공급 과잉"],
-                "mitigation": ["장기 계약", "보증 보험"]
-            }
-        else:
-            return {
-                "summary": "종합 분석 결과",
-                "key_points": ["시장 안정", "규제 강화"],
-                "outlook": "중립적"
+                "type": "rent_increase_analysis",
+                "old_amount": f"{old_amount}억",
+                "new_amount": f"{new_amount}억",
+                "increase_amount": f"{new_amount - old_amount}억",
+                "increase_rate": f"{increase_rate:.1f}%",
+                "legal_limit": "5%",
+                "is_legal": increase_rate <= 5,
+                "assessment": f"요청된 인상률 {increase_rate:.1f}%는 법정 한도 5%를 {'초과' if increase_rate > 5 else '준수'}합니다.",
+                "recommendation": "법정 한도를 초과하는 인상은 거부할 수 있습니다." if increase_rate > 5 else "법정 범위 내 인상입니다."
             }
 
-    def _parse_metrics(self, metrics_data: Any) -> List[AnalysisMetrics]:
-        """메트릭 데이터 파싱"""
-        metrics = []
-
-        if isinstance(metrics_data, dict):
-            for key, value in metrics_data.items():
-                metric = AnalysisMetrics(
-                    metric_name=key,
-                    value=float(value) if isinstance(value, (int, float)) else 0.0,
-                    unit="",
-                    trend="stable",
-                    comparison=None
-                )
-                metrics.append(metric)
-
-        return metrics
+        return {"type": "rent_increase_analysis", "status": "insufficient_data"}
 
     async def generate_insights_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
-        """
-        인사이트 생성 노드
-        분석 결과를 바탕으로 인사이트 도출 - LLM 사용 시 더 정확함
-        """
+        """인사이트 생성 노드"""
         logger.info("[AnalysisTeam] Generating insights")
 
-        state["analysis_progress"] = 0.7
+        state["analysis_progress"] = {"current": "insights", "percent": 0.7}
 
         # LLM 사용 가능 시 LLM 기반 인사이트 생성
         if self.llm_context and self.llm_context.api_key:
@@ -307,14 +209,12 @@ class AnalysisExecutor:
                 insights = await self._generate_insights_with_llm(state)
             except Exception as e:
                 logger.warning(f"LLM insight generation failed, using fallback: {e}")
-                # Fallback: 기존 rule-based 방식
                 analysis_method = self.analysis_methods.get(
                     state.get("analysis_type", "comprehensive"),
                     self._comprehensive_analysis
                 )
                 insights = analysis_method(state)
         else:
-            # Fallback: 기존 rule-based 방식
             analysis_method = self.analysis_methods.get(
                 state.get("analysis_type", "comprehensive"),
                 self._comprehensive_analysis
@@ -322,22 +222,18 @@ class AnalysisExecutor:
             insights = analysis_method(state)
 
         state["insights"] = insights
-        state["analysis_progress"] = 0.8
-
-        # 신뢰도 계산
-        state["confidence_level"] = self._calculate_confidence(state)
+        state["analysis_progress"] = {"current": "insights", "percent": 0.8}
+        state["confidence_score"] = self._calculate_confidence(state)
 
         return state
 
     async def _generate_insights_with_llm(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
-        """LLM을 사용한 인사이트 생성 (LLMService 사용)"""
-        # 분석 데이터 준비
+        """LLM을 사용한 인사이트 생성"""
         raw_analysis = state.get("raw_analysis", {})
         analysis_type = state.get("analysis_type", "comprehensive")
         query = state.get("shared_context", {}).get("query", "")
 
         try:
-            # LLMService를 통한 인사이트 생성
             result = await self.llm_service.complete_json_async(
                 prompt_name="insight_generation",
                 variables={
@@ -350,23 +246,15 @@ class AnalysisExecutor:
 
             logger.info(f"LLM Insight Generation: {len(result.get('insights', []))} insights generated")
 
-            # LLM 응답을 AnalysisInsight 객체로 변환
             insights = []
             for insight_data in result.get("insights", []):
                 insight = AnalysisInsight(
                     insight_type=insight_data.get("type", "key_finding"),
-                    description=f"{insight_data.get('title', '')}: {insight_data.get('description', '')}",
+                    content=f"{insight_data.get('title', '')}: {insight_data.get('description', '')}",
                     confidence=insight_data.get("confidence", 0.7),
-                    supporting_data=insight_data.get("supporting_evidence", []),
-                    recommendations=insight_data.get("recommendations", [])
+                    supporting_data=insight_data.get("supporting_evidence", {})
                 )
                 insights.append(insight)
-
-            # 전체 평가와 핵심 포인트 저장
-            state["llm_assessment"] = {
-                "overall": result.get("overall_assessment", ""),
-                "key_takeaways": result.get("key_takeaways", [])
-            }
 
             return insights
 
@@ -379,106 +267,71 @@ class AnalysisExecutor:
         raw_analysis = state.get("raw_analysis", {})
         insights = []
 
-        # 주요 발견사항
-        if raw_analysis:
+        # custom 분석 결과 확인
+        if "custom" in raw_analysis and raw_analysis["custom"]["type"] == "rent_increase_analysis":
+            custom = raw_analysis["custom"]
             insights.append(AnalysisInsight(
-                insight_type="key_finding",
-                description="시장 상황이 안정적입니다",
+                insight_type="rent_increase",
+                content=custom.get("assessment", ""),
+                confidence=0.95,
+                supporting_data=custom
+            ))
+
+        # 시장 분석 결과
+        if "market" in raw_analysis and raw_analysis["market"].get("status") == "success":
+            market = raw_analysis["market"]
+            insights.append(AnalysisInsight(
+                insight_type="market_condition",
+                content=f"시장 상황: {market.get('market_conditions', {}).get('overall', 'N/A')}",
                 confidence=0.8,
-                supporting_data=[raw_analysis],
-                recommendations=["현재 시점이 거래에 적합합니다"]
+                supporting_data=market.get("metrics", {})
             ))
 
         return insights
 
     def _market_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
         """시장 분석"""
-        raw_analysis = state.get("raw_analysis", {})
-        insights = []
-
-        market_trend = raw_analysis.get("market_trend", "중립")
-        insights.append(AnalysisInsight(
-            insight_type="market_trend",
-            description=f"시장 트렌드: {market_trend}",
-            confidence=0.75,
-            supporting_data=[{"trend": market_trend}],
-            recommendations=["시장 동향을 지속적으로 모니터링하세요"]
-        ))
-
-        return insights
+        return self._comprehensive_analysis(state)
 
     def _risk_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
         """리스크 분석"""
-        raw_analysis = state.get("raw_analysis", {})
-        insights = []
-
-        risk_level = raw_analysis.get("risk_level", "낮음")
-        risk_factors = raw_analysis.get("risk_factors", [])
-
-        insights.append(AnalysisInsight(
-            insight_type="risk_assessment",
-            description=f"위험도: {risk_level}",
-            confidence=0.85,
-            supporting_data=[{"risk_factors": risk_factors}],
-            recommendations=raw_analysis.get("mitigation", [])
-        ))
-
-        return insights
+        return self._comprehensive_analysis(state)
 
     def _comparison_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
         """비교 분석"""
-        insights = []
-
-        insights.append(AnalysisInsight(
-            insight_type="comparison",
-            description="비교 분석 결과",
-            confidence=0.7,
-            supporting_data=[],
-            recommendations=["더 많은 데이터가 필요합니다"]
-        ))
-
-        return insights
+        return self._comprehensive_analysis(state)
 
     def _calculate_confidence(self, state: AnalysisTeamState) -> float:
         """신뢰도 계산"""
-        # 간단한 신뢰도 계산
         base_confidence = 0.5
 
-        # 데이터 양에 따라 증가
         if state.get("input_data"):
             base_confidence += 0.1 * min(len(state["input_data"]), 3)
 
-        # 분석 성공 여부
         if state.get("analysis_status") == "completed":
             base_confidence += 0.2
 
         return min(base_confidence, 1.0)
 
     async def create_report_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
-        """
-        보고서 생성 노드
-        분석 결과와 인사이트를 종합하여 보고서 생성
-        """
+        """보고서 생성 노드"""
         logger.info("[AnalysisTeam] Creating report")
 
-        state["analysis_progress"] = 0.9
+        state["analysis_progress"] = {"current": "report", "percent": 0.9}
 
-        # 보고서 생성
         report = AnalysisReport(
+            title=f"{state.get('analysis_type', '종합')} 분석 보고서",
             summary=self._generate_summary(state),
             key_findings=self._extract_key_findings(state),
-            metrics=state.get("metrics", []),
+            metrics=state.get("metrics", {}),
             insights=state.get("insights", []),
-            visualizations=[],  # 시각화는 추후 구현
+            visualizations=[],
             recommendations=self._compile_recommendations(state),
             generated_at=datetime.now()
         )
 
         state["report"] = report
-        state["analysis_progress"] = 1.0
-
-        # 데이터 품질 점수
-        state["data_quality_score"] = self._calculate_data_quality(state)
+        state["analysis_progress"] = {"current": "report", "percent": 1.0}
 
         return state
 
@@ -486,7 +339,7 @@ class AnalysisExecutor:
         """요약 생성"""
         analysis_type = state.get("analysis_type", "종합")
         insights_count = len(state.get("insights", []))
-        confidence = state.get("confidence_level", 0)
+        confidence = state.get("confidence_score", 0)
 
         return (f"{analysis_type} 분석을 완료했습니다. "
                 f"{insights_count}개의 주요 인사이트를 도출했으며, "
@@ -498,54 +351,31 @@ class AnalysisExecutor:
 
         for insight in state.get("insights", []):
             if insight.get("confidence", 0) > 0.7:
-                findings.append(insight.get("description", ""))
+                findings.append(insight.get("content", ""))
 
-        # 원시 분석에서 추가 추출
-        raw_analysis = state.get("raw_analysis", {})
-        if "key_points" in raw_analysis:
-            findings.extend(raw_analysis["key_points"])
-
-        return findings[:5]  # 상위 5개만
+        return findings[:5]
 
     def _compile_recommendations(self, state: AnalysisTeamState) -> List[str]:
         """추천사항 종합"""
         recommendations = []
 
-        # 인사이트에서 추천사항 수집
-        for insight in state.get("insights", []):
-            recommendations.extend(insight.get("recommendations", []))
+        # raw_analysis에서 추천사항 추출
+        raw_analysis = state.get("raw_analysis", {})
+        if "custom" in raw_analysis and "recommendation" in raw_analysis["custom"]:
+            recommendations.append(raw_analysis["custom"]["recommendation"])
 
-        # 중복 제거
         return list(set(recommendations))
 
-    def _calculate_data_quality(self, state: AnalysisTeamState) -> float:
-        """데이터 품질 점수 계산"""
-        score = 0.5
-
-        # 입력 데이터 존재
-        if state.get("input_data"):
-            score += 0.2
-
-        # 전처리 완료
-        if state.get("preprocessing_status") == "completed":
-            score += 0.1
-
-        # 분석 완료
-        if state.get("analysis_status") == "completed":
-            score += 0.2
-
-        return min(score, 1.0)
-
     async def finalize_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
-        """
-        최종화 노드
-        상태 정리 및 완료 처리
-        """
+        """최종화 노드"""
         logger.info("[AnalysisTeam] Finalizing")
 
         state["end_time"] = datetime.now()
 
-        # 상태 결정
+        # Calculate analysis time
+        if state["start_time"] and state["end_time"]:
+            state["analysis_time"] = (state["end_time"] - state["start_time"]).total_seconds()
+
         if state.get("error"):
             state["status"] = "failed"
         elif state.get("report"):
@@ -562,26 +392,15 @@ class AnalysisExecutor:
         analysis_type: str = "comprehensive",
         input_data: Optional[Dict] = None
     ) -> AnalysisTeamState:
-        """
-        AnalysisTeam 실행
-
-        Args:
-            shared_state: 공유 상태
-            analysis_type: 분석 타입
-            input_data: 입력 데이터
-
-        Returns:
-            분석 팀 상태
-        """
+        """AnalysisTeam 실행"""
         # 입력 데이터 준비
         analysis_inputs = []
         if input_data:
             for source, data in input_data.items():
                 analysis_inputs.append(AnalysisInput(
                     data_source=source,
-                    data_type="mixed",
-                    raw_data=data,
-                    preprocessing_required=False
+                    data=data,
+                    metadata={}
                 ))
 
         # 초기 상태 생성
@@ -591,20 +410,17 @@ class AnalysisExecutor:
             shared_context=shared_state,
             analysis_type=analysis_type,
             input_data=analysis_inputs,
-            analysis_params={},
-            preprocessing_status=None,
-            preprocessed_data=None,
-            analysis_status="",
-            analysis_progress=0.0,
-            raw_analysis=None,
-            metrics=[],
+            raw_analysis={},
+            metrics={},
             insights=[],
-            report=None,
-            analysis_method="",
-            confidence_level=0.0,
-            data_quality_score=0.0,
+            report={},
+            visualization_data=None,
+            recommendations=[],
+            confidence_score=0.0,
+            analysis_progress={"current": "init", "percent": 0.0},
             start_time=None,
             end_time=None,
+            analysis_time=None,
             error=None
         )
 
@@ -617,52 +433,3 @@ class AnalysisExecutor:
             initial_state["status"] = "failed"
             initial_state["error"] = str(e)
             return initial_state
-
-
-# 테스트 코드
-if __name__ == "__main__":
-    async def test_analysis_team():
-        from app.service_agent.foundation.separated_states import StateManager
-
-        # AnalysisTeam 초기화
-        analysis_team = AnalysisTeamSupervisor()
-
-        # 테스트 케이스
-        test_cases = [
-            ("comprehensive", {"search_results": {"laws": ["법률1", "법률2"]}}),
-            ("market", {"market_data": {"price": "5억", "trend": "상승"}}),
-            ("risk", {"risk_data": {"factors": ["금리", "공급"]}})
-        ]
-
-        for analysis_type, input_data in test_cases:
-            print(f"\n{'='*60}")
-            print(f"Analysis Type: {analysis_type}")
-            print(f"Input Data: {input_data}")
-            print("-"*60)
-
-            # 공유 상태 생성
-            shared_state = StateManager.create_shared_state(
-                query=f"{analysis_type} 분석해주세요",
-                session_id="test_analysis"
-            )
-
-            # AnalysisTeam 실행
-            result = await analysis_team.execute(
-                shared_state,
-                analysis_type=analysis_type,
-                input_data=input_data
-            )
-
-            print(f"Status: {result['status']}")
-            print(f"Progress: {result.get('analysis_progress', 0)*100:.0f}%")
-            print(f"Confidence: {result.get('confidence_level', 0)*100:.0f}%")
-
-            if result.get("report"):
-                report = result["report"]
-                print(f"\n[Report Summary]")
-                print(report.get("summary"))
-                print(f"Key Findings: {len(report.get('key_findings', []))}")
-                print(f"Recommendations: {len(report.get('recommendations', []))}")
-
-    import asyncio
-    asyncio.run(test_analysis_team())

@@ -210,6 +210,7 @@ class AnalysisTeamState(TypedDict):
     input_data: Dict[str, Any]
 
     # Analysis results
+    raw_analysis: Dict[str, Any]  # Raw analysis results from analysis_tools
     metrics: Dict[str, float]
     insights: List[str]
     report: Dict[str, Any]
