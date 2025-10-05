@@ -2,6 +2,8 @@
 Analysis Tools for AnalysisAgent
 =================================
 Provides various analysis capabilities for real estate data
+
+This file maintains compatibility with existing code while also supporting new tools.
 """
 
 from typing import Dict, Any, List, Optional
@@ -9,6 +11,13 @@ import logging
 from datetime import datetime
 import statistics
 import random
+
+# Import new analysis tools for enhanced functionality
+from .contract_analysis_tool import ContractAnalysisTool
+from .market_analysis_tool import MarketAnalysisTool as NewMarketAnalysisTool
+from .roi_calculator_tool import ROICalculatorTool
+from .loan_simulator_tool import LoanSimulatorTool
+from .policy_matcher_tool import PolicyMatcherTool
 
 logger = logging.getLogger(__name__)
 

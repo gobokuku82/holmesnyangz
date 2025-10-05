@@ -26,6 +26,15 @@ from app.service_agent.foundation.separated_states import (
 )
 from app.service_agent.llm_manager import LLMService
 
+# Import analysis tools
+from app.service_agent.tools import (
+    ContractAnalysisTool,
+    MarketAnalysisTool,
+    ROICalculatorTool,
+    LoanSimulatorTool,
+    PolicyMatcherTool
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,12 +50,23 @@ class AnalysisExecutor:
         self.llm_service = LLMService(llm_context=llm_context) if llm_context else None
         self.team_name = "analysis"
 
+        # 분석 도구 초기화
+        self.contract_tool = ContractAnalysisTool(llm_service=self.llm_service)
+        self.market_tool = MarketAnalysisTool(llm_service=self.llm_service)
+        self.roi_tool = ROICalculatorTool()
+        self.loan_tool = LoanSimulatorTool()
+        self.policy_tool = PolicyMatcherTool()
+
         # 분석 메서드 매핑
         self.analysis_methods = {
             "comprehensive": self._comprehensive_analysis,
             "market": self._market_analysis,
             "risk": self._risk_analysis,
-            "comparison": self._comparison_analysis
+            "comparison": self._comparison_analysis,
+            "contract": self._contract_analysis,
+            "investment": self._investment_analysis,
+            "loan": self._loan_analysis,
+            "policy": self._policy_analysis
         }
 
         # 서브그래프 구성
@@ -114,39 +134,72 @@ class AnalysisExecutor:
     async def analyze_data_node(self, state: AnalysisTeamState) -> AnalysisTeamState:
         """
         실제 데이터 분석 노드
-        analysis_tools를 사용하여 실제 분석 수행
+        새로운 analysis tools를 사용하여 실제 분석 수행
         """
-        logger.info("[AnalysisTeam] Analyzing data with analysis_tools")
+        logger.info("[AnalysisTeam] Analyzing data with new analysis tools")
 
         state["analysis_status"] = "analyzing"
         state["analysis_progress"] = {"current": "analyze", "percent": 0.3}
 
         try:
-            from app.service_agent.tools.analysis_tools import (
-                MarketAnalyzer, TrendAnalyzer, RiskAssessor
-            )
-
             preprocessed_data = state.get("preprocessed_data", {})
             query = state.get("shared_context", {}).get("query", "")
+            analysis_type = state.get("analysis_type", "comprehensive")
 
             results = {}
 
-            # 1. 시장 분석
-            market_analyzer = MarketAnalyzer()
-            results["market"] = await market_analyzer.execute(preprocessed_data)
-            logger.info("[AnalysisTools] Market analysis completed")
+            # 분석 유형에 따라 적절한 도구 사용
+            if analysis_type == "market" or "시세" in query or "가격" in query:
+                # 시장 분석
+                property_data = self._extract_property_data(preprocessed_data, query)
+                market_data = preprocessed_data.get("real_estate_search", {})
+                results["market"] = await self.market_tool.execute(
+                    property_data=property_data,
+                    market_data=market_data
+                )
+                logger.info("[AnalysisTools] Market analysis completed")
 
-            # 2. 트렌드 분석
-            trend_analyzer = TrendAnalyzer()
-            results["trend"] = await trend_analyzer.execute(preprocessed_data)
-            logger.info("[AnalysisTools] Trend analysis completed")
+            if analysis_type == "contract" or "계약" in query:
+                # 계약서 분석
+                contract_text = preprocessed_data.get("contract", "")
+                legal_refs = preprocessed_data.get("legal_search", [])
+                if contract_text:
+                    results["contract"] = await self.contract_tool.execute(
+                        contract_text=contract_text,
+                        legal_references=legal_refs
+                    )
+                    logger.info("[AnalysisTools] Contract analysis completed")
 
-            # 3. 리스크 평가
-            risk_assessor = RiskAssessor()
-            results["risk"] = await risk_assessor.execute(preprocessed_data)
-            logger.info("[AnalysisTools] Risk assessment completed")
+            if analysis_type == "investment" or "투자" in query or "수익" in query:
+                # ROI 계산
+                property_price = self._extract_price(preprocessed_data, query)
+                if property_price:
+                    results["roi"] = await self.roi_tool.execute(
+                        property_price=property_price,
+                        monthly_rent=self._extract_rent(preprocessed_data, query)
+                    )
+                    logger.info("[AnalysisTools] ROI calculation completed")
 
-            # 4. 맞춤 분석 (전세금 인상률 등)
+            if analysis_type == "loan" or "대출" in query:
+                # 대출 시뮬레이션
+                property_price = self._extract_price(preprocessed_data, query)
+                income = self._extract_income(preprocessed_data, query)
+                if property_price and income:
+                    results["loan"] = await self.loan_tool.execute(
+                        property_price=property_price,
+                        annual_income=income
+                    )
+                    logger.info("[AnalysisTools] Loan simulation completed")
+
+            if analysis_type == "policy" or "정책" in query or "지원" in query:
+                # 정책 매칭
+                user_profile = self._extract_user_profile(preprocessed_data, query)
+                results["policy"] = await self.policy_tool.execute(
+                    user_profile=user_profile
+                )
+                logger.info("[AnalysisTools] Policy matching completed")
+
+            # 맞춤 분석 (전세금 인상률 등)
             results["custom"] = self._perform_custom_analysis(query, preprocessed_data)
             if results["custom"]["type"] != "general":
                 logger.info(f"[CustomAnalysis] {results['custom']['type']} performed")
@@ -162,6 +215,74 @@ class AnalysisExecutor:
             state["error"] = str(e)
 
         return state
+
+    def _extract_property_data(self, data: Dict, query: str) -> Dict:
+        """부동산 데이터 추출"""
+        property_data = {
+            "address": data.get("address", ""),
+            "type": "apartment",
+            "size": 84.5,
+            "price": 0
+        }
+
+        # 쿼리에서 지역 추출
+        if "강남" in query:
+            property_data["address"] = "서울시 강남구"
+        elif "서초" in query:
+            property_data["address"] = "서울시 서초구"
+
+        # 데이터에서 가격 정보 추출
+        if "real_estate_search" in data:
+            prices = data["real_estate_search"].get("results", [])
+            if prices:
+                property_data["price"] = prices[0].get("price", 0)
+
+        return property_data
+
+    def _extract_price(self, data: Dict, query: str) -> float:
+        """가격 정보 추출"""
+        # 쿼리에서 금액 추출
+        amounts = re.findall(r'(\d+)억', query)
+        if amounts:
+            return float(amounts[0]) * 100000000
+
+        # 데이터에서 추출
+        if "real_estate_search" in data:
+            results = data["real_estate_search"].get("results", [])
+            if results:
+                return results[0].get("price", 0)
+
+        return 0
+
+    def _extract_rent(self, data: Dict, query: str) -> float:
+        """월세 정보 추출"""
+        # 쿼리에서 월세 추출
+        rents = re.findall(r'월세.*?(\d+)만', query)
+        if rents:
+            return float(rents[0]) * 10000
+        return 0
+
+    def _extract_income(self, data: Dict, query: str) -> float:
+        """소득 정보 추출"""
+        # 기본값
+        return 100000000  # 1억
+
+    def _extract_user_profile(self, data: Dict, query: str) -> Dict:
+        """사용자 프로필 추출"""
+        profile = {
+            "age": 32,
+            "annual_income": 60000000,
+            "has_house": False,
+            "region": "서울"
+        }
+
+        # 쿼리에서 정보 추출
+        if "청년" in query:
+            profile["age"] = 28
+        elif "신혼" in query:
+            profile["marriage_years"] = 2
+
+        return profile
 
     def _perform_custom_analysis(self, query: str, data: Dict) -> Dict:
         """쿼리 기반 맞춤 분석"""
@@ -300,6 +421,115 @@ class AnalysisExecutor:
     def _comparison_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
         """비교 분석"""
         return self._comprehensive_analysis(state)
+
+    def _contract_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
+        """계약서 분석"""
+        raw_analysis = state.get("raw_analysis", {})
+        insights = []
+
+        if "contract" in raw_analysis and raw_analysis["contract"].get("status") == "success":
+            contract = raw_analysis["contract"]
+
+            # 위험 요소
+            for risk in contract.get("risks", [])[:3]:
+                insights.append(AnalysisInsight(
+                    insight_type="contract_risk",
+                    content=f"{risk.get('keyword', '')}: {risk.get('suggestion', '')}",
+                    confidence=0.85,
+                    supporting_data=risk
+                ))
+
+            # 추천사항
+            for rec in contract.get("recommendations", [])[:2]:
+                insights.append(AnalysisInsight(
+                    insight_type="recommendation",
+                    content=rec.get("detail", ""),
+                    confidence=0.8,
+                    supporting_data=rec
+                ))
+
+        return insights
+
+    def _investment_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
+        """투자 분석"""
+        raw_analysis = state.get("raw_analysis", {})
+        insights = []
+
+        if "roi" in raw_analysis and raw_analysis["roi"].get("status") == "success":
+            roi = raw_analysis["roi"]
+            metrics = roi.get("roi_metrics", {})
+
+            insights.append(AnalysisInsight(
+                insight_type="roi_analysis",
+                content=f"투자수익률 {metrics.get('roi_percentage', 0)}%, 연평균 {metrics.get('annual_return', 0)}%",
+                confidence=0.9,
+                supporting_data=metrics
+            ))
+
+            evaluation = roi.get("evaluation", {})
+            insights.append(AnalysisInsight(
+                insight_type="investment_grade",
+                content=f"{evaluation.get('grade', '')}: {evaluation.get('recommendation', '')}",
+                confidence=0.85,
+                supporting_data=evaluation
+            ))
+
+        return insights
+
+    def _loan_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
+        """대출 분석"""
+        raw_analysis = state.get("raw_analysis", {})
+        insights = []
+
+        if "loan" in raw_analysis and raw_analysis["loan"].get("status") == "success":
+            loan = raw_analysis["loan"]
+            max_loan = loan.get("max_loan", {})
+
+            insights.append(AnalysisInsight(
+                insight_type="loan_limit",
+                content=f"최대 대출 한도: {max_loan.get('loan_amount', 0)/100000000:.1f}억 (LTV {max_loan.get('ltv_ratio', 0)}%)",
+                confidence=0.9,
+                supporting_data=max_loan
+            ))
+
+            repayment = loan.get("repayment_plan", {})
+            insights.append(AnalysisInsight(
+                insight_type="repayment",
+                content=f"월 상환액: {repayment.get('monthly_payment', 0)/10000:.0f}만원 (소득 대비 {repayment.get('payment_burden_pct', 0)}%)",
+                confidence=0.85,
+                supporting_data=repayment
+            ))
+
+        return insights
+
+    def _policy_analysis(self, state: AnalysisTeamState) -> List[AnalysisInsight]:
+        """정책 분석"""
+        raw_analysis = state.get("raw_analysis", {})
+        insights = []
+
+        if "policy" in raw_analysis and raw_analysis["policy"].get("status") == "success":
+            policy = raw_analysis["policy"]
+
+            # 상위 3개 정책
+            for p in policy.get("matched_policies", [])[:3]:
+                insights.append(AnalysisInsight(
+                    insight_type="policy_match",
+                    content=f"{p.get('name', '')}: {p.get('priority_reason', '')}",
+                    confidence=p.get("match_score", 50) / 100,
+                    supporting_data=p
+                ))
+
+            # 총 혜택
+            benefits = policy.get("benefit_summary", {})
+            if benefits.get("max_loan_amount"):
+                insights.append(AnalysisInsight(
+                    insight_type="total_benefit",
+                    content=f"최대 대출 {benefits['max_loan_amount']/100000000:.1f}억, 최저금리 {benefits.get('min_interest_rate', 0)}%",
+                    confidence=0.8,
+                    supporting_data=benefits
+                ))
+
+        return insights
 
     def _calculate_confidence(self, state: AnalysisTeamState) -> float:
         """신뢰도 계산"""

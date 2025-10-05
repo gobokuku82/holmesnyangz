@@ -60,9 +60,15 @@ class AgentAdapter:
             capabilities = AgentCapabilities(
                 name="analysis_team",
                 description="수집된 데이터를 분석하고 보고서를 생성하는 팀",
-                input_types=["collected_data", "analysis_type"],
-                output_types=["report", "insights", "recommendations"],
-                required_tools=["analysis_tools"],
+                input_types=["collected_data", "analysis_type", "property_data", "user_profile"],
+                output_types=["report", "insights", "recommendations", "roi_metrics", "risk_assessment"],
+                required_tools=[
+                    "contract_analysis_tool",
+                    "market_analysis_tool",
+                    "roi_calculator_tool",
+                    "loan_simulator_tool",
+                    "policy_matcher_tool"
+                ],
                 team="analysis"
             )
 
