@@ -209,8 +209,19 @@ class TeamBasedSupervisor:
 
     def _get_team_for_agent(self, agent_name: str) -> str:
         """Agent가 속한 팀 찾기"""
-        from app.service_agent.foundation.agent_adapter import AgentAdapter
+        # 팀 이름 매핑 (agent_selection.txt에서 사용하는 이름들)
+        team_name_mapping = {
+            "search_team": "search",
+            "analysis_team": "analysis",
+            "document_team": "document"
+        }
 
+        # 이미 팀 이름인 경우 바로 매핑
+        if agent_name in team_name_mapping:
+            return team_name_mapping[agent_name]
+
+        # Agent 이름인 경우 기존 로직 사용
+        from app.service_agent.foundation.agent_adapter import AgentAdapter
         dependencies = AgentAdapter.get_agent_dependencies(agent_name)
         return dependencies.get("team", "search")
 

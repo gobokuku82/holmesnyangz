@@ -164,23 +164,25 @@ sub_intents 필드에 부가적인 의도들도 함께 기록해주세요.
 
 ## 응답 형식 (JSON 형식으로 응답):
 
-{{
+```json
+{
     "intent": "LEGAL_CONSULT",
     "confidence": 0.9,
     "keywords": ["전세금", "인상", "제한"],
     "sub_intents": [],
     "is_compound": false,
     "decomposed_tasks": [],
-    "entities": {{
+    "entities": {
         "location": "강남구",
         "price": "5억",
         "contract_type": "전세",
         "date": "2024년",
         "area": "84㎡",
         "action_verbs": ["확인", "검토"]
-    }},
+    },
     "reasoning": "전세금 인상에 대한 법률 질문이므로 LEGAL_CONSULT로 분류"
-}}
+}
+```
 
 응답 규칙:
 - intent: 위 9개 카테고리 중 하나 (대문자_언더스코어 형식)

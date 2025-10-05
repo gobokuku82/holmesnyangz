@@ -16,6 +16,8 @@
 - 불확실 → search_team + analysis_team
 
 ## 응답 (JSON만)
-{{
+```json
+{
     "agents": ["팀이름1", "팀이름2"]
-}}
+}
+```

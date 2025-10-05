@@ -1,8 +1,8 @@
 {
   "test_metadata": {
     "phase": "Phase 1 - Query Decomposition Test",
-    "date": "2025-10-05T14:44:08.457104",
-    "total_tests": 30
+    "date": "2025-10-05T16:06:21.011449",
+    "total_tests": 40
   },
   "results": [
     {
@@ -11,19 +11,20 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:39:42.135553",
+      "timestamp": "2025-10-05T15:54:40.963942",
       "intent_analysis": {
         "intent_type": "법률상담",
         "confidence": 0.9,
         "keywords": [
           "전세금",
           "인상",
-          "제한"
+          "제한",
+          "법률"
         ],
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "전세금 인상 제한에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 전세금 인상 제한에 대한 질문. 2단계(유형): 정보 확인형 - 법률적 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 전세금 인상 제한에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -53,7 +54,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.975038,
+      "execution_time": 9.070611,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -68,7 +69,7 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:39:47.110591",
+      "timestamp": "2025-10-05T15:54:50.034553",
       "intent_analysis": {
         "intent_type": "시세조회",
         "confidence": 0.95,
@@ -81,7 +82,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 '강남구 아파트 전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회만 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -111,7 +112,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.150666,
+      "execution_time": 9.687455,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -126,7 +127,7 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:39:51.261869",
+      "timestamp": "2025-10-05T15:54:59.723092",
       "intent_analysis": {
         "intent_type": "대출상담",
         "confidence": 0.9,
@@ -138,7 +139,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "전세자금대출 한도에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 전세자금대출 한도에 대한 질문. 2단계(유형): 정보 확인형 - 대출 한도에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -173,7 +174,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.770339,
+      "execution_time": 8.697732,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -188,7 +189,7 @@
       "category": "문서작성",
       "expected_intent": "CONTRACT_CREATION",
       "expected_agent": "document_team",
-      "timestamp": "2025-10-05T14:39:56.032208",
+      "timestamp": "2025-10-05T15:55:08.420824",
       "intent_analysis": {
         "intent_type": "계약서작성",
         "confidence": 0.95,
@@ -199,7 +200,7 @@
         "suggested_agents": [
           "document_team"
         ],
-        "reasoning": "임대차계약서 작성 요청이므로 CONTRACT_CREATION으로 분류",
+        "reasoning": "1단계(구조): 단순 요청으로 임대차계약서 작성 요청 포함. 2단계(유형): 계약서 작성 요청형 - 단순 정보가 아닌 문서 생성 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 문서 생성 에이전트 호출 필요. 5단계(검증): 요청이 명확하므로 CONTRACT_CREATION으로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -229,7 +230,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.200301,
+      "execution_time": 15.406662,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -244,7 +245,7 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:00.232509",
+      "timestamp": "2025-10-05T15:55:23.827486",
       "intent_analysis": {
         "intent_type": "법률상담",
         "confidence": 0.9,
@@ -254,9 +255,10 @@
           "거부"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "계약 갱신 거부에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 계약 갱신 거부 가능성에 대한 질문. 2단계(유형): 정보 확인형 - 법률적 규정 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 계약 갱신 거부 가능성에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -276,17 +278,22 @@
       },
       "execution_plan": {
         "strategy": "sequential",
-        "num_steps": 1,
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
             "priority": 0,
             "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
           }
         ],
         "estimated_time": 30
       },
-      "execution_time": 5.226294,
+      "execution_time": 9.459629,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -301,10 +308,10 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:05.459734",
+      "timestamp": "2025-10-05T15:55:33.288027",
       "intent_analysis": {
         "intent_type": "시세조회",
-        "confidence": 0.9,
+        "confidence": 0.95,
         "keywords": [
           "서초구",
           "아파트",
@@ -314,7 +321,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "서초구 아파트 매매 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로, 서초구 아파트 매매 시세에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만 필요. 5단계(검증): 단순 시세 조회이므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -344,7 +351,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 5.439812,
+      "execution_time": 7.947077,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -359,10 +366,10 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:10.899546",
+      "timestamp": "2025-10-05T15:55:41.235104",
       "intent_analysis": {
         "intent_type": "대출상담",
-        "confidence": 0.8,
+        "confidence": 0.9,
         "keywords": [
           "LTV",
           "비율"
@@ -371,7 +378,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "LTV 비율에 대한 질문이므로 LOAN_CONSULT로 분류하였으며, 금융 관련 정보 요청이므로 확신도가 높음.",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 LTV 비율에 대한 정의를 묻고 있음. 2단계(유형): 정보 확인형 - LTV 비율에 대한 사실 확인이 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -406,7 +413,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.696759,
+      "execution_time": 9.048874,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -421,10 +428,10 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:15.597285",
+      "timestamp": "2025-10-05T15:55:50.283978",
       "intent_analysis": {
-        "intent_type": "unclear",
-        "confidence": 0.4,
+        "intent_type": "법률상담",
+        "confidence": 0.85,
         "keywords": [
           "보증금",
           "반환",
@@ -436,23 +443,23 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "질문이 구체적인 정보나 요청을 포함하지 않아 의도를 명확히 파악하기 어려움. 추가 질문이 필요함.",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 보증금 반환 보증 가입 방법에 대한 질문. 2단계(유형): 정보 확인형 - 가입 방법에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 보증금 반환 보증 가입 방법에 대한 정보 검색 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
-        "is_compound": false,
+        "is_compound": true,
         "num_tasks": 1,
-        "execution_mode": "sequential",
+        "execution_mode": "parallel",
         "tasks": [
           {
-            "description": "보증금 반환 보증 가입 방법은?",
+            "description": "보증금 반환 보증 가입 방법에 대한 정보 조회",
             "type": "search",
             "agent_team": "search_team",
             "dependencies": []
           }
         ],
-        "confidence": 1.0,
-        "reasoning": "Simple query - no decomposition needed"
+        "confidence": 0.8,
+        "reasoning": "단일 정보 조회 요청으로 분해 불필요"
       },
       "execution_plan": {
         "strategy": "sequential",
@@ -471,11 +478,11 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.762482,
+      "execution_time": 12.013422,
       "validation": {
         "intent_match": false,
         "agent_match": true,
-        "decomposition_correct": true,
+        "decomposition_correct": false,
         "overall": false
       },
       "status": "success"
@@ -486,7 +493,7 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:20.360758",
+      "timestamp": "2025-10-05T15:56:02.297400",
       "intent_analysis": {
         "intent_type": "시세조회",
         "confidence": 0.95,
@@ -499,7 +506,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "송파구 아파트 가격 동향에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 가격 동향에 대한 질문. 2단계(유형): 정보 확인형 - 가격 동향에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 가격 동향 요청이므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -529,7 +536,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.9642,
+      "execution_time": 7.712759,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -544,7 +551,7 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:25.324958",
+      "timestamp": "2025-10-05T15:56:10.010159",
       "intent_analysis": {
         "intent_type": "대출상담",
         "confidence": 0.9,
@@ -557,7 +564,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "주택담보대출 금리에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 금리 비교에 대한 질문. 2단계(유형): 정보 확인형 - 금리 정보를 확인하는 것이므로 검색만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 금리 정보 검색 필요. 5단계(검증): 단순 금리 비교 요청이므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -592,7 +599,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.780914,
+      "execution_time": 8.810367,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -607,7 +614,7 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:30.106865",
+      "timestamp": "2025-10-05T15:56:18.821425",
       "intent_analysis": {
         "intent_type": "법률상담",
         "confidence": 0.9,
@@ -617,9 +624,10 @@
           "대상"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "임대차보호법의 적용 대상에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로, 임대차보호법의 적용 대상을 묻고 있음. 2단계(유형): 정보 확인형 - 법률에 대한 사실 확인이 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -639,17 +647,22 @@
       },
       "execution_plan": {
         "strategy": "sequential",
-        "num_steps": 1,
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
             "priority": 0,
             "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
           }
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.360964,
+      "execution_time": 15.252895,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -664,10 +677,10 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:34.468831",
+      "timestamp": "2025-10-05T15:56:34.074320",
       "intent_analysis": {
         "intent_type": "시세조회",
-        "confidence": 0.9,
+        "confidence": 0.95,
         "keywords": [
           "마포구",
           "오피스텔",
@@ -677,7 +690,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "마포구 오피스텔 전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 '전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -707,7 +720,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.939532,
+      "execution_time": 7.578978,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -722,10 +735,10 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:39.408363",
+      "timestamp": "2025-10-05T15:56:41.653298",
       "intent_analysis": {
         "intent_type": "대출상담",
-        "confidence": 0.8,
+        "confidence": 0.9,
         "keywords": [
           "DSR",
           "규제"
@@ -734,7 +747,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "DSR(총부채상환비율) 규제에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 DSR 규제에 대한 설명을 요구. 2단계(유형): 정보 확인형 - DSR 규제에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -769,7 +782,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 5.166412,
+      "execution_time": 16.794064,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -784,19 +797,20 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:44.574775",
+      "timestamp": "2025-10-05T15:56:58.448284",
       "intent_analysis": {
         "intent_type": "법률상담",
-        "confidence": 0.8,
+        "confidence": 0.9,
         "keywords": [
           "묵시적",
           "갱신",
           "임대차"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "묵시적 갱신에 대한 법률적 질문이므로 LEGAL_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 묵시적 갱신의 정의를 묻고 있음. 2단계(유형): 정보 확인형 - 사실 확인만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 관련 정보 검색만 필요. 5단계(검증): 묵시적 갱신에 대한 정의를 제공하면 충분하므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -816,17 +830,22 @@
       },
       "execution_plan": {
         "strategy": "sequential",
-        "num_steps": 1,
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
             "priority": 0,
             "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
           }
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.454891,
+      "execution_time": 8.293118,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -841,7 +860,7 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:49.030664",
+      "timestamp": "2025-10-05T15:57:06.741402",
       "intent_analysis": {
         "intent_type": "시세조회",
         "confidence": 0.95,
@@ -854,7 +873,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "용산구 아파트의 실거래가를 조회하는 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 '실거래가 조회' 포함. 2단계(유형): 정보 확인형 - 실거래가에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 요청이므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -884,7 +903,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 5.685061,
+      "execution_time": 8.763684,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -899,10 +918,10 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:54.716724",
+      "timestamp": "2025-10-05T15:57:15.507087",
       "intent_analysis": {
         "intent_type": "대출상담",
-        "confidence": 0.8,
+        "confidence": 0.9,
         "keywords": [
           "신혼부부",
           "특례",
@@ -913,7 +932,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "신혼부부 특례 대출의 조건에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 '신혼부부 특례 대출 조건'에 대한 질문. 2단계(유형): 정보 확인형 - 대출 조건에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 조건에 대한 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -948,7 +967,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.731202,
+      "execution_time": 8.334501,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -963,7 +982,7 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:40:59.448932",
+      "timestamp": "2025-10-05T15:57:23.841588",
       "intent_analysis": {
         "intent_type": "법률상담",
         "confidence": 0.85,
@@ -973,9 +992,10 @@
           "가능"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "계약금 환불에 대한 법률적 질문이므로 LEGAL_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 계약금 환불 가능성에 대한 질문. 2단계(유형): 정보 확인형 - 계약금 환불 가능 여부 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 계약금 환불에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -995,17 +1015,22 @@
       },
       "execution_plan": {
         "strategy": "sequential",
-        "num_steps": 1,
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
             "priority": 0,
             "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
           }
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.757311,
+      "execution_time": 8.10055,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -1020,7 +1045,7 @@
       "category": "시세",
       "expected_intent": "MARKET_INQUIRY",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:41:04.207334",
+      "timestamp": "2025-10-05T15:57:31.942138",
       "intent_analysis": {
         "intent_type": "시세조회",
         "confidence": 0.95,
@@ -1033,7 +1058,7 @@
         "suggested_agents": [
           "search_team"
         ],
-        "reasoning": "성동구 빌라의 전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 '전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회만 필요. 5단계(검증): 단순 시세 요청이므로 MARKET_INQUIRY로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -1063,7 +1088,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.926838,
+      "execution_time": 6.261,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -1078,7 +1103,7 @@
       "category": "대출",
       "expected_intent": "LOAN_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:41:09.134172",
+      "timestamp": "2025-10-05T15:57:38.203138",
       "intent_analysis": {
         "intent_type": "대출상담",
         "confidence": 0.9,
@@ -1093,7 +1118,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "생애최초 주택 구매 대출 한도에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 대출 한도에 대한 질문. 2단계(유형): 정보 확인형 - 대출 한도에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 한도에 대한 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -1128,7 +1153,7 @@
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.901,
+      "execution_time": 8.780564,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -1143,19 +1168,18 @@
       "category": "법률",
       "expected_intent": "LEGAL_CONSULT",
       "expected_agent": "search_team",
-      "timestamp": "2025-10-05T14:41:14.035172",
+      "timestamp": "2025-10-05T15:57:46.983702",
       "intent_analysis": {
-        "intent_type": "unclear",
-        "confidence": 0.4,
+        "intent_type": "법률상담",
+        "confidence": 0.8,
         "keywords": [
           "전입신고",
           "기간"
         ],
         "suggested_agents": [
-          "search_team",
-          "analysis_team"
+          "search_team"
         ],
-        "reasoning": "전입신고 기간에 대한 질문이지만, 부동산 관련 정보인지 명확하지 않아 UNCLEAR로 분류",
+        "reasoning": "1단계(구조): 단순 정보 요청으로 전입신고 기간에 대한 질문. 2단계(유형): 정보 확인형 - 사실 확인만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.",
         "fallback": false
       },
       "decomposition": {
@@ -1175,22 +1199,17 @@
       },
       "execution_plan": {
         "strategy": "sequential",
-        "num_steps": 2,
+        "num_steps": 1,
         "steps": [
           {
             "agent": "search_team",
             "priority": 0,
             "dependencies": []
-          },
-          {
-            "agent": "analysis_team",
-            "priority": 1,
-            "dependencies": []
           }
         ],
         "estimated_time": 30
       },
-      "execution_time": 4.26728,
+      "execution_time": 6.06035,
       "validation": {
         "intent_match": false,
         "agent_match": true,
@@ -1210,10 +1229,10 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:41:18.304451",
+      "timestamp": "2025-10-05T15:57:53.047050",
       "intent_analysis": {
         "intent_type": "시세조회",
-        "confidence": 0.9,
+        "confidence": 0.85,
         "keywords": [
           "강남구",
           "아파트",
@@ -1225,7 +1244,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "강남구 아파트 시세 확인이 주된 의도이며, 대출 가능 금액 계산이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+        "reasoning": "1단계(구조): 두 개의 요청(시세 확인 + 대출 가능 금액 계산) 포함. 2단계(유형): 정보 확인형(시세) + 대출 관련 정보 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 대출 가능 금액 계산을 위한 검색 필요. 5단계(검증): 두 가지 요청이 명확하므로 복합 질문으로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -1285,7 +1304,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 21.525254,
+      "execution_time": 26.806415,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1305,9 +1324,9 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:41:39.829705",
+      "timestamp": "2025-10-05T15:58:19.853465",
       "intent_analysis": {
-        "intent_type": "시세조회",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "서초동",
@@ -1317,52 +1336,79 @@
           "주의사항"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "전세 시세에 대한 질문이 주된 의도이며, 법적 주의사항에 대한 요청이 부가적으로 포함되어 있어 MARKET_INQUIRY로 분류하였고, LEGAL_CONSULT을 sub_intent로 추가함."
+        "reasoning": "1단계(구조): 두 개의 요청(전세 시세 + 법적 주의사항). 2단계(유형): 정보 확인형(시세) + 평가/판단형(법적 주의사항). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 법적 주의사항 확인이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류."
       },
       "decomposition": {
-        "is_compound": false,
-        "num_tasks": 1,
-        "execution_mode": "sequential",
-        "parallel_groups": [],
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "parallel",
+        "parallel_groups": [
+          [
+            "task_0",
+            "task_1"
+          ]
+        ],
         "tasks": [
           {
             "id": "task_0",
-            "description": "서초동 전세 시세 알려주고 법적 주의사항도 알려줘",
+            "description": "서초동 전세 시세 조회",
             "type": "search",
             "agent_team": "search_team",
             "priority": 1,
             "dependencies": [],
-            "estimated_time": 0.0
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "전세 계약 관련 법적 주의사항 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 15
           }
         ],
-        "total_estimated_time": 30.0,
-        "confidence": 1.0,
-        "reasoning": "Simple query - no decomposition needed"
+        "total_estimated_time": 20,
+        "confidence": 0.8,
+        "reasoning": "전세 시세 조회와 법적 주의사항 조회는 독립적이므로 병렬 처리 가능"
       },
       "comprehensive_plan": {
-        "strategy": "sequential",
-        "num_steps": 1,
+        "strategy": "parallel",
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
-            "priority": 0,
+            "priority": 1,
             "dependencies": [],
-            "timeout": 30
+            "timeout": 20
+          },
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 15
           }
         ],
-        "estimated_time": 30,
-        "parallel_groups": [],
+        "estimated_time": 20,
+        "parallel_groups": [
+          [
+            "search_team"
+          ]
+        ],
         "metadata": {
-          "created_by": "PlanningAgent"
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 13.518164,
+      "execution_time": 23.3338,
       "validation": {
         "intent_match": false,
-        "decomposition_match": false,
-        "task_count_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
         "agents_match": true,
         "overall": false
       },
@@ -1379,10 +1425,10 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:41:53.347869",
+      "timestamp": "2025-10-05T15:58:43.187265",
       "intent_analysis": {
         "intent_type": "계약서검토",
-        "confidence": 0.9,
+        "confidence": 0.85,
         "keywords": [
           "계약서",
           "검토",
@@ -1393,7 +1439,7 @@
           "document_team",
           "analysis_team"
         ],
-        "reasoning": "계약서 검토와 위험 요소 분석 요청이 포함되어 있어 CONTRACT_REVIEW가 주 의도이며, 위험 분석이 부가적인 의도로 판단됨."
+        "reasoning": "1단계(구조): 계약서 검토 요청과 위험 요소 분석 요청이 포함됨. 2단계(유형): 계약서 검토와 위험 분석이 모두 포함되어 있어 평가/판단형과 해결책 요청형의 복합 요청. 3단계(복잡도): 고 - 두 가지 작업이 동시에 요구됨. 4단계(처리): 계약서 검토와 위험 요소 분석이 필요함. 5단계(검증): 단순 계약서 검토만으로는 부족하므로 RISK_ANALYSIS도 포함되어야 함."
       },
       "decomposition": {
         "is_compound": true,
@@ -1453,7 +1499,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 17.223466,
+      "execution_time": 18.885025,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1474,9 +1520,9 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:42:10.571335",
+      "timestamp": "2025-10-05T15:59:02.072290",
       "intent_analysis": {
-        "intent_type": "시세조회",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "송파구",
@@ -1489,7 +1535,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "주된 의도는 송파구의 시세 조회이며, 투자 가치 평가가 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류하고, COMPREHENSIVE를 sub_intent로 추가했습니다."
+        "reasoning": "1단계(구조): 시세 조회와 투자 가치 평가 요청 포함. 2단계(유형): 두 가지 요청이 있어 종합적인 분석 필요. 3단계(복잡도): 중 - 시세와 투자 가치를 동시에 고려해야 함. 4단계(처리): 시세 데이터 조회와 투자 가치 분석 필요. 5단계(검증): 단순 시세 조회로는 부족하므로 COMPREHENSIVE로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -1499,7 +1545,7 @@
         "tasks": [
           {
             "id": "task_0",
-            "description": "송파구 시세 조회",
+            "description": "송파구 아파트 시세 조회",
             "type": "search",
             "agent_team": "search_team",
             "priority": 1,
@@ -1549,7 +1595,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 18.348087,
+      "execution_time": 22.282817,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1569,19 +1615,20 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:42:28.919422",
+      "timestamp": "2025-10-05T15:59:24.355107",
       "intent_analysis": {
-        "intent_type": "법률상담",
-        "confidence": 0.9,
+        "intent_type": "종합분석",
+        "confidence": 0.85,
         "keywords": [
           "전세금",
           "인상",
           "법조항"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "전세금 인상 가능 여부에 대한 법률 질문이므로 LEGAL_CONSULT로 분류"
+        "reasoning": "1단계(구조): 전세금 인상 가능 여부 확인 요청과 관련 법조항 검색 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 법적 근거와 가능성 확인 필요. 3단계(복잡도): 중 - 전세금 인상 가능성과 법적 조항을 동시에 고려해야 함. 4단계(처리): 법률 검색과 인상 가능성 확인이 필요. 5단계(검증): LEGAL_CONSULT만으로는 불충분, 종합적 분석 필요 → COMPREHENSIVE 선택."
       },
       "decomposition": {
         "is_compound": true,
@@ -1641,7 +1688,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 16.385192,
+      "execution_time": 22.13147,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1662,10 +1709,10 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:42:45.307524",
+      "timestamp": "2025-10-05T15:59:46.490485",
       "intent_analysis": {
         "intent_type": "대출상담",
-        "confidence": 0.9,
+        "confidence": 0.85,
         "keywords": [
           "대출",
           "한도",
@@ -1676,7 +1723,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "대출 한도와 금리에 대한 질문이므로 LOAN_CONSULT로 분류하였으며, 두 가지 작업으로 분해됨."
+        "reasoning": "1단계(구조): 대출 한도 조회와 금리 비교 요청. 2단계(유형): 대출 관련 정보 확인형. 3단계(복잡도): 중 - 두 가지 독립적 조회. 4단계(처리): 대출 한도 조회와 금리 정보 검색 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -1687,15 +1734,15 @@
           {
             "id": "task_0",
             "description": "대출 한도 조회",
-            "type": "calculation",
-            "agent_team": "analysis_team",
+            "type": "search",
+            "agent_team": "search_team",
             "priority": 1,
             "dependencies": [],
-            "estimated_time": 15
+            "estimated_time": 20
           },
           {
             "id": "task_1",
-            "description": "대출 금리 정보 조회",
+            "description": "금리 정보 조회",
             "type": "search",
             "agent_team": "search_team",
             "priority": 1,
@@ -1715,20 +1762,14 @@
             "estimated_time": 25
           }
         ],
-        "total_estimated_time": 42.0,
-        "confidence": 0.9,
-        "reasoning": "대출 한도 조회와 금리 정보 조회는 독립적이므로 병렬 처리 가능, 비교 분석은 두 결과가 필요"
+        "total_estimated_time": 45.5,
+        "confidence": 0.8,
+        "reasoning": "대출 한도 조회와 금리 정보 조회는 독립적이므로 병렬 처리 가능, 비교 분석은 두 결과 필요"
       },
       "comprehensive_plan": {
         "strategy": "sequential",
-        "num_steps": 3,
+        "num_steps": 2,
         "steps": [
-          {
-            "agent": "analysis_team",
-            "priority": 1,
-            "dependencies": [],
-            "timeout": 15
-          },
           {
             "agent": "search_team",
             "priority": 1,
@@ -1736,24 +1777,26 @@
             "timeout": 20
           },
           {
-            "agent": "analysis_team",
-            "priority": 2,
-            "dependencies": [
-              "task_0",
-              "task_1"
-            ],
-            "timeout": 25
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
           }
         ],
-        "estimated_time": 45,
-        "parallel_groups": [],
+        "estimated_time": 20,
+        "parallel_groups": [
+          [
+            "task_0",
+            "task_1"
+          ]
+        ],
         "metadata": {
           "is_compound": true,
           "decomposition": {},
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 22.525686,
+      "execution_time": 21.295756,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1774,20 +1817,22 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:43:07.833210",
+      "timestamp": "2025-10-05T16:00:07.786241",
       "intent_analysis": {
-        "intent_type": "시세조회",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "마포구",
           "아파트",
-          "시세"
+          "시세",
+          "계약서",
+          "작성"
         ],
         "suggested_agents": [
           "search_team",
           "document_team"
         ],
-        "reasoning": "마포구 아파트 시세에 대한 질문이 주된 의도이며, 계약서 작성 요청이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류하고 CONTRACT_CREATION을 sub_intent로 추가함."
+        "reasoning": "1단계(구조): 두 개의 요청(시세 조회 + 계약서 작성) 포함. 2단계(유형): 정보 확인형(시세) + 계약서 작성 요청(해결책 요청형). 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 시세 조회와 계약서 작성을 위한 별도의 처리 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -1818,7 +1863,7 @@
         ],
         "total_estimated_time": 50,
         "confidence": 0.8,
-        "reasoning": "계약서 작성에 시세 정보가 필요하므로 순차 실행이 필요함"
+        "reasoning": "아파트 시세 정보가 있어야 계약서 작성이 가능하므로 순차 실행 필요"
       },
       "comprehensive_plan": {
         "strategy": "sequential",
@@ -1847,7 +1892,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 14.592411,
+      "execution_time": 24.593679,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1868,9 +1913,9 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:43:22.426628",
+      "timestamp": "2025-10-05T16:00:32.379920",
       "intent_analysis": {
-        "intent_type": "시세조회",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "전세",
@@ -1882,7 +1927,7 @@
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "전세 시세 확인이 주된 의도이며, 리스크 평가가 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+        "reasoning": "1단계(구조): 전세 시세 확인 요청 + 리스크 평가 요청 포함. 2단계(유형): 두 가지 요청이 있어 정보 확인형과 평가형이 결합됨. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 시세 조회와 리스크 분석이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -1901,7 +1946,7 @@
           },
           {
             "id": "task_1",
-            "description": "리스크 평가",
+            "description": "전세 시세에 대한 리스크 평가",
             "type": "analysis",
             "agent_team": "analysis_team",
             "priority": 2,
@@ -1942,7 +1987,7 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 18.58301,
+      "execution_time": 29.370491,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,
@@ -1963,9 +2008,9 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:43:41.009638",
+      "timestamp": "2025-10-05T16:01:01.750411",
       "intent_analysis": {
-        "intent_type": "법률상담",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "임대차보호법",
@@ -1973,53 +2018,75 @@
           "가능 여부"
         ],
         "suggested_agents": [
-          "search_team"
+          "search_team",
+          "analysis_team"
         ],
-        "reasoning": "임대차보호법에 대한 내용과 적용 가능 여부를 묻고 있으므로 LEGAL_CONSULT로 분류"
+        "reasoning": "1단계(구조): 임대차보호법 내용 요청 + 적용 가능 여부 판단 포함. 2단계(유형): 해결책 요청형 - 법률 정보 확인과 적용 가능성 분석 필요. 3단계(복잡도): 중 - 법률 내용 확인과 그에 대한 적용 여부 판단. 4단계(처리): 법률 내용 검색 + 적용 가능성 분석 필요. 5단계(검증): 단순 법률 정보 제공으로 끝나지 않고, 적용 가능성에 대한 판단이 필요하므로 COMPREHENSIVE 선택."
       },
       "decomposition": {
-        "is_compound": false,
-        "num_tasks": 1,
+        "is_compound": true,
+        "num_tasks": 2,
         "execution_mode": "sequential",
         "parallel_groups": [],
         "tasks": [
           {
             "id": "task_0",
-            "description": "임대차보호법 내용 찾고 적용 가능 여부 판단해줘",
+            "description": "임대차보호법 내용 조회",
             "type": "search",
             "agent_team": "search_team",
             "priority": 1,
             "dependencies": [],
-            "estimated_time": 0.0
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "임대차보호법 적용 가능 여부 분석",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
           }
         ],
-        "total_estimated_time": 30.0,
-        "confidence": 1.0,
-        "reasoning": "Simple query - no decomposition needed"
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "임대차보호법 내용을 먼저 조회한 후, 그 내용을 바탕으로 적용 가능 여부를 판단해야 하므로 순차 실행 필요"
       },
       "comprehensive_plan": {
         "strategy": "sequential",
-        "num_steps": 1,
+        "num_steps": 2,
         "steps": [
           {
             "agent": "search_team",
-            "priority": 0,
+            "priority": 1,
             "dependencies": [],
-            "timeout": 30
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
           }
         ],
-        "estimated_time": 30,
+        "estimated_time": 45,
         "parallel_groups": [],
         "metadata": {
-          "created_by": "PlanningAgent"
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 9.065541,
+      "execution_time": 26.62526,
       "validation": {
         "intent_match": false,
-        "decomposition_match": false,
-        "task_count_match": false,
-        "agents_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
         "overall": false
       },
       "status": "success"
@@ -2035,23 +2102,21 @@
       ],
       "expected_decomposition": true,
       "expected_tasks": 2,
-      "timestamp": "2025-10-05T14:43:50.075179",
+      "timestamp": "2025-10-05T16:01:28.375671",
       "intent_analysis": {
-        "intent_type": "시세조회",
+        "intent_type": "종합분석",
         "confidence": 0.85,
         "keywords": [
           "용산구",
-          "매매",
-          "시세",
-          "전세",
-          "전환",
+          "매매 시세",
+          "전세 전환",
           "계산"
         ],
         "suggested_agents": [
           "search_team",
           "analysis_team"
         ],
-        "reasoning": "매매 시세 조회가 주된 의도이며, 전세 전환 계산이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+        "reasoning": "1단계(구조): 두 개의 요청(매매 시세 조회 + 전세 전환 계산) 포함. 2단계(유형): 정보 확인형(시세) + 해결책 요청형(전세 전환 계산). 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 검색 + 계산 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류."
       },
       "decomposition": {
         "is_compound": true,
@@ -2111,7 +2176,987 @@
           "created_by": "PlanningAgent with QueryDecomposer"
         }
       },
-      "execution_time": 18.381925,
+      "execution_time": 28.003118,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D011",
+      "query": "주택담보대출 조건 확인하고 한도 계산해줘",
+      "category": "대출+계산",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:01:56.381786",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "주택담보대출",
+          "조건",
+          "한도",
+          "계산"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 주택담보대출 조건 확인과 한도 계산 요청. 2단계(유형): 대출 조건과 한도에 대한 정보 요청으로 LOAN_CONSULT로 분류. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 조건 검색과 한도 계산 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 충분."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "주택담보대출 조건 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "대출 한도 계산",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "대출 조건을 확인한 후에야 한도를 계산할 수 있으므로 순차 실행이 필요함."
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 24.322693,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D012",
+      "query": "계약 갱신 청구권 확인하고 행사 방법 알려줘",
+      "category": "법률+절차",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agents": [
+        "search_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:02:20.704479",
+      "intent_analysis": {
+        "intent_type": "종합분석",
+        "confidence": 0.85,
+        "keywords": [
+          "계약",
+          "갱신",
+          "청구권",
+          "행사",
+          "방법"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 계약 갱신 청구권 확인 + 행사 방법 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 방법 필요. 3단계(복잡도): 중 - 법률적 요소와 구체적 방법이 결합된 요청. 4단계(처리): 법률 정보 검색 + 행사 방법 안내 필요. 5단계(검증): LEGAL_CONSULT만으로는 부족, 종합적 분석 필요 → COMPREHENSIVE 선택."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "계약 갱신 청구권 관련 법률 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "계약 갱신 청구권 행사 방법 분석",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "계약 갱신 청구권에 대한 법률 정보가 있어야 행사 방법을 분석할 수 있으므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 26.457602,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D013",
+      "query": "강남 전세 시세 확인하고 월세 전환 비교해줘",
+      "category": "시세+비교",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:02:47.162081",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "강남",
+          "전세",
+          "시세",
+          "월세",
+          "전환",
+          "비교"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 두 개의 요청(전세 시세 확인 + 월세 전환 비교) 포함. 2단계(유형): 정보 확인형 - 시세 조회와 비교 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 데이터 조회 및 비교 분석 필요. 5단계(검증): 두 가지 요청이 명확하므로 MARKET_INQUIRY로 분류하고, 복합 질문으로 처리."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "강남 전세 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "강남 전세 시세를 기반으로 월세 전환 비교 분석",
+            "type": "comparison",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "전세 시세 조회 결과가 있어야 월세 전환 비교 분석이 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 3,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0",
+              "task_1"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 30.189802,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D014",
+      "query": "보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘",
+      "category": "법률+절차",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agents": [
+        "search_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:03:17.351883",
+      "intent_analysis": {
+        "intent_type": "종합분석",
+        "confidence": 0.85,
+        "keywords": [
+          "보증금",
+          "반환",
+          "법적",
+          "보호",
+          "절차"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 보증금 반환 절차와 법적 보호 방법 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 절차와 방법 필요. 3단계(복잡도): 중 - 두 가지 독립적 요청이지만 관련성이 높음. 4단계(처리): 보증금 반환 절차와 법적 보호 방법에 대한 정보 검색 및 분석 필요. 5단계(검증): 두 가지 요청이 서로 연결되어 있으므로 COMPREHENSIVE로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "보증금 반환 절차에 대한 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "보증금 반환 시 법적 보호 방법 분석",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "보증금 반환 절차를 먼저 알아야 법적 보호 방법을 분석할 수 있으므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 24.330572,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D015",
+      "query": "서초 아파트 가격 조회하고 상승률 분석해줘",
+      "category": "시세+분석",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:03:41.682455",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.9,
+        "keywords": [
+          "서초",
+          "아파트",
+          "가격",
+          "상승률",
+          "조회",
+          "분석"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 단순 정보 요청으로 가격 조회와 상승률 분석 포함. 2단계(유형): 정보 확인형 - 가격과 상승률에 대한 사실 확인 필요. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 가격 데이터 조회와 상승률 분석 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "서초 아파트 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "서초 아파트 상승률 분석",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "시세 조회 결과가 상승률 분석에 필요하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 24.502665,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D016",
+      "query": "전세자금대출 상품 찾고 금리 비교해줘",
+      "category": "대출+비교",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:04:06.189113",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "전세자금대출",
+          "상품",
+          "금리",
+          "비교"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 단순 정보 요청으로 전세자금대출 상품과 금리 비교 요청. 2단계(유형): 정보 확인형 - 대출 상품과 금리에 대한 정보 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 상품과 금리 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "전세자금대출 상품 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "대출 상품의 금리 비교 분석",
+            "type": "comparison",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "대출 상품 정보를 먼저 조회한 후, 그 결과를 바탕으로 금리 비교 분석을 진행해야 하므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 25.299759,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D017",
+      "query": "계약서 특약사항 검토하고 수정안 제시해줘",
+      "category": "검토+문서",
+      "expected_intent": "CONTRACT_REVIEW",
+      "expected_agents": [
+        "search_team",
+        "document_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:04:31.488872",
+      "intent_analysis": {
+        "intent_type": "계약서검토",
+        "confidence": 0.85,
+        "keywords": [
+          "계약서",
+          "특약사항",
+          "검토",
+          "수정안"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "document_team"
+        ],
+        "reasoning": "1단계(구조): 계약서의 특약사항 검토 및 수정안 제시 요청. 2단계(유형): 검토 및 수정 요청으로 평가/판단형. 3단계(복잡도): 중 - 계약서 검토와 수정 제안이 포함됨. 4단계(처리): 계약서 분석 및 수정사항 제안 필요. 5단계(검증): 계약서 검토 요청이므로 CONTRACT_REVIEW로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "계약서 특약사항 검토",
+            "type": "review",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 30
+          },
+          {
+            "id": "task_1",
+            "description": "수정안 제안 생성",
+            "type": "generation",
+            "agent_team": "document_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 20
+          }
+        ],
+        "total_estimated_time": 50,
+        "confidence": 0.8,
+        "reasoning": "계약서 검토 결과가 있어야 수정안을 제시할 수 있으므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 30
+          },
+          {
+            "agent": "document_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 20
+          }
+        ],
+        "estimated_time": 50,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 26.488487,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D018",
+      "query": "성동구 시세 알려주고 투자 수익률 계산해줘",
+      "category": "시세+계산",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:04:57.978365",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "성동구",
+          "시세",
+          "투자",
+          "수익률"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 두 개의 요청(시세 조회 + 투자 수익률 계산) 포함. 2단계(유형): 정보 확인형(시세) + 해결책 요청형(수익률 계산). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 데이터 검색 + 수익률 계산 필요. 5단계(검증): 주 의도는 시세 조회이므로 MARKET_INQUIRY로 분류, 부가 의도로 투자 수익률 계산 포함."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "성동구 아파트 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "투자 수익률 계산",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "시세 정보가 있어야 투자 수익률 계산이 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 24.25229,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D019",
+      "query": "임대차 계약 해지 조건 확인하고 위약금 계산해줘",
+      "category": "법률+계산",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:05:22.230655",
+      "intent_analysis": {
+        "intent_type": "종합분석",
+        "confidence": 0.85,
+        "keywords": [
+          "임대차",
+          "계약",
+          "해지",
+          "위약금",
+          "조건"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): 임대차 계약 해지 조건 확인 + 위약금 계산 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 계산과 조건 확인 필요. 3단계(복잡도): 중 - 계약 해지 조건과 위약금 계산이 포함된 복합적인 요청. 4단계(처리): 계약 해지 조건 법률 검색 + 위약금 계산 필요. 5단계(검증): LEGAL_CONSULT와 LOAN_CONSULT가 모두 필요하므로 COMPREHENSIVE로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "임대차 계약 해지 조건 관련 법률 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "위약금 계산",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "해지 조건을 확인한 후에 위약금을 계산해야 하므로 순차 실행이 필요함."
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 28.831131,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D020",
+      "query": "LTV, DTI 규제 확인하고 대출 가능액 산정해줘",
+      "category": "대출+계산",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T16:05:51.061786",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.85,
+        "keywords": [
+          "LTV",
+          "DTI",
+          "대출",
+          "가능액",
+          "규제"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "1단계(구조): LTV와 DTI 규제 확인 요청 + 대출 가능액 산정 요청 포함. 2단계(유형): 대출 관련 정보 확인 및 계산 요청. 3단계(복잡도): 중 - 두 가지 규제 확인과 대출 가능액 산정이 필요. 4단계(처리): LTV와 DTI 규제 검색 후 대출 가능액 계산 필요. 5단계(검증): 대출 관련 정보와 계산이 모두 포함되어 있어 LOAN_CONSULT로 분류."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 3,
+        "execution_mode": "conditional",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "LTV 규제 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "DTI 규제 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_2",
+            "description": "대출 가능액 산정",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0",
+              "task_1"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 38.5,
+        "confidence": 0.8,
+        "reasoning": "LTV와 DTI 정보 조회는 독립적이므로 병렬 처리 가능, 대출 가능액 산정은 두 결과 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 3,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0",
+              "task_1"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 29.945679,
       "validation": {
         "intent_match": false,
         "decomposition_match": true,

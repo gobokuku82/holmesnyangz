@@ -115,11 +115,11 @@
 4. 검증: search만으로는 "투자 가치 평가" 불가능
 
 ```json
-{{
+{
     "selected_agents": ["search_team", "analysis_team"],
     "reasoning": "1단계: 시세 조회+투자 평가 필요. 2단계: 중간 복잡도. 3단계: 순차 의존. 4단계: search로 시세 수집 후 analysis로 투자 가치 평가 필요",
     "coordination": "sequential"
-}}
+}
 ```
 
 ### 예시 2: 단순 정보 조회
@@ -131,11 +131,11 @@
 4. 검증: search_team만으로 충분
 
 ```json
-{{
+{
     "selected_agents": ["search_team"],
     "reasoning": "1단계: 단순 정보 조회. 2단계: 저복잡도. 3단계: 독립적. 4단계: 법률 검색만으로 답변 가능",
     "coordination": "single"
-}}
+}
 ```
 
 ### 예시 3: 해결책 요청 (핵심 예시!)
@@ -148,24 +148,26 @@
 4. 검증: "법적으로"만 보고 search만 선택하면 불충분! 해결책 제시 필요
 
 ```json
-{{
+{
     "selected_agents": ["search_team", "analysis_team"],
     "reasoning": "1단계: 법률 + 상황 분석 + 해결책 필요. 2단계: 고복잡도(3억→10억 비정상). 3단계: 순차(법률 확인 후 타당성 분석). 4단계: '어떻게 해야' = 단순 법률 조회 아님, 분석 필수",
     "coordination": "sequential",
     "confidence": 0.95
-}}
+}
 ```
 
 ## 응답 형식 (JSON)
 
-{{
+```json
+{
     "selected_agents": ["선택된 agent/team 목록"],
     "reasoning": "선택 이유를 구체적으로 설명. 각 Agent의 역할과 처리 순서 포함",
     "coordination": "single/sequential/parallel/pipeline",
-    "dependencies": {{"agent2": ["agent1"]}},
+    "dependencies": {"agent2": ["agent1"]},
     "estimated_time": 30,
     "confidence": 0.9
-}}
+}
+```
 
 ## 선택 가이드라인
 

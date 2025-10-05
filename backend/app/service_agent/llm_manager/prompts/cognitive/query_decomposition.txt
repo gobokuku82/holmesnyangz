@@ -46,169 +46,169 @@
 질문: "강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘"
 분해:
 ```json
-{{
+{
     "is_compound": true,
     "sub_tasks": [
-        {{
+        {
             "description": "강남구 아파트 시세 조회",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 20
-        }},
-        {{
+        },
+        {
             "description": "대출 가능 금액 계산",
             "type": "calculation",
             "agent": "analysis_team",
             "priority": 2,
             "depends_on": ["task_0"],
-            "required_data": {{"price": "task_0.result.price"}},
+            "required_data": {"price": "task_0.result.price"},
             "estimated_time": 15
-        }}
+        }
     ],
     "execution_mode": "sequential",
     "reasoning": "시세 정보가 있어야 대출 금액 계산이 가능하므로 순차 실행"
-}}
+}
 ```
 
 ### 예시 2: 복합 질문 (병렬 가능)
 질문: "이 지역 전세 시세와 매매 시세 모두 알려주고 비교 분석해줘"
 분해:
 ```json
-{{
+{
     "is_compound": true,
     "sub_tasks": [
-        {{
+        {
             "description": "전세 시세 조회",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 20
-        }},
-        {{
+        },
+        {
             "description": "매매 시세 조회",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 20
-        }},
-        {{
+        },
+        {
             "description": "전세/매매 시세 비교 분석",
             "type": "comparison",
             "agent": "analysis_team",
             "priority": 2,
             "depends_on": ["task_0", "task_1"],
-            "required_data": {{
+            "required_data": {
                 "lease_price": "task_0.result",
                 "sale_price": "task_1.result"
-            }},
+            },
             "estimated_time": 25
-        }}
+        }
     ],
     "execution_mode": "mixed",
     "parallel_groups": [["task_0", "task_1"], ["task_2"]],
     "reasoning": "시세 조회는 독립적이므로 병렬 처리, 비교는 두 결과 필요"
-}}
+}
 ```
 
 ### 예시 3: 복합 질문 (3단계 이상)
 질문: "이 계약서 검토해서 위험한 부분 찾고 수정안 만들어서 최종 계약서 작성해줘"
 분해:
 ```json
-{{
+{
     "is_compound": true,
     "sub_tasks": [
-        {{
+        {
             "description": "계약서 내용 전체 검토",
             "type": "review",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 30
-        }},
-        {{
+        },
+        {
             "description": "위험 요소 및 문제점 분석",
             "type": "analysis",
             "agent": "analysis_team",
             "priority": 2,
             "depends_on": ["task_0"],
             "estimated_time": 25
-        }},
-        {{
+        },
+        {
             "description": "수정안 제안 생성",
             "type": "generation",
             "agent": "document_team",
             "priority": 3,
             "depends_on": ["task_1"],
             "estimated_time": 20
-        }},
-        {{
+        },
+        {
             "description": "최종 계약서 작성",
             "type": "generation",
             "agent": "document_team",
             "priority": 4,
             "depends_on": ["task_2"],
             "estimated_time": 30
-        }}
+        }
     ],
     "execution_mode": "sequential",
     "reasoning": "각 단계가 이전 결과에 의존하므로 순차 실행 필요"
-}}
+}
 ```
 
 ### 예시 4: 단순 질문 (분해 불필요)
 질문: "전세금 인상률 상한이 얼마야?"
 분해:
 ```json
-{{
+{
     "is_compound": false,
     "sub_tasks": [
-        {{
+        {
             "description": "전세금 인상률 상한 법률 정보 조회",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 15
-        }}
+        }
     ],
     "execution_mode": "sequential",
     "reasoning": "단일 정보 조회 요청으로 분해 불필요"
-}}
+}
 ```
 
 ### 예시 5: 조건부 실행
 질문: "이 물건 시세 확인하고 적정가면 대출 상담도 받고 싶어"
 분해:
 ```json
-{{
+{
     "is_compound": true,
     "sub_tasks": [
-        {{
+        {
             "description": "물건 시세 조회 및 적정성 평가",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 25
-        }},
-        {{
+        },
+        {
             "description": "대출 상담 정보 제공",
             "type": "search",
             "agent": "search_team",
             "priority": 2,
             "depends_on": ["task_0"],
             "optional": true,
-            "context": {{"condition": "if_reasonable_price"}},
+            "context": {"condition": "if_reasonable_price"},
             "estimated_time": 20
-        }}
+        }
     ],
     "execution_mode": "conditional",
     "reasoning": "시세 확인 결과에 따라 대출 상담 진행 여부 결정"
-}}
+}
 ```
 
 ### 예시 6: 상황 설명 + 해결책 요청 (핵심 패턴!)
@@ -221,39 +221,39 @@
 
 분해:
 ```json
-{{
+{
     "is_compound": true,
     "sub_tasks": [
-        {{
+        {
             "description": "전세금 인상 한도 관련 법률 조회",
             "type": "search",
             "agent": "search_team",
             "priority": 1,
             "depends_on": [],
             "estimated_time": 20
-        }},
-        {{
+        },
+        {
             "description": "3억→10억 인상의 법적 타당성 및 적정성 분석",
             "type": "analysis",
             "agent": "analysis_team",
             "priority": 2,
             "depends_on": ["task_0"],
-            "required_data": {{"legal_limit": "task_0.result", "current": 300000000, "requested": 1000000000}},
+            "required_data": {"legal_limit": "task_0.result", "current": 300000000, "requested": 1000000000},
             "estimated_time": 25
-        }},
-        {{
+        },
+        {
             "description": "구체적 대응 방안 및 해결책 제시",
             "type": "analysis",
             "agent": "analysis_team",
             "priority": 3,
             "depends_on": ["task_1"],
             "estimated_time": 20
-        }}
+        }
     ],
     "execution_mode": "sequential",
     "confidence": 0.95,
     "reasoning": "상황 설명+해결책 요청 패턴. '어떻게 해야'는 단순 정보 조회가 아닌 종합 해결책 필요. 법률 조회 → 상황 분석 → 해결책 제시 3단계 순차 처리"
-}}
+}
 ```
 
 ## Chain-of-Thought 프로세스:

@@ -1,12 +1,16 @@
 """
-Prompt Manager - 프롬프트 템플릿 관리
-프롬프트 파일 로딩, 변수 치환, 캐싱 담당
+프롬프트 템플릿 관리자 - 코드 블록 안전 처리 버전
+- TXT/YAML 파일 로드
+- 변수 치환 (코드 블록 보호)
+- 프롬프트 캐싱
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
+import re
+import uuid
 import yaml
+from pathlib import Path
+from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +19,7 @@ class PromptManager:
     """
     프롬프트 템플릿 관리자
     - TXT/YAML 파일 로드
-    - 변수 치환
+    - 변수 치환 (코드 블록을 안전하게 보호)
     - 프롬프트 캐싱
     """
 
@@ -57,9 +61,9 @@ class PromptManager:
         # 프롬프트 템플릿 로드 (캐싱 활용)
         template = self._load_template(prompt_name, category)
 
-        # 변수 치환
+        # 안전한 변수 치환 (코드 블록 보호)
         try:
-            prompt = template.format(**variables)
+            prompt = self._safe_format(template, variables)
             return prompt
         except KeyError as e:
             logger.error(f"Missing variable in prompt {prompt_name}: {e}")
@@ -93,38 +97,107 @@ class PromptManager:
             "metadata": metadata
         }
 
+    def _safe_format(self, template: str, variables: Dict[str, Any]) -> str:
+        """
+        코드 블록을 보호하면서 안전하게 변수 치환
+
+        Args:
+            template: 프롬프트 템플릿
+            variables: 치환할 변수
+
+        Returns:
+            변수가 치환된 프롬프트
+
+        Process:
+            1. 코드 블록 추출 및 placeholder로 치환
+            2. 일반 변수 치환 수행
+            3. 코드 블록 복원
+        """
+        # Step 1: 코드 블록을 임시 placeholder로 치환
+        code_blocks = {}
+
+        def save_code_block(match):
+            """코드 블록을 저장하고 placeholder 반환"""
+            # 고유 ID 생성
+            block_id = f"__CODE_BLOCK_{uuid.uuid4().hex}__"
+
+            # 코드 블록 내용 저장
+            code_content = match.group(1)
+
+            # escape 처리 제거 ({{ -> {, }} -> })
+            # 이미 escape되어 있는 경우 처리
+            code_content = code_content.replace('{{', '{').replace('}}', '}')
+
+            # 전체 코드 블록 저장 (```json 포함)
+            code_blocks[block_id] = f"```json\n{code_content}\n```"
+
+            # placeholder 반환
+            return block_id
+
+        # 모든 코드 블록을 placeholder로 치환
+        protected_template = re.sub(
+            r'```json\n(.*?)\n```',
+            save_code_block,
+            template,
+            flags=re.DOTALL
+        )
+
+        # Step 2: 일반 변수 치환 (코드 블록은 이미 보호됨)
+        # 하지만 format()은 여전히 중괄호 안의 줄바꿈을 변수로 인식할 수 있음
+        # 따라서 안전한 대체 방법 사용
+        formatted = protected_template
+        for key, value in variables.items():
+            # {variable} 패턴만 정확히 치환
+            pattern = '{' + key + '}'
+            formatted = formatted.replace(pattern, str(value))
+
+        # Step 3: 코드 블록 복원
+        for block_id, code_block in code_blocks.items():
+            formatted = formatted.replace(block_id, code_block)
+
+        return formatted
+
     def _load_template(self, prompt_name: str, category: str = None) -> str:
         """
-        프롬프트 템플릿 파일 로드 (캐싱)
+        프롬프트 템플릿 로드
 
         Args:
             prompt_name: 프롬프트 이름
-            category: 카테고리 (None이면 자동 탐색)
+            category: 카테고리 (cognitive/execution/common)
 
         Returns:
             프롬프트 템플릿 문자열
+
+        Raises:
+            FileNotFoundError: 프롬프트 파일이 없는 경우
         """
         # 캐시 확인
-        cache_key = f"{category or 'auto'}:{prompt_name}"
+        cache_key = f"{category}/{prompt_name}" if category else prompt_name
         if cache_key in self._cache:
+            logger.debug(f"Using cached prompt: {cache_key}")
             return self._cache[cache_key]
 
-        # 파일 경로 탐색
+        # 파일 경로 결정
         file_path = self._find_prompt_file(prompt_name, category)
 
-        if not file_path:
+        if not file_path or not file_path.exists():
             raise FileNotFoundError(
-                f"Prompt file not found: {prompt_name} "
-                f"(searched in {self.prompts_dir})"
+                f"Prompt template not found: {prompt_name} "
+                f"(category: {category or 'auto'})"
             )
 
         # 파일 로드
-        template = self._load_file(file_path)
+        logger.debug(f"Loading prompt from: {file_path}")
+
+        if file_path.suffix == ".yaml" or file_path.suffix == ".yml":
+            template, metadata = self._load_yaml_template(file_path)
+            self._metadata_cache[prompt_name] = metadata
+        else:  # .txt
+            with open(file_path, 'r', encoding='utf-8') as f:
+                template = f.read()
 
         # 캐시 저장
         self._cache[cache_key] = template
-
-        logger.debug(f"Loaded prompt template: {prompt_name} from {file_path}")
 
         return template
 
@@ -134,63 +207,66 @@ class PromptManager:
 
         Args:
             prompt_name: 프롬프트 이름
-            category: 카테고리 (None이면 전체 탐색)
+            category: 카테고리
 
         Returns:
-            파일 경로 (없으면 None)
+            찾은 파일 경로 또는 None
         """
-        # 검색할 카테고리 목록
-        if category:
-            categories = [category]
-        else:
-            categories = ["cognitive", "execution", "common"]
+        # 가능한 확장자
+        extensions = ['.txt', '.yaml', '.yml']
 
-        # 각 카테고리에서 TXT, YAML 순서로 탐색
-        for cat in categories:
-            for ext in [".txt", ".yaml"]:
-                file_path = self.prompts_dir / cat / f"{prompt_name}{ext}"
+        if category:
+            # 특정 카테고리 지정
+            for ext in extensions:
+                file_path = self.prompts_dir / category / f"{prompt_name}{ext}"
+                if file_path.exists():
+                    return file_path
+        else:
+            # 모든 카테고리 탐색
+            for cat in ["cognitive", "execution", "common"]:
+                for ext in extensions:
+                    file_path = self.prompts_dir / cat / f"{prompt_name}{ext}"
+                    if file_path.exists():
+                        return file_path
+
+            # 루트 디렉토리도 확인
+            for ext in extensions:
+                file_path = self.prompts_dir / f"{prompt_name}{ext}"
                 if file_path.exists():
                     return file_path
 
         return None
 
-    def _load_file(self, file_path: Path) -> str:
+    def _load_yaml_template(self, file_path: Path) -> Tuple[str, Dict]:
         """
-        프롬프트 파일 로드 (TXT 또는 YAML)
+        YAML 프롬프트 파일 로드
 
         Args:
-            file_path: 파일 경로
+            file_path: YAML 파일 경로
 
         Returns:
-            프롬프트 템플릿 문자열
+            (템플릿 문자열, 메타데이터)
         """
-        if file_path.suffix == ".txt":
-            # TXT 파일: 그대로 로드
-            return file_path.read_text(encoding='utf-8')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
 
-        elif file_path.suffix == ".yaml":
-            # YAML 파일: 파싱 후 system_prompt 추출
-            data = yaml.safe_load(file_path.read_text(encoding='utf-8'))
+        # 템플릿 추출
+        template = data.get('template', '')
 
-            # 메타데이터 캐싱
-            prompt_name = file_path.stem
-            self._metadata_cache[prompt_name] = data.get("metadata", {})
+        # 메타데이터 추출
+        metadata = {k: v for k, v in data.items() if k != 'template'}
 
-            # 프롬프트 반환
-            return data.get("system_prompt", "")
+        return template, metadata
 
-        else:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
-
-    def list_prompts(self, category: str = None) -> Dict[str, list]:
+    def list_available_prompts(self, category: str = None) -> Dict[str, list]:
         """
         사용 가능한 프롬프트 목록 반환
 
         Args:
-            category: 특정 카테고리만 (None이면 전체)
+            category: 특정 카테고리만 조회 (None이면 전체)
 
         Returns:
-            {"cognitive": [...], "execution": [...], "common": [...]}
+            {"category": ["prompt1", "prompt2", ...]}
         """
         result = {}
 
@@ -199,59 +275,23 @@ class PromptManager:
         for cat in categories:
             cat_dir = self.prompts_dir / cat
             if cat_dir.exists():
-                prompts = [
-                    f.stem for f in cat_dir.iterdir()
-                    if f.suffix in [".txt", ".yaml"]
-                ]
-                result[cat] = sorted(prompts)
+                prompts = []
+                for file in cat_dir.iterdir():
+                    if file.suffix in ['.txt', '.yaml', '.yml']:
+                        prompts.append(file.stem)
+                if prompts:
+                    result[cat] = sorted(prompts)
 
         return result
 
-    def reload(self):
-        """캐시 초기화 (프롬프트 재로드 강제)"""
+    def clear_cache(self):
+        """캐시 초기화"""
         self._cache.clear()
         self._metadata_cache.clear()
         logger.info("Prompt cache cleared")
 
-    def validate(self, prompt_name: str, required_variables: list = None) -> bool:
-        """
-        프롬프트 유효성 검증
 
-        Args:
-            prompt_name: 프롬프트 이름
-            required_variables: 필수 변수 목록
-
-        Returns:
-            유효하면 True
-        """
-        try:
-            # 프롬프트 로드 시도
-            template = self._load_template(prompt_name)
-
-            # 필수 변수 확인
-            if required_variables:
-                import string
-                formatter = string.Formatter()
-                template_vars = [
-                    field_name for _, field_name, _, _
-                    in formatter.parse(template)
-                    if field_name
-                ]
-
-                for var in required_variables:
-                    if var not in template_vars:
-                        logger.error(f"Required variable '{var}' not found in {prompt_name}")
-                        return False
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Prompt validation failed for {prompt_name}: {e}")
-            return False
-
-
-# ============ 편의 함수 ============
-
+# 전역 편의 함수
 def get_prompt(prompt_name: str, variables: Dict[str, Any] = None) -> str:
     """
     프롬프트 가져오기 (전역 편의 함수)
