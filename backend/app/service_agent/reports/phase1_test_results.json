@@ -1,0 +1,2125 @@
+{
+  "test_metadata": {
+    "phase": "Phase 1 - Query Decomposition Test",
+    "date": "2025-10-05T14:44:08.457104",
+    "total_tests": 30
+  },
+  "results": [
+    {
+      "id": "S001",
+      "query": "전세금 5% 인상 제한이 언제까지인가요?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:39:42.135553",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.9,
+        "keywords": [
+          "전세금",
+          "인상",
+          "제한"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "전세금 인상 제한에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "전세금 5% 인상 제한이 언제까지인가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.975038,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S002",
+      "query": "강남구 아파트 전세 시세 알려주세요",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:39:47.110591",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.95,
+        "keywords": [
+          "강남구",
+          "아파트",
+          "전세",
+          "시세"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "강남구 아파트 전세 시세 알려주세요",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.150666,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S003",
+      "query": "전세자금대출 한도가 얼마나 되나요?",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:39:51.261869",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "전세자금대출",
+          "한도"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "전세자금대출 한도에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "전세자금대출 한도가 얼마나 되나요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.770339,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S004",
+      "query": "임대차계약서 작성해주세요",
+      "category": "문서작성",
+      "expected_intent": "CONTRACT_CREATION",
+      "expected_agent": "document_team",
+      "timestamp": "2025-10-05T14:39:56.032208",
+      "intent_analysis": {
+        "intent_type": "계약서작성",
+        "confidence": 0.95,
+        "keywords": [
+          "임대차계약서",
+          "작성"
+        ],
+        "suggested_agents": [
+          "document_team"
+        ],
+        "reasoning": "임대차계약서 작성 요청이므로 CONTRACT_CREATION으로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "임대차계약서 작성해주세요",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "document_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.200301,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S005",
+      "query": "계약 갱신 거부 가능한가요?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:00.232509",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.9,
+        "keywords": [
+          "계약",
+          "갱신",
+          "거부"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "계약 갱신 거부에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "계약 갱신 거부 가능한가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 5.226294,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S006",
+      "query": "서초구 아파트 매매 시세는?",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:05.459734",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.9,
+        "keywords": [
+          "서초구",
+          "아파트",
+          "매매",
+          "시세"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "서초구 아파트 매매 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "서초구 아파트 매매 시세는?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 5.439812,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S007",
+      "query": "LTV 비율이 뭔가요?",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:10.899546",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.8,
+        "keywords": [
+          "LTV",
+          "비율"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "LTV 비율에 대한 질문이므로 LOAN_CONSULT로 분류하였으며, 금융 관련 정보 요청이므로 확신도가 높음.",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "LTV 비율이 뭔가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.696759,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S008",
+      "query": "보증금 반환 보증 가입 방법은?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:15.597285",
+      "intent_analysis": {
+        "intent_type": "unclear",
+        "confidence": 0.4,
+        "keywords": [
+          "보증금",
+          "반환",
+          "보증",
+          "가입",
+          "방법"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "질문이 구체적인 정보나 요청을 포함하지 않아 의도를 명확히 파악하기 어려움. 추가 질문이 필요함.",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "보증금 반환 보증 가입 방법은?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.762482,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S009",
+      "query": "송파구 아파트 가격 동향 알려주세요",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:20.360758",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.95,
+        "keywords": [
+          "송파구",
+          "아파트",
+          "가격",
+          "동향"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "송파구 아파트 가격 동향에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "송파구 아파트 가격 동향 알려주세요",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.9642,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S010",
+      "query": "주택담보대출 금리 비교해주세요",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:25.324958",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "주택담보대출",
+          "금리",
+          "비교"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "주택담보대출 금리에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "주택담보대출 금리 비교해주세요",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.780914,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S011",
+      "query": "임대차보호법 적용 대상은?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:30.106865",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.9,
+        "keywords": [
+          "임대차보호법",
+          "적용",
+          "대상"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "임대차보호법의 적용 대상에 대한 법률 질문이므로 LEGAL_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "임대차보호법 적용 대상은?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.360964,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S012",
+      "query": "마포구 오피스텔 전세 시세는?",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:34.468831",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.9,
+        "keywords": [
+          "마포구",
+          "오피스텔",
+          "전세",
+          "시세"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "마포구 오피스텔 전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "마포구 오피스텔 전세 시세는?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.939532,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S013",
+      "query": "DSR 규제가 뭔가요?",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:39.408363",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.8,
+        "keywords": [
+          "DSR",
+          "규제"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "DSR(총부채상환비율) 규제에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "DSR 규제가 뭔가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 5.166412,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S014",
+      "query": "묵시적 갱신이 뭔가요?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:44.574775",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.8,
+        "keywords": [
+          "묵시적",
+          "갱신",
+          "임대차"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "묵시적 갱신에 대한 법률적 질문이므로 LEGAL_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "묵시적 갱신이 뭔가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.454891,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S015",
+      "query": "용산구 아파트 실거래가 조회",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:49.030664",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.95,
+        "keywords": [
+          "용산구",
+          "아파트",
+          "실거래가",
+          "조회"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "용산구 아파트의 실거래가를 조회하는 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "용산구 아파트 실거래가 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 5.685061,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S016",
+      "query": "신혼부부 특례 대출 조건은?",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:54.716724",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.8,
+        "keywords": [
+          "신혼부부",
+          "특례",
+          "대출",
+          "조건"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "신혼부부 특례 대출의 조건에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "신혼부부 특례 대출 조건은?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.731202,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S017",
+      "query": "계약금 환불 가능한가요?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:40:59.448932",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.85,
+        "keywords": [
+          "계약금",
+          "환불",
+          "가능"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "계약금 환불에 대한 법률적 질문이므로 LEGAL_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "계약금 환불 가능한가요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.757311,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S018",
+      "query": "성동구 빌라 전세 시세 알려주세요",
+      "category": "시세",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:41:04.207334",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.95,
+        "keywords": [
+          "성동구",
+          "빌라",
+          "전세",
+          "시세"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "성동구 빌라의 전세 시세에 대한 질문이므로 MARKET_INQUIRY로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "성동구 빌라 전세 시세 알려주세요",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.926838,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S019",
+      "query": "생애최초 주택 구매 대출 한도는?",
+      "category": "대출",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:41:09.134172",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "생애최초",
+          "주택",
+          "구매",
+          "대출",
+          "한도"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "생애최초 주택 구매 대출 한도에 대한 질문이므로 LOAN_CONSULT로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "생애최초 주택 구매 대출 한도는?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.901,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "S020",
+      "query": "전입신고 기간은 얼마나 되나요?",
+      "category": "법률",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agent": "search_team",
+      "timestamp": "2025-10-05T14:41:14.035172",
+      "intent_analysis": {
+        "intent_type": "unclear",
+        "confidence": 0.4,
+        "keywords": [
+          "전입신고",
+          "기간"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "전입신고 기간에 대한 질문이지만, 부동산 관련 정보인지 명확하지 않아 UNCLEAR로 분류",
+        "fallback": false
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "tasks": [
+          {
+            "description": "전입신고 기간은 얼마나 되나요?",
+            "type": "search",
+            "agent_team": "search_team",
+            "dependencies": []
+          }
+        ],
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "execution_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": []
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": []
+          }
+        ],
+        "estimated_time": 30
+      },
+      "execution_time": 4.26728,
+      "validation": {
+        "intent_match": false,
+        "agent_match": true,
+        "decomposition_correct": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D001",
+      "query": "강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘",
+      "category": "시세+계산",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:41:18.304451",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.9,
+        "keywords": [
+          "강남구",
+          "아파트",
+          "시세",
+          "대출",
+          "가능 금액"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "강남구 아파트 시세 확인이 주된 의도이며, 대출 가능 금액 계산이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "강남구 아파트 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "대출 가능 금액 계산",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "시세 정보가 있어야 대출 금액 계산이 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 21.525254,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D002",
+      "query": "서초동 전세 시세 알려주고 법적 주의사항도 알려줘",
+      "category": "시세+법률",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:41:39.829705",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "서초동",
+          "전세",
+          "시세",
+          "법적",
+          "주의사항"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "전세 시세에 대한 질문이 주된 의도이며, 법적 주의사항에 대한 요청이 부가적으로 포함되어 있어 MARKET_INQUIRY로 분류하였고, LEGAL_CONSULT을 sub_intent로 추가함."
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "서초동 전세 시세 알려주고 법적 주의사항도 알려줘",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 0.0
+          }
+        ],
+        "total_estimated_time": 30.0,
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": [],
+            "timeout": 30
+          }
+        ],
+        "estimated_time": 30,
+        "parallel_groups": [],
+        "metadata": {
+          "created_by": "PlanningAgent"
+        }
+      },
+      "execution_time": 13.518164,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": false,
+        "task_count_match": false,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D003",
+      "query": "이 계약서 검토하고 위험 요소 분석해줘",
+      "category": "검토+분석",
+      "expected_intent": "CONTRACT_REVIEW",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:41:53.347869",
+      "intent_analysis": {
+        "intent_type": "계약서검토",
+        "confidence": 0.9,
+        "keywords": [
+          "계약서",
+          "검토",
+          "위험",
+          "분석"
+        ],
+        "suggested_agents": [
+          "document_team",
+          "analysis_team"
+        ],
+        "reasoning": "계약서 검토와 위험 요소 분석 요청이 포함되어 있어 CONTRACT_REVIEW가 주 의도이며, 위험 분석이 부가적인 의도로 판단됨."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "계약서 내용 전체 검토",
+            "type": "review",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 30
+          },
+          {
+            "id": "task_1",
+            "description": "위험 요소 및 문제점 분석",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 55,
+        "confidence": 0.8,
+        "reasoning": "계약서 검토 결과에 따라 위험 요소 분석이 가능하므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 30
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 55,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 17.223466,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D004",
+      "query": "송파구 시세 조회하고 투자 가치 평가해줘",
+      "category": "시세+평가",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:42:10.571335",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "송파구",
+          "시세",
+          "투자",
+          "가치",
+          "평가"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "주된 의도는 송파구의 시세 조회이며, 투자 가치 평가가 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류하고, COMPREHENSIVE를 sub_intent로 추가했습니다."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "송파구 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "송파구 시세에 대한 투자 가치 평가",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "시세 정보가 있어야 투자 가치 평가가 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 18.348087,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D005",
+      "query": "전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘",
+      "category": "법률+검색",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agents": [
+        "search_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:42:28.919422",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.9,
+        "keywords": [
+          "전세금",
+          "인상",
+          "법조항"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "전세금 인상 가능 여부에 대한 법률 질문이므로 LEGAL_CONSULT로 분류"
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "전세금 인상 가능 여부 확인",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "전세금 인상 관련 법조항 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "전세금 인상 가능 여부를 확인한 후에 관련 법조항을 조회해야 하므로 순차 실행 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "search_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 16.385192,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D006",
+      "query": "대출 한도 조회하고 금리 비교해줘",
+      "category": "대출+비교",
+      "expected_intent": "LOAN_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:42:45.307524",
+      "intent_analysis": {
+        "intent_type": "대출상담",
+        "confidence": 0.9,
+        "keywords": [
+          "대출",
+          "한도",
+          "금리",
+          "비교"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "대출 한도와 금리에 대한 질문이므로 LOAN_CONSULT로 분류하였으며, 두 가지 작업으로 분해됨."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 3,
+        "execution_mode": "conditional",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "대출 한도 조회",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 15
+          },
+          {
+            "id": "task_1",
+            "description": "대출 금리 정보 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_2",
+            "description": "대출 한도와 금리 비교 분석",
+            "type": "comparison",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0",
+              "task_1"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 42.0,
+        "confidence": 0.9,
+        "reasoning": "대출 한도 조회와 금리 정보 조회는 독립적이므로 병렬 처리 가능, 비교 분석은 두 결과가 필요"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 3,
+        "steps": [
+          {
+            "agent": "analysis_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 15
+          },
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0",
+              "task_1"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 22.525686,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D007",
+      "query": "마포구 아파트 시세 알려주고 계약서 작성해줘",
+      "category": "시세+문서",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "document_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:43:07.833210",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "마포구",
+          "아파트",
+          "시세"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "document_team"
+        ],
+        "reasoning": "마포구 아파트 시세에 대한 질문이 주된 의도이며, 계약서 작성 요청이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류하고 CONTRACT_CREATION을 sub_intent로 추가함."
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "마포구 아파트 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "계약서 작성",
+            "type": "generation",
+            "agent_team": "document_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 30
+          }
+        ],
+        "total_estimated_time": 50,
+        "confidence": 0.8,
+        "reasoning": "계약서 작성에 시세 정보가 필요하므로 순차 실행이 필요함"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "document_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 30
+          }
+        ],
+        "estimated_time": 50,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 14.592411,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D008",
+      "query": "전세 시세 확인하고 리스크 평가해줘",
+      "category": "시세+리스크",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:43:22.426628",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "전세",
+          "시세",
+          "리스크",
+          "평가"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "전세 시세 확인이 주된 의도이며, 리스크 평가가 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "전세 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "리스크 평가",
+            "type": "analysis",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 25
+          }
+        ],
+        "total_estimated_time": 45,
+        "confidence": 0.8,
+        "reasoning": "전세 시세 정보가 있어야 리스크 평가가 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 25
+          }
+        ],
+        "estimated_time": 45,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 18.58301,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D009",
+      "query": "임대차보호법 내용 찾고 적용 가능 여부 판단해줘",
+      "category": "법률+판단",
+      "expected_intent": "LEGAL_CONSULT",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:43:41.009638",
+      "intent_analysis": {
+        "intent_type": "법률상담",
+        "confidence": 0.85,
+        "keywords": [
+          "임대차보호법",
+          "적용",
+          "가능 여부"
+        ],
+        "suggested_agents": [
+          "search_team"
+        ],
+        "reasoning": "임대차보호법에 대한 내용과 적용 가능 여부를 묻고 있으므로 LEGAL_CONSULT로 분류"
+      },
+      "decomposition": {
+        "is_compound": false,
+        "num_tasks": 1,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "임대차보호법 내용 찾고 적용 가능 여부 판단해줘",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 0.0
+          }
+        ],
+        "total_estimated_time": 30.0,
+        "confidence": 1.0,
+        "reasoning": "Simple query - no decomposition needed"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 1,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 0,
+            "dependencies": [],
+            "timeout": 30
+          }
+        ],
+        "estimated_time": 30,
+        "parallel_groups": [],
+        "metadata": {
+          "created_by": "PlanningAgent"
+        }
+      },
+      "execution_time": 9.065541,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": false,
+        "task_count_match": false,
+        "agents_match": false,
+        "overall": false
+      },
+      "status": "success"
+    },
+    {
+      "id": "D010",
+      "query": "용산구 매매 시세 조회하고 전세 전환 계산해줘",
+      "category": "시세+계산",
+      "expected_intent": "MARKET_INQUIRY",
+      "expected_agents": [
+        "search_team",
+        "analysis_team"
+      ],
+      "expected_decomposition": true,
+      "expected_tasks": 2,
+      "timestamp": "2025-10-05T14:43:50.075179",
+      "intent_analysis": {
+        "intent_type": "시세조회",
+        "confidence": 0.85,
+        "keywords": [
+          "용산구",
+          "매매",
+          "시세",
+          "전세",
+          "전환",
+          "계산"
+        ],
+        "suggested_agents": [
+          "search_team",
+          "analysis_team"
+        ],
+        "reasoning": "매매 시세 조회가 주된 의도이며, 전세 전환 계산이 부가적인 의도로 포함되어 있어 MARKET_INQUIRY로 분류"
+      },
+      "decomposition": {
+        "is_compound": true,
+        "num_tasks": 2,
+        "execution_mode": "sequential",
+        "parallel_groups": [],
+        "tasks": [
+          {
+            "id": "task_0",
+            "description": "용산구 매매 시세 조회",
+            "type": "search",
+            "agent_team": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "estimated_time": 20
+          },
+          {
+            "id": "task_1",
+            "description": "전세 전환 계산",
+            "type": "calculation",
+            "agent_team": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "estimated_time": 15
+          }
+        ],
+        "total_estimated_time": 35,
+        "confidence": 0.8,
+        "reasoning": "매매 시세 정보가 있어야 전세 전환 계산이 가능하므로 순차 실행"
+      },
+      "comprehensive_plan": {
+        "strategy": "sequential",
+        "num_steps": 2,
+        "steps": [
+          {
+            "agent": "search_team",
+            "priority": 1,
+            "dependencies": [],
+            "timeout": 20
+          },
+          {
+            "agent": "analysis_team",
+            "priority": 2,
+            "dependencies": [
+              "task_0"
+            ],
+            "timeout": 15
+          }
+        ],
+        "estimated_time": 35,
+        "parallel_groups": [],
+        "metadata": {
+          "is_compound": true,
+          "decomposition": {},
+          "created_by": "PlanningAgent with QueryDecomposer"
+        }
+      },
+      "execution_time": 18.381925,
+      "validation": {
+        "intent_match": false,
+        "decomposition_match": true,
+        "task_count_match": true,
+        "agents_match": true,
+        "overall": false
+      },
+      "status": "success"
+    }
+  ]
+}

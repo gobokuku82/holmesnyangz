@@ -45,7 +45,7 @@ class Config:
     LEGAL_PATHS = {
         "chroma_db": LEGAL_INFO_BASE / "chroma_db",                          # ChromaDB vector database
         "sqlite_db": LEGAL_INFO_BASE / "sqlite_db" / "legal_metadata.db",   # SQLite metadata
-        "embedding_model": BASE_DIR / "app" / "service_agent" / "models" / "KURE_v1",  # Korean Legal Embedding Model
+        "embedding_model": BASE_DIR / "app" / "models" / "KURE_v1",  # Korean Legal Embedding Model
     }
 
     # ============ Model Settings (Active) ============

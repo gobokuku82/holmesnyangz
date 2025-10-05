@@ -1,11 +1,51 @@
 """
 Separated State Definitions for Team-based Architecture
 각 팀별로 독립적인 State를 정의하여 State pollution을 방지
+
+Refactored for better organization and maintainability
+- Added logging support
+- Improved error handling
+- Better type hints
+- Added standard result format for Phase 2
 """
 
-from typing import TypedDict, Dict, List, Any, Optional, Literal
+import logging
+from typing import TypedDict, Dict, List, Any, Optional, Literal, Union
 from datetime import datetime
+from dataclasses import dataclass, field
 
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# STANDARD RESULT FORMAT (Phase 2 Preparation)
+# ============================================================================
+
+@dataclass
+class StandardResult:
+    """
+    모든 Agent의 표준 응답 포맷
+    Phase 2에서 본격 활용 예정
+    """
+    agent_name: str
+    status: Literal["success", "failure", "partial"]
+    data: Dict[str, Any]
+    error: Optional[str] = None
+    timestamp: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for State storage"""
+        return {
+            "agent_name": self.agent_name,
+            "status": self.status,
+            "data": self.data,
+            "error": self.error,
+            "timestamp": self.timestamp.isoformat()
+        }
+
+# ============================================================================
+# SHARED STATE DEFINITIONS
+# ============================================================================
 
 class SearchKeywords(TypedDict):
     """검색 키워드 구조"""
@@ -16,7 +56,11 @@ class SearchKeywords(TypedDict):
 
 
 class SharedState(TypedDict):
-    """모든 팀이 공유하는 최소한의 상태"""
+    """
+    모든 팀이 공유하는 최소한의 상태
+    - 필수 필드만 포함
+    - 팀 간 통신의 기본 단위
+    """
     user_query: str
     session_id: str
     timestamp: str
@@ -24,6 +68,9 @@ class SharedState(TypedDict):
     status: Literal["pending", "processing", "completed", "error"]
     error_message: Optional[str]
 
+# ============================================================================
+# TEAM-SPECIFIC STATE DEFINITIONS
+# ============================================================================
 
 class SearchTeamState(TypedDict):
     """검색 팀 전용 State"""
@@ -181,6 +228,9 @@ class AnalysisTeamState(TypedDict):
     # Error tracking
     error: Optional[str]
 
+# ============================================================================
+# SUPERVISOR STATE DEFINITIONS
+# ============================================================================
 
 class PlanningState(TypedDict):
     """계획 수립 전용 State"""
@@ -233,9 +283,16 @@ class MainSupervisorState(TypedDict):
     error_log: List[str]
     status: str
 
+# ============================================================================
+# STATE MANAGEMENT UTILITIES
+# ============================================================================
 
 class StateManager:
-    """State 변환 및 관리 유틸리티"""
+    """
+    State 변환 및 관리 유틸리티
+    - Logging 추가
+    - Error handling 개선
+    """
 
     @staticmethod
     def create_shared_state(
@@ -247,6 +304,8 @@ class StateManager:
         """공유 State 생성"""
         if timestamp is None:
             timestamp = datetime.now().isoformat()
+
+        logger.info(f"Creating shared state for session: {session_id}")
 
         return SharedState(
             user_query=query,
@@ -260,6 +319,8 @@ class StateManager:
     @staticmethod
     def extract_shared_state(state: Dict[str, Any]) -> SharedState:
         """전체 State에서 공유 State만 추출"""
+        logger.debug(f"Extracting shared state from full state")
+
         return SharedState(
             user_query=state.get("user_query", ""),
             session_id=state.get("session_id", ""),
@@ -275,45 +336,42 @@ class StateManager:
         team_name: str,
         team_result: Dict[str, Any]
     ) -> MainSupervisorState:
-        """팀 결과를 메인 State에 병합"""
-        # Store team result
-        main_state["team_results"][team_name] = team_result
+        """
+        팀 결과를 메인 State에 병합
+        - Improved error handling
+        - Better logging
+        """
+        logger.info(f"Merging results from team: {team_name}")
 
-        # Update completed/failed teams
-        if team_result.get("status") in ["completed", "success"]:
-            if team_name not in main_state["completed_teams"]:
-                main_state["completed_teams"].append(team_name)
-        else:
-            if team_name not in main_state["failed_teams"]:
-                main_state["failed_teams"].append(team_name)
+        try:
+            # Store team result
+            if "team_results" not in main_state:
+                main_state["team_results"] = {}
+            main_state["team_results"][team_name] = team_result
 
-        # Remove from active teams
-        if team_name in main_state["active_teams"]:
-            main_state["active_teams"].remove(team_name)
+            # Update completed/failed teams
+            if team_result.get("status") in ["completed", "success"]:
+                if "completed_teams" not in main_state:
+                    main_state["completed_teams"] = []
+                if team_name not in main_state["completed_teams"]:
+                    main_state["completed_teams"].append(team_name)
+                    logger.info(f"Team {team_name} completed successfully")
+            else:
+                if "failed_teams" not in main_state:
+                    main_state["failed_teams"] = []
+                if team_name not in main_state["failed_teams"]:
+                    main_state["failed_teams"].append(team_name)
+                    logger.warning(f"Team {team_name} failed")
 
-        return main_state
+            # Remove from active teams
+            if "active_teams" in main_state and team_name in main_state["active_teams"]:
+                main_state["active_teams"].remove(team_name)
 
-    @staticmethod
-    def merge_team_result(
-        main_state: MainSupervisorState,
-        team_name: str,
-        team_result: Dict[str, Any]
-    ) -> MainSupervisorState:
-        """팀 결과를 메인 State에 병합"""
-        if team_name == "search":
-            main_state["search_team_result"] = team_result
-        elif team_name == "document":
-            main_state["document_team_result"] = team_result
-        elif team_name == "analysis":
-            main_state["analysis_team_result"] = team_result
-
-        # Update completed teams
-        if team_name not in main_state["completed_teams"]:
-            main_state["completed_teams"].append(team_name)
-
-        # Remove from active teams
-        if team_name in main_state["active_teams"]:
-            main_state["active_teams"].remove(team_name)
+        except Exception as e:
+            logger.error(f"Error merging team results for {team_name}: {str(e)}")
+            if "error_log" not in main_state:
+                main_state["error_log"] = []
+            main_state["error_log"].append(f"Failed to merge {team_name} results: {str(e)}")
 
         return main_state
 
@@ -323,81 +381,137 @@ class StateManager:
         shared_state: SharedState,
         additional_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """팀별 초기 State 생성"""
+        """
+        팀별 초기 State 생성
+        - Improved initialization
+        - Better defaults
+        """
+        logger.info(f"Creating initial state for team: {team_type}")
 
-        base_state = dict(shared_state)
+        # Base shared fields
+        base_fields = {
+            "team_name": team_type,
+            "status": "initialized",
+            "shared_context": dict(shared_state),
+            "start_time": None,
+            "end_time": None,
+            "error": None
+        }
 
-        if team_type == "search":
-            state = SearchTeamState(
-                **base_state,
-                search_keywords=[],
-                search_scope=["legal", "real_estate", "loan"],
-                search_results={},
-                legal_search_results=None,
-                real_estate_search_results=None,
-                loan_search_results=None,
-                search_metadata={},
-                execution_step="initialized"
-            )
+        try:
+            if team_type == "search":
+                state = {
+                    **base_fields,
+                    "keywords": None,
+                    "search_scope": ["legal", "real_estate", "loan"],
+                    "filters": {},
+                    "legal_results": [],
+                    "real_estate_results": [],
+                    "loan_results": [],
+                    "aggregated_results": {},
+                    "total_results": 0,
+                    "search_time": 0.0,
+                    "sources_used": [],
+                    "search_progress": {},
+                    "current_search": None,
+                    "execution_strategy": None
+                }
 
-        elif team_type == "document":
-            state = DocumentTeamState(
-                **base_state,
-                document_type=additional_data.get("document_type", "contract") if additional_data else "contract",
-                document_template=None,
-                document_data={},
-                generated_document=None,
-                review_needed=True,
-                review_results=None,
-                review_risks=None,
-                review_recommendations=None,
-                final_document=None,
-                execution_step="initialized"
-            )
+            elif team_type == "document":
+                doc_type = additional_data.get("document_type", "contract") if additional_data else "contract"
+                state = {
+                    **base_fields,
+                    "document_type": doc_type,
+                    "template": None,
+                    "document_content": None,
+                    "generation_progress": {},
+                    "review_needed": True,
+                    "review_result": None,
+                    "final_document": None,
+                    "generation_time": None,
+                    "review_time": None
+                }
 
-        elif team_type == "analysis":
-            state = AnalysisTeamState(
-                **base_state,
-                analysis_type=additional_data.get("analysis_type", "comprehensive") if additional_data else "comprehensive",
-                analysis_input={},
-                analysis_metrics={},
-                analysis_insights=[],
-                analysis_report=None,
-                visualization_data=None,
-                recommendations=None,
-                confidence_score=None,
-                execution_step="initialized"
-            )
+            elif team_type == "analysis":
+                analysis_type = additional_data.get("analysis_type", "comprehensive") if additional_data else "comprehensive"
+                state = {
+                    **base_fields,
+                    "analysis_type": analysis_type,
+                    "input_data": {},
+                    "metrics": {},
+                    "insights": [],
+                    "report": {},
+                    "visualization_data": None,
+                    "recommendations": [],
+                    "confidence_score": 0.0,
+                    "analysis_progress": {},
+                    "analysis_time": None
+                }
 
-        else:
-            raise ValueError(f"Unknown team type: {team_type}")
+            else:
+                raise ValueError(f"Unknown team type: {team_type}")
 
-        # Add any additional data
-        if additional_data:
-            state.update(additional_data)
+            # Add any additional data
+            if additional_data:
+                state.update(additional_data)
+                logger.debug(f"Added additional data to {team_type} state")
 
-        return state
+            return state
 
+        except Exception as e:
+            logger.error(f"Error creating initial state for {team_type}: {str(e)}")
+            raise
+
+# ============================================================================
+# STATE VALIDATION
+# ============================================================================
 
 class StateValidator:
-    """State 유효성 검증"""
+    """
+    State 유효성 검증
+    - Improved error messages
+    - Better logging
+    """
+
+    @staticmethod
+    def validate_shared_state(state: Dict[str, Any]) -> tuple[bool, List[str]]:
+        """공유 State 검증"""
+        errors = []
+
+        # Required fields
+        required_fields = ["user_query", "session_id"]
+        for field in required_fields:
+            if not state.get(field):
+                errors.append(f"{field} is required")
+
+        # Status validation
+        valid_statuses = ["pending", "processing", "completed", "error"]
+        if state.get("status") and state["status"] not in valid_statuses:
+            errors.append(f"Invalid status: {state['status']}")
+
+        if errors:
+            logger.warning(f"Shared state validation errors: {errors}")
+
+        return len(errors) == 0, errors
 
     @staticmethod
     def validate_search_state(state: Dict[str, Any]) -> tuple[bool, List[str]]:
         """검색 팀 State 검증"""
         errors = []
 
-        if not state.get("user_query"):
-            errors.append("user_query is required")
+        # Check shared state first
+        is_valid, shared_errors = StateValidator.validate_shared_state(state.get("shared_context", {}))
+        errors.extend(shared_errors)
 
-        if not state.get("session_id"):
-            errors.append("session_id is required")
-
+        # Search specific validation
         search_scope = state.get("search_scope", [])
         valid_scopes = ["legal", "real_estate", "loan"]
         for scope in search_scope:
             if scope not in valid_scopes:
                 errors.append(f"Invalid search scope: {scope}")
+
+        if errors:
+            logger.warning(f"Search state validation errors: {errors}")
 
         return len(errors) == 0, errors
 
@@ -406,15 +520,20 @@ class StateValidator:
         """문서 팀 State 검증"""
         errors = []
 
-        if not state.get("user_query"):
-            errors.append("user_query is required")
+        # Check shared state first
+        is_valid, shared_errors = StateValidator.validate_shared_state(state.get("shared_context", {}))
+        errors.extend(shared_errors)
 
+        # Document specific validation
         if not state.get("document_type"):
             errors.append("document_type is required")
 
-        valid_types = ["contract", "agreement", "report", "notice", "application"]
-        if state.get("document_type") not in valid_types:
+        valid_types = ["contract", "agreement", "report", "notice", "application", "lease_contract", "sales_contract"]
+        if state.get("document_type") and state["document_type"] not in valid_types:
             errors.append(f"Invalid document type: {state.get('document_type')}")
+
+        if errors:
+            logger.warning(f"Document state validation errors: {errors}")
 
         return len(errors) == 0, errors
 
@@ -423,14 +542,97 @@ class StateValidator:
         """분석 팀 State 검증"""
         errors = []
 
-        if not state.get("user_query"):
-            errors.append("user_query is required")
+        # Check shared state first
+        is_valid, shared_errors = StateValidator.validate_shared_state(state.get("shared_context", {}))
+        errors.extend(shared_errors)
 
+        # Analysis specific validation
         if not state.get("analysis_type"):
             errors.append("analysis_type is required")
 
         valid_types = ["market", "risk", "comprehensive", "comparison", "trend"]
-        if state.get("analysis_type") not in valid_types:
+        if state.get("analysis_type") and state["analysis_type"] not in valid_types:
             errors.append(f"Invalid analysis type: {state.get('analysis_type')}")
 
+        if errors:
+            logger.warning(f"Analysis state validation errors: {errors}")
+
         return len(errors) == 0, errors
+
+# ============================================================================
+# STATE TRANSITION HELPERS (New for Phase 1)
+# ============================================================================
+
+class StateTransition:
+    """
+    State 전환 관리
+    - Phase transition logging
+    - Error recovery helpers
+    """
+
+    @staticmethod
+    def update_status(state: Dict[str, Any], new_status: str) -> Dict[str, Any]:
+        """Update status with logging"""
+        old_status = state.get("status", "unknown")
+        state["status"] = new_status
+        logger.info(f"Status transition: {old_status} -> {new_status}")
+        return state
+
+    @staticmethod
+    def record_error(state: Dict[str, Any], error: str) -> Dict[str, Any]:
+        """Record error in state"""
+        state["error"] = error
+        state["status"] = "error"
+        if "error_log" not in state:
+            state["error_log"] = []
+        state["error_log"].append({
+            "timestamp": datetime.now().isoformat(),
+            "error": error
+        })
+        logger.error(f"Error recorded: {error}")
+        return state
+
+    @staticmethod
+    def mark_completed(state: Dict[str, Any], result: Any = None) -> Dict[str, Any]:
+        """Mark task as completed"""
+        state["status"] = "completed"
+        state["end_time"] = datetime.now()
+        if result is not None:
+            state["result"] = result
+
+        # Calculate execution time if start_time exists
+        if state.get("start_time"):
+            delta = state["end_time"] - state["start_time"]
+            state["execution_time"] = delta.total_seconds()
+            logger.info(f"Task completed in {state['execution_time']:.2f} seconds")
+
+        return state
+
+# ============================================================================
+# EXPORT ALL PUBLIC CLASSES
+# ============================================================================
+
+__all__ = [
+    # Standard format
+    'StandardResult',
+    # State definitions
+    'SharedState',
+    'SearchTeamState',
+    'DocumentTeamState',
+    'AnalysisTeamState',
+    'PlanningState',
+    'MainSupervisorState',
+    # Supporting types
+    'SearchKeywords',
+    'DocumentTemplate',
+    'DocumentContent',
+    'ReviewResult',
+    'AnalysisInput',
+    'AnalysisMetrics',
+    'AnalysisInsight',
+    'AnalysisReport',
+    # Utilities
+    'StateManager',
+    'StateValidator',
+    'StateTransition'
+]

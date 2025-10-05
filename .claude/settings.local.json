@@ -10,7 +10,10 @@
       "Bash(mkdir:*)",
       "Bash(timeout:*)",
       "Bash(move:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(venv/Scripts/python:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

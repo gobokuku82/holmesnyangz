@@ -103,7 +103,7 @@ class DocumentExecutor:
         workflow.add_node("finalize", self.finalize_node)
 
         # 엣지 구성
-        workflow.set_entry_point("prepare")
+        workflow.add_edge(START, "prepare")
         workflow.add_edge("prepare", "generate")
         workflow.add_edge("generate", "review_check")
 

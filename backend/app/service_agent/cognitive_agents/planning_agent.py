@@ -1,6 +1,7 @@
 """
 Planning Agent - 의도 분석 및 실행 계획 수립 전담
 Supervisor의 계획 관련 로직을 분리하여 독립적으로 관리
+Phase 1 Enhancement: Query Decomposer 통합
 """
 
 import logging
@@ -19,6 +20,11 @@ if str(backend_dir) not in sys.path:
 from app.service_agent.foundation.agent_registry import AgentRegistry
 from app.service_agent.foundation.agent_adapter import AgentAdapter
 from app.service_agent.llm_manager import LLMService
+from app.service_agent.cognitive_agents.query_decomposer import (
+    QueryDecomposer,
+    DecomposedQuery,
+    ExecutionMode as DecomposerExecutionMode
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +102,8 @@ class PlanningAgent:
         self.llm_service = LLMService(llm_context=llm_context) if llm_context else None
         self.intent_patterns = self._initialize_intent_patterns()
         self.agent_capabilities = self._load_agent_capabilities()
+        # Phase 1: Query Decomposer 추가
+        self.query_decomposer = QueryDecomposer(self.llm_service)
 
     def _initialize_intent_patterns(self) -> Dict[IntentType, List[str]]:
         """의도 패턴 초기화"""
@@ -182,7 +190,7 @@ class PlanningAgent:
             logger.error(f"LLM intent analysis failed: {e}")
             raise
 
-    async def _analyze_with_patterns(self, query: str, context: Optional[Dict]) -> IntentResult:
+    def _analyze_with_patterns(self, query: str, context: Optional[Dict]) -> IntentResult:
         """패턴 매칭 기반 의도 분석"""
         detected_intents = {}
         found_keywords = []
@@ -206,8 +214,19 @@ class PlanningAgent:
             intent_type = IntentType.UNCLEAR
             confidence = 0.0
 
-        # Agent 선택 (패턴 매칭 시에도 async 호출)
-        suggested_agents = await self._suggest_agents(intent_type, query, found_keywords)
+        # Agent 선택 (패턴 매칭 - fallback에서는 기본 Agent 사용)
+        # Note: This is sync function now, so we provide basic agent selection
+        intent_to_agent = {
+            IntentType.LEGAL_CONSULT: ["search_team"],
+            IntentType.MARKET_INQUIRY: ["search_team"],
+            IntentType.LOAN_CONSULT: ["search_team"],
+            IntentType.CONTRACT_CREATION: ["document_team"],
+            IntentType.CONTRACT_REVIEW: ["search_team", "analysis_team"],
+            IntentType.COMPREHENSIVE: ["search_team", "analysis_team"],
+            IntentType.RISK_ANALYSIS: ["analysis_team"],
+            IntentType.UNCLEAR: ["search_team"],
+        }
+        suggested_agents = intent_to_agent.get(intent_type, ["search_team"])
 
         return IntentResult(
             intent_type=intent_type,
@@ -387,6 +406,90 @@ class PlanningAgent:
             logger.error(f"Simple LLM agent selection failed: {e}")
             raise
 
+    async def create_comprehensive_plan(
+        self,
+        query: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> ExecutionPlan:
+        """
+        Phase 1 Enhancement: 복합 질문 분해를 포함한 종합 계획 수립
+
+        Args:
+            query: 사용자 질문
+            context: 추가 컨텍스트
+
+        Returns:
+            종합 실행 계획
+        """
+        logger.info(f"Creating comprehensive plan for query: {query[:100]}...")
+
+        # 1. 의도 분석
+        intent = await self.analyze_intent(query, context)
+        logger.info(f"Intent analyzed: {intent.intent_type.value} (confidence: {intent.confidence:.2f})")
+
+        # 2. 복합 질문 분해
+        decomposed = await self.query_decomposer.decompose(
+            query=query,
+            context=context,
+            intent_result={
+                "intent": intent.intent_type.value,
+                "confidence": intent.confidence,
+                "keywords": intent.keywords,
+                "entities": intent.entities,
+                "is_compound": len(intent.suggested_agents) > 1
+            }
+        )
+        logger.info(f"Query decomposed into {len(decomposed.sub_tasks)} tasks")
+
+        # 3. 분해된 작업을 기반으로 실행 계획 생성
+        if decomposed.is_compound:
+            # 복합 질문: 분해된 작업들로 계획 수립
+            steps = []
+            for task in decomposed.sub_tasks:
+                step = ExecutionStep(
+                    agent_name=task.agent_team,
+                    priority=task.priority,
+                    dependencies=task.dependencies,
+                    input_mapping=task.required_data,
+                    timeout=int(task.estimated_time),
+                    optional=task.optional
+                )
+                steps.append(step)
+
+            # 실행 전략 변환
+            strategy_map = {
+                DecomposerExecutionMode.SEQUENTIAL: ExecutionStrategy.SEQUENTIAL,
+                DecomposerExecutionMode.PARALLEL: ExecutionStrategy.PARALLEL,
+                DecomposerExecutionMode.CONDITIONAL: ExecutionStrategy.CONDITIONAL
+            }
+            strategy = strategy_map.get(decomposed.execution_mode, ExecutionStrategy.SEQUENTIAL)
+
+            plan = ExecutionPlan(
+                steps=steps,
+                strategy=strategy,
+                intent=intent,
+                estimated_time=decomposed.total_estimated_time,
+                parallel_groups=decomposed.parallel_groups,
+                metadata={
+                    "is_compound": True,
+                    "decomposition": decomposed.to_dict() if hasattr(decomposed, 'to_dict') else {},
+                    "created_by": "PlanningAgent with QueryDecomposer"
+                }
+            )
+        else:
+            # 단순 질문: 기존 방식으로 계획 수립
+            plan = await self.create_execution_plan(intent)
+
+        # 4. 계획 검증 및 최적화
+        is_valid, errors = await self.validate_dependencies(plan)
+        if not is_valid:
+            logger.warning(f"Plan validation errors: {errors}")
+
+        plan = await self.optimize_plan(plan)
+
+        logger.info(f"Comprehensive plan created: {self.get_plan_summary(plan)}")
+        return plan
+
     async def create_execution_plan(
         self,
         intent: IntentResult,
@@ -407,6 +510,10 @@ class PlanningAgent:
         # 사용 가능한 Agent 확인
         if available_agents is None:
             available_agents = AgentRegistry.list_agents(enabled_only=True)
+            # Fallback: AgentRegistry가 비어있으면 기본 팀 사용
+            if not available_agents:
+                available_agents = ["search_team", "analysis_team", "document_team"]
+                logger.warning("AgentRegistry is empty, using default teams")
 
         # 추천 Agent 중 사용 가능한 것만 필터링
         logger.debug(f"Suggested agents: {intent.suggested_agents}")
@@ -651,15 +758,15 @@ if __name__ == "__main__":
     async def test_planning_agent():
         planner = PlanningAgent()
 
-        # 의도 분석 테스트
-        queries = [
+        # 단순 질문 테스트
+        simple_queries = [
             "전세금 5% 인상이 가능한가요?",
             "강남구 아파트 시세 알려주세요",
             "임대차계약서 작성해주세요",
-            "이 계약서 검토해주세요"
         ]
 
-        for query in queries:
+        print("=== 단순 질문 테스트 ===")
+        for query in simple_queries:
             print(f"\n질문: {query}")
             intent = await planner.analyze_intent(query)
             print(f"의도: {intent.intent_type.value} (신뢰도: {intent.confidence:.2f})")
@@ -668,5 +775,21 @@ if __name__ == "__main__":
             # 실행 계획 생성
             plan = await planner.create_execution_plan(intent)
             print(f"계획 요약: {planner.get_plan_summary(plan)}")
+
+        # Phase 1: 복합 질문 테스트
+        complex_queries = [
+            "강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘",
+            "이 계약서 검토해서 위험한 부분 찾고 수정안 만들어줘",
+            "서초동 전세가 확인하고 법적으로 문제없는지도 봐줘"
+        ]
+
+        print("\n\n=== 복합 질문 테스트 (Phase 1 Enhancement) ===")
+        for query in complex_queries:
+            print(f"\n복합 질문: {query}")
+            plan = await planner.create_comprehensive_plan(query)
+            print(f"전체 계획: {planner.get_plan_summary(plan)}")
+            print(f"분해된 작업 수: {len(plan.steps)}")
+            for step in plan.steps:
+                print(f"  - {step.agent_name}: 우선순위 {step.priority}, 의존성 {step.dependencies}")
 
     asyncio.run(test_planning_agent())

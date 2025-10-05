@@ -18,7 +18,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import tools_condition
 
@@ -55,7 +55,7 @@ class DocumentAgent:
         workflow.add_node("format_output", self.format_output_node)
 
         # 엣지 설정
-        workflow.set_entry_point("analyze_request")
+        workflow.add_edge(START, "analyze_request")
         workflow.add_edge("analyze_request", "validate_parameters")
         workflow.add_conditional_edges(
             "validate_parameters",

@@ -86,7 +86,7 @@ class AnalysisExecutor:
         workflow.add_node("finalize", self.finalize_node)
 
         # 엣지 구성
-        workflow.set_entry_point("prepare")
+        workflow.add_edge(START, "prepare")
         workflow.add_edge("prepare", "preprocess")
 
         # 전처리 필요 여부
