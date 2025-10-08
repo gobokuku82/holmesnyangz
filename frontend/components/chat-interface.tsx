@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Bot, User, Maximize2 } from "lucide-react"
 import type { PageType } from "@/app/page"
+import { useSession } from "@/hooks/use-session"
+import { chatAPI } from "@/lib/api"
+import type { ChatResponse } from "@/types/chat"
 
 interface Message {
   id: string
@@ -22,6 +25,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
+  const { sessionId, isLoading: sessionLoading, error: sessionError, resetSession } = useSession()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -50,7 +54,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
   }, [messages])
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
+    if (!content.trim() || !sessionId) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -63,34 +67,55 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     setInputValue("")
     setIsProcessing(true)
 
-    // Detect agent type and set processing agent
+    // Detect agent type for loading animation
     const agentType = detectAgentType(content)
     setProcessingAgent(agentType)
 
-    // Simulate agent processing
-    setTimeout(() => {
-      if (agentType) {
-        const agentPopup: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "agent-popup",
-          content: getAgentResponse(agentType, content),
-          timestamp: new Date(),
-          agentType,
-        }
-        setMessages((prev) => [...prev, agentPopup])
-      } else {
-        const botResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "bot",
-          content: "죄송합니다. 더 구체적인 질문을 해주시면 적절한 에이전트를 연결해드리겠습니다.",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, botResponse])
+    try {
+      // 실제 API 호출
+      const response = await chatAPI.sendMessage({
+        query: content,
+        session_id: sessionId,
+        enable_checkpointing: true,
+      })
+
+      // Agent 타입 감지 (응답 기반)
+      const responseAgentType = detectAgentTypeFromResponse(response)
+
+      // 봇 응답 추가
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        content: response.response.answer,
+        timestamp: new Date(),
       }
 
+      setMessages((prev) => [...prev, botMessage])
+
+      // Agent 팝업 표시 (필요시)
+      if (responseAgentType && response.teams_executed.length > 0) {
+        const agentPopup: Message = {
+          id: (Date.now() + 2).toString(),
+          type: "agent-popup",
+          content: getAgentResponseFromAPI(responseAgentType, response),
+          timestamp: new Date(),
+          agentType: responseAgentType,
+        }
+        setMessages((prev) => [...prev, agentPopup])
+      }
+    } catch (error) {
+      // 에러 메시지 표시
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "bot",
+        content: `오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsProcessing(false)
       setProcessingAgent(null)
-    }, 2000)
+    }
   }
 
   const detectAgentType = (content: string): PageType | null => {
@@ -111,16 +136,29 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     return null
   }
 
-  const getAgentResponse = (agentType: PageType, content: string): string => {
+  const detectAgentTypeFromResponse = (response: ChatResponse): PageType | null => {
+    const teams = response.teams_executed
+
+    if (teams.includes("analysis_team")) return "analysis"
+    if (teams.includes("search_team")) return "verification"
+    if (teams.includes("document_team")) return "consultation"
+
+    return null
+  }
+
+  const getAgentResponseFromAPI = (agentType: PageType, response: ChatResponse): string => {
+    const executionTime = response.execution_time_ms || 0
+    const teamCount = response.teams_executed.length
+
     switch (agentType) {
       case "analysis":
-        return "분석 에이전트가 활성화되었습니다. 계약서나 서류를 업로드하시거나 관련 정보를 입력해주세요."
+        return `분석 에이전트가 ${teamCount}개 팀을 사용하여 ${executionTime}ms 동안 처리했습니다.`
       case "verification":
-        return "검증 에이전트가 활성화되었습니다. 매물 정보를 확인하여 허위매물 여부와 위험도를 평가해드리겠습니다."
+        return `검증 에이전트가 처리를 완료했습니다. ${response.search_results?.length || 0}개의 결과를 찾았습니다.`
       case "consultation":
-        return "상담 에이전트가 활성화되었습니다. 원하시는 지역과 조건을 알려주시면 맞춤형 매물을 추천해드리겠습니다."
+        return `상담 에이전트가 처리를 완료했습니다. 처리 시간: ${executionTime}ms`
       default:
-        return "에이전트를 준비 중입니다."
+        return `처리가 완료되었습니다.`
     }
   }
 
@@ -172,6 +210,30 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
   const handleMaximize = (agentType: PageType) => {
     onSplitView(agentType)
+  }
+
+  // 세션 로딩 중
+  if (sessionLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">세션을 초기화하는 중...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 세션 에러
+  if (sessionError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <p className="text-sm text-destructive mb-4">{sessionError}</p>
+          <Button onClick={resetSession}>다시 시도</Button>
+        </div>
+      </div>
+    )
   }
 
   return (
