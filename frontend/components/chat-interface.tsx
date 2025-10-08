@@ -141,10 +141,15 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       setMessages((prev) => prev.filter(m => m.id !== processFlowMessageId))
 
       // 봇 응답 추가
+      // IRRELEVANT/UNCLEAR 응답은 message 필드 사용, 일반 응답은 answer 필드 사용
+      const responseContent = response.response.type === "guidance"
+        ? response.response.message
+        : response.response.answer || response.response.message || "응답을 받지 못했습니다.";
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "bot",
-        content: response.response.answer,
+        content: responseContent,
         timestamp: new Date(),
       }
 
