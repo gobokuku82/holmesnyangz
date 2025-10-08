@@ -1,15 +1,13 @@
 """
 Checkpointer management module
-Provides basic checkpoint functionality for state persistence
-This is a minimal implementation - will be extended later
+Provides checkpoint functionality for state persistence using AsyncSqliteSaver
 """
 
 import logging
 from pathlib import Path
 from typing import Optional
 
-# We'll add actual AsyncSqliteSaver import later
-# For now, just create the structure
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from app.service_agent.foundation.config import Config
 
@@ -18,14 +16,15 @@ logger = logging.getLogger(__name__)
 
 class CheckpointerManager:
     """
-    Manages checkpoint creation and retrieval
-    This is a minimal implementation that will be extended with AsyncSqliteSaver
+    Manages checkpoint creation and retrieval using AsyncSqliteSaver
     """
 
     def __init__(self):
         """Initialize the checkpointer manager"""
         self.checkpoint_dir = Config.CHECKPOINT_DIR
         self._ensure_checkpoint_dir_exists()
+        self._checkpointers = {}  # Cache for checkpointer instances
+        self._context_managers = {}  # Cache for async context managers
         logger.info(f"CheckpointerManager initialized with dir: {self.checkpoint_dir}")
 
     def _ensure_checkpoint_dir_exists(self):
@@ -45,19 +44,18 @@ class CheckpointerManager:
         """
         return Config.get_checkpoint_path(agent_name, session_id)
 
-    async def create_checkpointer(self, db_path: Optional[str] = None) -> Optional[object]:
+    async def create_checkpointer(self, db_path: Optional[str] = None) -> AsyncSqliteSaver:
         """
-        Create a checkpointer instance
+        Create and setup an AsyncSqliteSaver checkpointer instance
 
         Args:
             db_path: Optional database path. If None, uses default from config
 
         Returns:
-            Checkpointer instance (currently returns None - will be AsyncSqliteSaver later)
+            AsyncSqliteSaver instance
 
-        Note:
-            This is a placeholder that will be replaced with AsyncSqliteSaver
-            once we add the actual LangGraph dependency
+        Raises:
+            Exception: If checkpointer setup fails
         """
         if db_path is None:
             db_path = self.checkpoint_dir / "default_checkpoint.db"
@@ -67,14 +65,61 @@ class CheckpointerManager:
         # Ensure parent directory exists
         db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Checkpointer would be created at: {db_path}")
+        # Check cache
+        db_path_str = str(db_path)
+        if db_path_str in self._checkpointers:
+            logger.debug(f"Returning cached checkpointer for: {db_path}")
+            return self._checkpointers[db_path_str]
 
-        # TODO: Replace with actual AsyncSqliteSaver initialization
-        # from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-        # checkpointer = AsyncSqliteSaver.from_conn_string(str(db_path))
-        # await checkpointer.setup()
+        logger.info(f"Creating AsyncSqliteSaver checkpointer at: {db_path}")
 
-        return None  # Placeholder - will return actual checkpointer later
+        try:
+            # AsyncSqliteSaver.from_conn_string returns an async context manager
+            # We need to enter the context and keep it alive
+            context_manager = AsyncSqliteSaver.from_conn_string(db_path_str)
+
+            # Enter the async context manager
+            actual_checkpointer = await context_manager.__aenter__()
+
+            # Cache both the checkpointer and context manager (to keep it alive)
+            self._checkpointers[db_path_str] = actual_checkpointer
+            self._context_managers[db_path_str] = context_manager
+
+            logger.info(f"AsyncSqliteSaver checkpointer created and setup successfully")
+            return actual_checkpointer
+
+        except Exception as e:
+            logger.error(f"Failed to create checkpointer: {e}", exc_info=True)
+            raise
+
+    async def close_checkpointer(self, db_path: Optional[str] = None):
+        """
+        Close a checkpointer and its context manager properly
+
+        Args:
+            db_path: Database path. If None, closes default checkpointer
+        """
+        if db_path is None:
+            db_path = str(self.checkpoint_dir / "default_checkpoint.db")
+        else:
+            db_path = str(db_path)
+
+        if db_path in self._context_managers:
+            try:
+                context_manager = self._context_managers[db_path]
+                await context_manager.__aexit__(None, None, None)
+                logger.info(f"Checkpointer closed for: {db_path}")
+            except Exception as e:
+                logger.error(f"Error closing checkpointer: {e}")
+            finally:
+                # Clean up cache
+                self._context_managers.pop(db_path, None)
+                self._checkpointers.pop(db_path, None)
+
+    async def close_all(self):
+        """Close all open checkpointers"""
+        for db_path in list(self._context_managers.keys()):
+            await self.close_checkpointer(db_path)
 
     def validate_checkpoint_setup(self) -> bool:
         """
@@ -123,7 +168,7 @@ def get_checkpointer_manager() -> CheckpointerManager:
     return _checkpointer_manager
 
 
-async def create_checkpointer(db_path: Optional[str] = None) -> Optional[object]:
+async def create_checkpointer(db_path: Optional[str] = None) -> AsyncSqliteSaver:
     """
     Convenience function to create a checkpointer
 
@@ -131,7 +176,7 @@ async def create_checkpointer(db_path: Optional[str] = None) -> Optional[object]
         db_path: Optional database path
 
     Returns:
-        Checkpointer instance (placeholder for now)
+        AsyncSqliteSaver instance
     """
     manager = get_checkpointer_manager()
     return await manager.create_checkpointer(db_path)

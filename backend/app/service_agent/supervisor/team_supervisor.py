@@ -27,6 +27,7 @@ from app.service_agent.cognitive_agents.planning_agent import PlanningAgent, Int
 from app.service_agent.execution_agents import SearchExecutor, DocumentExecutor, AnalysisExecutor
 from app.service_agent.foundation.agent_registry import AgentRegistry
 from app.service_agent.foundation.agent_adapter import initialize_agent_system
+from app.service_agent.foundation.checkpointer import create_checkpointer
 
 logger = logging.getLogger(__name__)
 
@@ -37,20 +38,24 @@ class TeamBasedSupervisor:
     각 팀을 독립적으로 관리하고 조정
     """
 
-    def __init__(self, llm_context: LLMContext = None):
+    def __init__(self, llm_context: LLMContext = None, enable_checkpointing: bool = True):
         """
         초기화
 
         Args:
             llm_context: LLM 컨텍스트
+            enable_checkpointing: Checkpointing 활성화 여부
         """
         self.llm_context = llm_context or create_default_llm_context()
+        self.enable_checkpointing = enable_checkpointing
 
         # Agent 시스템 초기화
         initialize_agent_system(auto_register=True)
 
-        # Checkpointer placeholder - will be initialized later
+        # Checkpointer - async 초기화 필요
         self.checkpointer = None
+        self._checkpointer_initialized = False
+        self._checkpoint_cm = None  # Async context manager for checkpointer
 
         # Planning Agent
         self.planning_agent = PlanningAgent(llm_context=llm_context)
@@ -62,11 +67,11 @@ class TeamBasedSupervisor:
             "analysis": AnalysisExecutor(llm_context=llm_context)
         }
 
-        # 워크플로우 구성
+        # 워크플로우 구성 (checkpointer는 나중에 초기화)
         self.app = None
         self._build_graph()
 
-        logger.info("TeamBasedSupervisor initialized with 3 teams")
+        logger.info(f"TeamBasedSupervisor initialized with 3 teams (checkpointing: {enable_checkpointing})")
 
     def _get_llm_client(self):
         """LLM 클라이언트 가져오기"""
@@ -107,6 +112,8 @@ class TeamBasedSupervisor:
         workflow.add_edge("aggregate", "generate_response")
         workflow.add_edge("generate_response", END)
 
+        # Compile without checkpointer initially
+        # Checkpointer will be set during async_run if enabled
         self.app = workflow.compile()
         logger.info("Team-based workflow graph built successfully")
 
@@ -571,6 +578,70 @@ class TeamBasedSupervisor:
             "data": aggregated
         }
 
+    async def _ensure_checkpointer(self):
+        """Checkpointer 초기화 및 graph 재컴파일 (최초 1회만)"""
+        if not self.enable_checkpointing:
+            return
+
+        if not self._checkpointer_initialized:
+            try:
+                logger.info("Initializing AsyncSqliteSaver checkpointer...")
+
+                # Use AsyncSqliteSaver directly with async context manager
+                from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+                from pathlib import Path
+
+                # Path(__file__) is backend/app/service_agent/supervisor/team_supervisor.py
+                # We need backend/data/system/checkpoints/default_checkpoint.db
+                db_path = Path(__file__).parent.parent.parent.parent / "data" / "system" / "checkpoints" / "default_checkpoint.db"
+                db_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # Create and enter async context manager
+                self._checkpoint_cm = AsyncSqliteSaver.from_conn_string(str(db_path))
+                self.checkpointer = await self._checkpoint_cm.__aenter__()
+                self._checkpointer_initialized = True
+
+                # Checkpointer와 함께 graph 재컴파일
+                logger.info("Recompiling graph with checkpointer...")
+                self._build_graph_with_checkpointer()
+
+                logger.info("Checkpointer initialized and graph recompiled successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize checkpointer: {e}")
+                self.enable_checkpointing = False
+
+    def _build_graph_with_checkpointer(self):
+        """Checkpointer와 함께 workflow graph 재구성"""
+        workflow = StateGraph(MainSupervisorState)
+
+        # 노드 추가 (기존과 동일)
+        workflow.add_node("initialize", self.initialize_node)
+        workflow.add_node("planning", self.planning_node)
+        workflow.add_node("execute_teams", self.execute_teams_node)
+        workflow.add_node("aggregate", self.aggregate_results_node)
+        workflow.add_node("generate_response", self.generate_response_node)
+
+        # 엣지 구성 (기존과 동일)
+        workflow.add_edge(START, "initialize")
+        workflow.add_edge("initialize", "planning")
+
+        workflow.add_conditional_edges(
+            "planning",
+            self._route_after_planning,
+            {
+                "execute": "execute_teams",
+                "respond": "generate_response"
+            }
+        )
+
+        workflow.add_edge("execute_teams", "aggregate")
+        workflow.add_edge("aggregate", "generate_response")
+        workflow.add_edge("generate_response", END)
+
+        # Checkpointer와 함께 compile
+        self.app = workflow.compile(checkpointer=self.checkpointer)
+        logger.info("Team-based workflow graph built with checkpointer")
+
     async def process_query(
         self,
         query: str,
@@ -587,6 +658,9 @@ class TeamBasedSupervisor:
             처리 결과
         """
         logger.info(f"[TeamSupervisor] Processing query: {query[:100]}...")
+
+        # Checkpointer 초기화 (최초 1회)
+        await self._ensure_checkpointer()
 
         # 초기 상태 생성
         initial_state = MainSupervisorState(
@@ -614,10 +688,22 @@ class TeamBasedSupervisor:
 
         # 워크플로우 실행
         try:
-            final_state = await self.app.ainvoke(initial_state)
+            # Checkpointing이 활성화되어 있으면 config에 thread_id 전달
+            if self.checkpointer:
+                config = {
+                    "configurable": {
+                        "thread_id": session_id
+                    }
+                }
+                logger.info(f"Running with checkpointer (thread_id: {session_id})")
+                final_state = await self.app.ainvoke(initial_state, config=config)
+            else:
+                logger.info("Running without checkpointer")
+                final_state = await self.app.ainvoke(initial_state)
+
             return final_state
         except Exception as e:
-            logger.error(f"Query processing failed: {e}")
+            logger.error(f"Query processing failed: {e}", exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
@@ -627,6 +713,22 @@ class TeamBasedSupervisor:
                     "error": str(e)
                 }
             }
+
+    async def cleanup(self):
+        """
+        Cleanup resources, especially the checkpointer context manager
+        Call this when done using the supervisor
+        """
+        if self._checkpoint_cm is not None:
+            try:
+                await self._checkpoint_cm.__aexit__(None, None, None)
+                logger.info("Checkpointer context manager closed successfully")
+            except Exception as e:
+                logger.error(f"Error closing checkpointer: {e}")
+            finally:
+                self._checkpoint_cm = None
+                self.checkpointer = None
+                self._checkpointer_initialized = False
 
 
 # 테스트 코드

@@ -176,7 +176,7 @@ class AnalysisExecutor:
         """
         if not self.llm_service:
             logger.warning("LLM service not available, using fallback")
-            return self._select_tools_with_fallback()
+            return self._select_tools_with_fallback(query=query)
 
         try:
             # 동적으로 사용 가능한 분석 tool 정보 수집
@@ -226,9 +226,9 @@ class AnalysisExecutor:
 
         except Exception as e:
             logger.error(f"LLM analysis tool selection failed: {e}")
-            return self._select_tools_with_fallback()
+            return self._select_tools_with_fallback(query=query)
 
-    def _select_tools_with_fallback(self) -> Dict[str, Any]:
+    def _select_tools_with_fallback(self, query: str = "") -> Dict[str, Any]:
         """
         규칙 기반 fallback tool 선택
         LLM 실패 시 사용 (안전망)
@@ -240,10 +240,29 @@ class AnalysisExecutor:
         if not scope:
             scope = []
 
+        reasoning = "Fallback: using all available analysis tools for comprehensive coverage"
+        confidence = 0.3
+
+        # Decision Logger에 기록 (fallback도 기록)
+        decision_id = None
+        if self.decision_logger and query:
+            try:
+                decision_id = self.decision_logger.log_tool_decision(
+                    agent_type="analysis",
+                    query=query,
+                    available_tools=available_tools,
+                    selected_tools=scope,
+                    reasoning=reasoning,
+                    confidence=confidence
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log fallback tool decision: {e}")
+
         return {
             "selected_tools": scope,
-            "reasoning": "Fallback: using all available analysis tools for comprehensive coverage",
-            "confidence": 0.3
+            "reasoning": reasoning,
+            "confidence": confidence,
+            "decision_id": decision_id
         }
 
     def _build_subgraph(self):
@@ -319,7 +338,8 @@ class AnalysisExecutor:
 
         try:
             preprocessed_data = state.get("preprocessed_data", {})
-            query = state.get("shared_context", {}).get("query", "")
+            shared_context = state.get("shared_context", {})
+            query = shared_context.get("user_query", "") or shared_context.get("query", "")
             analysis_type = state.get("analysis_type", "comprehensive")
 
             # LLM 기반 도구 선택
@@ -639,7 +659,8 @@ class AnalysisExecutor:
         """LLM을 사용한 인사이트 생성"""
         raw_analysis = state.get("raw_analysis", {})
         analysis_type = state.get("analysis_type", "comprehensive")
-        query = state.get("shared_context", {}).get("query", "")
+        shared_context = state.get("shared_context", {})
+        query = shared_context.get("user_query", "") or shared_context.get("query", "")
 
         try:
             result = await self.llm_service.complete_json_async(

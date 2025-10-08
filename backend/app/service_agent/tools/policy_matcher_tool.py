@@ -39,7 +39,7 @@ class PolicyMatcherTool:
         # 2024년 주요 정부 정책 데이터베이스
         self.policies = self._initialize_policy_database()
 
-        logger.info("PolicyMatcherTool initialized with {} policies", len(self.policies))
+        logger.info(f"PolicyMatcherTool initialized with {len(self.policies)} policies")
 
     def _initialize_policy_database(self) -> List[Dict]:
         """정책 데이터베이스 초기화"""

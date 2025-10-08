@@ -297,7 +297,7 @@ class SearchExecutor:
         """
         if not self.llm_service:
             logger.warning("LLM service not available, using fallback")
-            return self._select_tools_with_fallback()
+            return self._select_tools_with_fallback(keywords=keywords, query=query)
 
         try:
             # 동적으로 사용 가능한 tool 정보 수집
@@ -342,9 +342,9 @@ class SearchExecutor:
 
         except Exception as e:
             logger.error(f"LLM tool selection failed: {e}")
-            return self._select_tools_with_fallback()
+            return self._select_tools_with_fallback(keywords=keywords, query=query)
 
-    def _select_tools_with_fallback(self, keywords: SearchKeywords = None) -> Dict[str, Any]:
+    def _select_tools_with_fallback(self, keywords: SearchKeywords = None, query: str = "") -> Dict[str, Any]:
         """
         규칙 기반 fallback tool 선택
         LLM 실패 시 사용 (안전망)
@@ -357,10 +357,29 @@ class SearchExecutor:
             # tool이 하나도 없으면 빈 배열
             scope = []
 
+        reasoning = "Fallback: using all available tools for safety"
+        confidence = 0.3
+
+        # Decision Logger에 기록 (fallback도 기록)
+        decision_id = None
+        if self.decision_logger and query:
+            try:
+                decision_id = self.decision_logger.log_tool_decision(
+                    agent_type="search",
+                    query=query,
+                    available_tools=available_tools,
+                    selected_tools=scope,
+                    reasoning=reasoning,
+                    confidence=confidence
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log fallback tool decision: {e}")
+
         return {
             "selected_tools": scope,
-            "reasoning": "Fallback: using all available tools for safety",
-            "confidence": 0.3
+            "reasoning": reasoning,
+            "confidence": confidence,
+            "decision_id": decision_id
         }
 
     def _determine_search_scope(self, keywords: SearchKeywords) -> List[str]:
@@ -413,7 +432,7 @@ class SearchExecutor:
         search_scope = state.get("search_scope", [])
         keywords = state.get("keywords", {})
         shared_context = state.get("shared_context", {})
-        query = shared_context.get("query", "")
+        query = shared_context.get("user_query", "") or shared_context.get("query", "")
 
         # LLM 기반 도구 선택
         tool_selection = await self._select_tools_with_llm(query, keywords)
