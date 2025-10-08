@@ -23,11 +23,12 @@ class Config:
     # ============ System Paths ============
     BASE_DIR = Path(__file__).parent.parent.parent.parent  # Project root
     DB_DIR = BASE_DIR / "database" / "storage"
-    CHECKPOINT_DIR = BASE_DIR / "checkpoints"
+    CHECKPOINT_DIR = BASE_DIR / "data" / "system" / "checkpoints"  # Changed to specified path
+    AGENT_LOGGING_DIR = BASE_DIR / "data" / "system" / "agent_logging"  # LLM decision logging
     LOG_DIR = BASE_DIR / "logs"
 
     # Create directories if they don't exist
-    for directory in [CHECKPOINT_DIR, LOG_DIR]:
+    for directory in [CHECKPOINT_DIR, AGENT_LOGGING_DIR, LOG_DIR]:
         directory.mkdir(parents=True, exist_ok=True)
 
     # ============ Database Paths (Active) ============
