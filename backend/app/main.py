@@ -17,10 +17,14 @@ app.add_middleware(
 )
 
 # Import and include routers
-from app.api.legal_search_api import router as legal_search_router
+from app.api.chat_api import router as chat_router
+from app.api.error_handlers import register_error_handlers
 
 # Include routers
-app.include_router(legal_search_router)
+app.include_router(chat_router)
+
+# Register error handlers
+register_error_handlers(app)
 
 @app.get("/")
 async def root():
