@@ -173,13 +173,37 @@ class TeamBasedSupervisor:
             available_teams=list(self.teams.keys()),
             execution_steps=[
                 {
+                    # 기본 정보
                     "step_id": f"step_{i}",
                     "agent_name": step.agent_name,
                     "team": self._get_team_for_agent(step.agent_name),
+                    "description": f"{step.agent_name} 실행",  # TODO: 더 나은 설명 필요
                     "priority": step.priority,
                     "dependencies": step.dependencies,
-                    "estimated_time": step.timeout,
-                    "required": not step.optional
+
+                    # 실행 설정
+                    "timeout": step.timeout,
+                    "retry_count": step.retry_count,
+                    "optional": step.optional,
+                    "input_mapping": step.input_mapping,
+
+                    # 상태 추적 (초기값)
+                    "status": "pending",
+                    "progress_percentage": 0,
+
+                    # 타이밍 (초기값)
+                    "started_at": None,
+                    "completed_at": None,
+                    "execution_time_ms": None,
+
+                    # 결과 (초기값)
+                    "result": None,
+                    "error": None,
+                    "error_details": None,
+
+                    # 사용자 수정 (초기값)
+                    "modified_by_user": False,
+                    "original_values": None
                 }
                 for i, step in enumerate(execution_plan.steps)
             ],
@@ -234,6 +258,30 @@ class TeamBasedSupervisor:
         from app.service_agent.foundation.agent_adapter import AgentAdapter
         dependencies = AgentAdapter.get_agent_dependencies(agent_name)
         return dependencies.get("team", "search")
+
+    def _find_step_id_for_team(
+        self,
+        team_name: str,
+        planning_state: Optional[PlanningState]
+    ) -> Optional[str]:
+        """
+        팀 이름으로 해당하는 step_id 찾기
+
+        Args:
+            team_name: 팀 이름 (예: "search", "analysis")
+            planning_state: PlanningState
+
+        Returns:
+            step_id 또는 None
+        """
+        if not planning_state:
+            return None
+
+        for step in planning_state.get("execution_steps", []):
+            if step.get("team") == team_name:
+                return step.get("step_id")
+
+        return None
 
     async def execute_teams_node(self, state: MainSupervisorState) -> MainSupervisorState:
         """
@@ -300,15 +348,47 @@ class TeamBasedSupervisor:
         shared_state: SharedState,
         main_state: MainSupervisorState
     ) -> Dict[str, Any]:
-        """팀 순차 실행"""
+        """팀 순차 실행 + execution_steps status 업데이트"""
         logger.info(f"[TeamSupervisor] Executing {len(teams)} teams sequentially")
 
         results = {}
+        planning_state = main_state.get("planning_state")
+
         for team_name in teams:
             if team_name in self.teams:
+                # Step ID 찾기
+                step_id = self._find_step_id_for_team(team_name, planning_state)
+
                 try:
+                    # ✅ 실행 전: status = "in_progress"
+                    if step_id and planning_state:
+                        planning_state = StateManager.update_step_status(
+                            planning_state,
+                            step_id,
+                            "in_progress",
+                            progress=0
+                        )
+                        main_state["planning_state"] = planning_state
+
+                    # 팀 실행
                     result = await self._execute_single_team(team_name, shared_state, main_state)
                     results[team_name] = result
+
+                    # ✅ 실행 성공: status = "completed"
+                    if step_id and planning_state:
+                        planning_state = StateManager.update_step_status(
+                            planning_state,
+                            step_id,
+                            "completed",
+                            progress=100
+                        )
+                        # 결과 저장
+                        for step in planning_state["execution_steps"]:
+                            if step["step_id"] == step_id:
+                                step["result"] = result
+                                break
+                        main_state["planning_state"] = planning_state
+
                     logger.info(f"[TeamSupervisor] Team '{team_name}' completed")
 
                     # 데이터 전달 (다음 팀을 위해)
@@ -317,7 +397,18 @@ class TeamBasedSupervisor:
                         main_state["team_results"][team_name] = self._extract_team_data(result, team_name)
 
                 except Exception as e:
+                    # ✅ 실행 실패: status = "failed"
                     logger.error(f"[TeamSupervisor] Team '{team_name}' failed: {e}")
+
+                    if step_id and planning_state:
+                        planning_state = StateManager.update_step_status(
+                            planning_state,
+                            step_id,
+                            "failed",
+                            error=str(e)
+                        )
+                        main_state["planning_state"] = planning_state
+
                     results[team_name] = {"status": "failed", "error": str(e)}
 
         return results

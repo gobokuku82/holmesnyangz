@@ -17,7 +17,8 @@
       "Bash(tee:*)",
       "Bash(venv\\Scripts\\python:*)",
       "Bash(cat:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(venvScriptspython backendappservice_agentteststest_status_tracking.py)"
     ],
     "deny": [],
     "ask": []

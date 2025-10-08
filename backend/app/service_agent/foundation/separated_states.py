@@ -233,6 +233,47 @@ class AnalysisTeamState(TypedDict):
 # SUPERVISOR STATE DEFINITIONS
 # ============================================================================
 
+class ExecutionStepState(TypedDict):
+    """
+    execution_steps의 표준 형식 - TODO 아이템 + ProcessFlow 호환
+
+    통합: TODO 관리 시스템 + ProcessFlow 시각화
+    - TODO: 사용자 수정, 승인, 진행률 추적
+    - ProcessFlow: 프론트엔드 시각화용 데이터 소스
+    """
+    # 기본 정보
+    step_id: str                    # 고유 ID (예: "step_0", "step_1")
+    agent_name: str                 # 담당 에이전트
+    team: str                       # 담당 팀 (ProcessFlow용 매핑)
+    description: str                # 작업 설명 (사용자에게 표시)
+    priority: int                   # 우선순위
+    dependencies: List[str]         # 선행 작업 ID들
+
+    # 실행 설정
+    timeout: int                    # 타임아웃 (초)
+    retry_count: int                # 재시도 횟수
+    optional: bool                  # 선택적 작업 여부
+    input_mapping: Dict[str, str]   # 입력 매핑
+
+    # 상태 추적 (TODO + ProcessFlow 공통)
+    status: Literal["pending", "in_progress", "completed", "failed", "skipped", "cancelled"]
+    progress_percentage: int        # 진행률 0-100
+
+    # 타이밍
+    started_at: Optional[str]       # 시작 시간 (ISO format datetime)
+    completed_at: Optional[str]     # 완료 시간 (ISO format datetime)
+    execution_time_ms: Optional[int] # 실행 시간 (밀리초)
+
+    # 결과
+    result: Optional[Dict[str, Any]]  # 실행 결과 데이터
+    error: Optional[str]              # 에러 메시지
+    error_details: Optional[str]      # 에러 상세 정보
+
+    # 사용자 수정 (TODO 전용)
+    modified_by_user: bool                          # 사용자가 수정했는지 여부
+    original_values: Optional[Dict[str, Any]]       # 수정 전 원본 값
+
+
 class PlanningState(TypedDict):
     """계획 수립 전용 State"""
     raw_query: str
@@ -240,7 +281,7 @@ class PlanningState(TypedDict):
     intent_confidence: float
     available_agents: List[str]
     available_teams: List[str]
-    execution_steps: List[Dict[str, Any]]
+    execution_steps: List[ExecutionStepState]  # ✅ 타입 표준화: Dict → ExecutionStepState
     execution_strategy: str
     parallel_groups: Optional[List[List[str]]]
     plan_validated: bool
@@ -293,7 +334,63 @@ class StateManager:
     State 변환 및 관리 유틸리티
     - Logging 추가
     - Error handling 개선
+    - TODO + ProcessFlow 상태 관리
     """
+
+    @staticmethod
+    def update_step_status(
+        planning_state: PlanningState,
+        step_id: str,
+        new_status: Literal["pending", "in_progress", "completed", "failed", "skipped", "cancelled"],
+        progress: Optional[int] = None,
+        error: Optional[str] = None
+    ) -> PlanningState:
+        """
+        개별 execution_step의 상태 업데이트
+        TODO 관리 + ProcessFlow 업데이트 공통 사용
+
+        Args:
+            planning_state: Planning State
+            step_id: 업데이트할 step ID
+            new_status: 새로운 상태
+            progress: 진행률 (0-100)
+            error: 에러 메시지 (실패 시)
+
+        Returns:
+            업데이트된 planning_state
+        """
+        for step in planning_state["execution_steps"]:
+            if step["step_id"] == step_id:
+                old_status = step["status"]
+                step["status"] = new_status
+
+                # 진행률 업데이트
+                if progress is not None:
+                    step["progress_percentage"] = progress
+
+                # 시작 시간 기록
+                if new_status == "in_progress" and not step.get("started_at"):
+                    step["started_at"] = datetime.now().isoformat()
+
+                # 완료 시간 기록 + 실행 시간 계산
+                if new_status in ["completed", "failed", "skipped", "cancelled"]:
+                    step["completed_at"] = datetime.now().isoformat()
+                    if step.get("started_at"):
+                        try:
+                            start = datetime.fromisoformat(step["started_at"])
+                            delta = datetime.now() - start
+                            step["execution_time_ms"] = int(delta.total_seconds() * 1000)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate execution time for step {step_id}: {e}")
+
+                # 에러 기록
+                if error:
+                    step["error"] = error
+
+                logger.info(f"Step {step_id} status: {old_status} -> {new_status}")
+                break
+
+        return planning_state
 
     @staticmethod
     def create_shared_state(
