@@ -10,10 +10,13 @@ import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { chatAPI } from "@/lib/api"
 import type { ChatResponse } from "@/types/chat"
+import { ProcessFlow } from "@/components/process-flow"
+import type { ProcessState, AgentType } from "@/types/process"
+import { STEP_MESSAGES } from "@/types/process"
 
 interface Message {
   id: string
-  type: "user" | "bot" | "agent-popup"
+  type: "user" | "bot" | "agent-popup" | "process-flow"
   content: string
   timestamp: Date
   agentType?: PageType
@@ -35,8 +38,11 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     },
   ])
   const [inputValue, setInputValue] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingAgent, setProcessingAgent] = useState<PageType | null>(null)
+  const [processState, setProcessState] = useState<ProcessState>({
+    step: "idle",
+    agentType: null,
+    message: ""
+  })
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const exampleQuestions = [
@@ -65,11 +71,35 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue("")
-    setIsProcessing(true)
 
     // Detect agent type for loading animation
-    const agentType = detectAgentType(content)
-    setProcessingAgent(agentType)
+    const agentType = detectAgentType(content) as AgentType | null
+
+    // ProcessFlow 메시지 추가 (임시)
+    const processFlowMessage: Message = {
+      id: "process-flow-temp",
+      type: "process-flow",
+      content: "",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, processFlowMessage])
+
+    // 프로세스 시작
+    setProcessState({
+      step: "planning",
+      agentType,
+      message: STEP_MESSAGES.planning,
+      startTime: Date.now()
+    })
+
+    // 단계별 시뮬레이션 (실제로는 백엔드에서 SSE 등으로 전송)
+    setTimeout(() => {
+      setProcessState(prev => ({
+        ...prev,
+        step: "searching",
+        message: STEP_MESSAGES.searching
+      }))
+    }, 800)
 
     try {
       // 실제 API 호출
@@ -79,8 +109,34 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         enable_checkpointing: true,
       })
 
+      // 분석 단계로 업데이트
+      setProcessState(prev => ({
+        ...prev,
+        step: "analyzing",
+        message: STEP_MESSAGES.analyzing
+      }))
+
+      // 답변 생성 단계
+      setProcessState(prev => ({
+        ...prev,
+        step: "generating",
+        message: STEP_MESSAGES.generating
+      }))
+
       // Agent 타입 감지 (응답 기반)
       const responseAgentType = detectAgentTypeFromResponse(response)
+
+      // 완료 상태로 변경
+      setTimeout(() => {
+        setProcessState({
+          step: "complete",
+          agentType: agentType,
+          message: STEP_MESSAGES.complete
+        })
+      }, 500)
+
+      // ProcessFlow 메시지 제거
+      setMessages((prev) => prev.filter(m => m.id !== "process-flow-temp"))
 
       // 봇 응답 추가
       const botMessage: Message = {
@@ -103,18 +159,59 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         }
         setMessages((prev) => [...prev, agentPopup])
       }
+
+      // 1초 후 idle로 복귀
+      setTimeout(() => {
+        setProcessState({
+          step: "idle",
+          agentType: null,
+          message: ""
+        })
+      }, 1500)
+
     } catch (error) {
-      // 에러 메시지 표시
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "bot",
-        content: `오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
-        timestamp: new Date(),
+      // 에러 상태로 변경
+      setProcessState({
+        step: "error",
+        agentType: agentType,
+        message: "오류가 발생했습니다",
+        error: error instanceof Error ? error.message : "알 수 없는 오류"
+      })
+
+      // ProcessFlow 메시지 제거
+      setMessages((prev) => prev.filter(m => m.id !== "process-flow-temp"))
+
+      // 세션 만료 처리 (401 또는 404)
+      if (error instanceof Error && (error.message.includes("401") || error.message.includes("404") || error.message.includes("session"))) {
+        console.warn("⚠️ Session expired during message send, resetting session...")
+        await resetSession()
+
+        const retryMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content: "세션이 만료되어 새로 고침합니다. 잠시 후 다시 시도해주세요.",
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, retryMessage])
+      } else {
+        // 일반 에러 메시지 표시
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content: `오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, errorMessage])
       }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsProcessing(false)
-      setProcessingAgent(null)
+
+      // 3초 후 idle로 복귀
+      setTimeout(() => {
+        setProcessState({
+          step: "idle",
+          agentType: null,
+          message: ""
+        })
+      }, 3000)
     }
   }
 
@@ -191,18 +288,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     }
   }
 
-  const getAgentSpinner = (agentType: PageType) => {
-    switch (agentType) {
-      case "analysis":
-        return "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E1%84%87%E1%85%AE%E1%86%AB%E1%84%89%E1%85%A5%E1%86%A8-gR4J9NBbIUQ22zBcypvWpm6Jcd01QY.mp4"
-      case "verification":
-        return "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E1%84%80%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B3%E1%86%BC-k0ckJk8Vqe4d18VfshE8AOJMkpv86u.mp4"
-      case "consultation":
-        return "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E1%84%89%E1%85%A1%E1%86%BC%E1%84%83%E1%85%A1%E1%86%B7-VSSf5Rk3Z2uFikkQfNNLJlUNkINwZ7.mp4"
-      default:
-        return null
-    }
-  }
 
   const handleExampleClick = (question: string) => {
     handleSendMessage(question)
@@ -238,26 +323,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-full bg-background relative">
-      {isProcessing && (
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 shadow-lg flex flex-col items-center gap-4">
-            {processingAgent && getAgentSpinner(processingAgent) ? (
-              <video autoPlay loop muted className="w-48 h-48 object-cover rounded-lg">
-                <source src={getAgentSpinner(processingAgent)!} type="video/mp4" />
-              </video>
-            ) : (
-              <div className="w-24 h-24 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            )}
-            <p className="text-sm text-muted-foreground text-center">
-              {processingAgent === "analysis" && "분석 에이전트가 처리 중입니다..."}
-              {processingAgent === "verification" && "검증 에이전트가 처리 중입니다..."}
-              {processingAgent === "consultation" && "상담 에이전트가 처리 중입니다..."}
-              {!processingAgent && "에이전트가 처리 중입니다..."}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="border-b border-border p-4">
         <h2 className="text-xl font-semibold text-foreground">부동산 챗봇</h2>
@@ -268,7 +333,15 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={message.id}>
+              {/* Process Flow 메시지 타입 처리 */}
+              {message.type === "process-flow" ? (
+                <ProcessFlow
+                  isVisible={processState.step !== "idle"}
+                  state={processState}
+                />
+              ) : (
+                <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
               {message.type === "agent-popup" ? (
                 <Card
                   className={`max-w-md p-4 ${message.agentType ? getAgentColors(message.agentType).bg : "bg-accent/10 border-accent"}`}
@@ -315,6 +388,8 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
                   </Card>
                 </div>
               )}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -331,7 +406,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
               size="sm"
               onClick={() => handleExampleClick(question)}
               className="text-xs"
-              disabled={isProcessing}
+              disabled={processState.step !== "idle"}
             >
               {question}
             </Button>
@@ -345,12 +420,12 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="메시지를 입력하세요..."
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
-            disabled={isProcessing}
+            disabled={processState.step !== "idle"}
             className="flex-1"
           />
           <Button
             onClick={() => handleSendMessage(inputValue)}
-            disabled={isProcessing || !inputValue.trim()}
+            disabled={processState.step !== "idle" || !inputValue.trim()}
             size="icon"
           >
             <Send className="h-4 w-4" />

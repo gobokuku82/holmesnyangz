@@ -249,15 +249,19 @@ def create_subgraph_context(
 
 def create_default_llm_context() -> LLMContext:
     """
-    Create default LLM context from environment variables
+    Create default LLM context from Config
+
+    Config가 이미 .env를 로드했으므로 Config에서 값을 가져옴
 
     Returns:
         LLMContext with default settings
     """
+    from app.service_agent.foundation.config import Config
+
     return LLMContext(
-        provider=os.getenv("LLM_PROVIDER", "openai"),
-        api_key=os.getenv("OPENAI_API_KEY"),
-        organization=os.getenv("OPENAI_ORG_ID"),
+        provider=Config.LLM_DEFAULTS.get("provider", "openai"),
+        api_key=Config.LLM_DEFAULTS.get("api_key"),
+        organization=Config.LLM_DEFAULTS.get("organization"),
     )
 
 

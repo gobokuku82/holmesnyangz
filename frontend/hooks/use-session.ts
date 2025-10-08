@@ -26,16 +26,20 @@ export function useSession() {
         // 2. 세션 유효성 검증
         try {
           await chatAPI.getSessionInfo(storedSessionId)
+          console.log("✅ Existing session valid:", storedSessionId)
           setSessionId(storedSessionId)
           setIsLoading(false)
           return
-        } catch {
+        } catch (error) {
           // 만료된 세션 - 삭제하고 새로 생성
+          console.warn("⚠️ Session expired or invalid, creating new session:", error)
           sessionStorage.removeItem(SESSION_STORAGE_KEY)
+          // 여기서 계속 진행하여 새 세션 생성
         }
       }
 
       // 3. 새 세션 생성
+      console.log("🔄 Creating new session...")
       const response = await chatAPI.startSession({
         metadata: {
           device: "web_browser",
@@ -43,9 +47,11 @@ export function useSession() {
         },
       })
 
+      console.log("✅ New session created:", response.session_id)
       setSessionId(response.session_id)
       sessionStorage.setItem(SESSION_STORAGE_KEY, response.session_id)
     } catch (err) {
+      console.error("❌ Session initialization failed:", err)
       setError(err instanceof Error ? err.message : "Failed to initialize session")
     } finally {
       setIsLoading(false)

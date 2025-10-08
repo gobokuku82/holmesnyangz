@@ -39,7 +39,15 @@ class SearchExecutor:
             llm_context: LLM 컨텍스트
         """
         self.llm_context = llm_context
-        self.llm_service = LLMService(llm_context=llm_context) if llm_context else None
+
+        # LLMService 초기화 (에러 발생 시 fallback)
+        try:
+            self.llm_service = LLMService(llm_context=llm_context)
+            logger.info("✅ LLMService initialized successfully in SearchExecutor")
+        except Exception as e:
+            logger.error(f"❌ LLMService initialization failed: {e}", exc_info=True)
+            self.llm_service = None
+
         self.team_name = "search"
 
         # Agent 초기화 (Registry에서 가져오기)

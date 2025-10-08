@@ -45,6 +45,12 @@ models/
 # data/storage/
 # logs/
 
+# Session Database (SQLite)
+backend/data/system/sessions/*.db
+backend/data/system/sessions/*.db-journal
+backend/data/system/sessions/*.db-shm
+backend/data/system/sessions/*.db-wal
+
 # IDE
 .vscode/
 .idea/

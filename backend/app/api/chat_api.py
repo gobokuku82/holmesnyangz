@@ -175,7 +175,14 @@ async def chat(
         )
 
     # 2. Supervisor 생성 (요청마다 새 인스턴스)
+    # LLM Context 생성 (API 키 포함)
+    from app.service_agent.foundation.context import create_default_llm_context
+
+    llm_context = create_default_llm_context()
+    logger.info(f"LLM Context created with API key: {llm_context.api_key[:20] if llm_context.api_key else 'None'}...")
+
     supervisor = TeamBasedSupervisor(
+        llm_context=llm_context,
         enable_checkpointing=request.enable_checkpointing
     )
 

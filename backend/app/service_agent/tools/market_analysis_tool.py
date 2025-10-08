@@ -417,7 +417,7 @@ class MarketAnalysisTool:
 """
 
             response = await self.llm_service.complete_async(
-                prompt_name="market_insight",
+                prompt_name="insight_generation",
                 variables={"prompt": prompt},
                 temperature=0.3
             )
