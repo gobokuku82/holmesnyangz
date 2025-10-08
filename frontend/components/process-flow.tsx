@@ -35,58 +35,64 @@ export function ProcessFlow({ isVisible, state, onCancel }: ProcessFlowProps) {
 
   return (
     <div className="flex justify-start mb-4">
-      <div className="flex items-start gap-3 max-w-md">
+      <div className="flex items-start gap-3 max-w-2xl w-full">
         {/* Bot Icon */}
         <div className="rounded-full p-2 bg-muted text-muted-foreground flex-shrink-0">
           <Bot className="h-4 w-4" />
         </div>
 
-        {/* Process Card */}
-        <Card className="p-3 bg-card border">
-          {/* 상단: 에이전트 이름 + 스피너 */}
-          <div className="flex items-center gap-3 mb-3">
-            {/* 작은 스피너/아이콘 */}
-            <div className="flex-shrink-0">
-              {isError ? (
-                <XCircle className="w-6 h-6 text-red-500" />
-              ) : isComplete ? (
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
-              ) : (
-                <Loader2 className="w-6 h-6 text-primary animate-spin" />
-              )}
-            </div>
-
-            {/* 에이전트 이름 + 메시지 */}
-            <div className="flex-1">
-              <p className="text-sm font-medium">{agentName}</p>
-              <p className="text-xs text-muted-foreground">{state.message}</p>
+        {/* Process Card - 가로 레이아웃 */}
+        <Card className="p-3 bg-card border flex-1">
+          {/* 상단 헤더: 에이전트명 + 메시지 + 시간 */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {/* 작은 스피너/아이콘 */}
+              <div className="flex-shrink-0">
+                {isError ? (
+                  <XCircle className="w-5 h-5 text-red-500" />
+                ) : isComplete ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium">{agentName}</p>
+                <p className="text-xs text-muted-foreground">{state.message}</p>
+              </div>
             </div>
 
             {/* 경과 시간 */}
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground font-mono">
               {(elapsedTime / 1000).toFixed(1)}s
             </div>
           </div>
 
-          {/* 진행 단계 표시 (컴팩트) */}
-          <div className="space-y-1.5">
+          {/* 진행 단계 표시 (가로 방향) */}
+          <div className="flex items-center gap-1">
             <StepIndicator
-              label="계획 수립"
+              label="계획"
               isActive={state.step === "planning"}
               isComplete={isStepComplete(state.step, "planning")}
             />
+            <StepConnector isComplete={isStepComplete(state.step, "planning")} />
+
             <StepIndicator
-              label="정보 검색"
+              label="검색"
               isActive={state.step === "searching"}
               isComplete={isStepComplete(state.step, "searching")}
             />
+            <StepConnector isComplete={isStepComplete(state.step, "searching")} />
+
             <StepIndicator
-              label="데이터 분석"
+              label="분석"
               isActive={state.step === "analyzing"}
               isComplete={isStepComplete(state.step, "analyzing")}
             />
+            <StepConnector isComplete={isStepComplete(state.step, "analyzing")} />
+
             <StepIndicator
-              label="답변 생성"
+              label="생성"
               isActive={state.step === "generating"}
               isComplete={isStepComplete(state.step, "generating")}
             />
@@ -107,7 +113,7 @@ export function ProcessFlow({ isVisible, state, onCancel }: ProcessFlowProps) {
 }
 
 /**
- * 단계별 인디케이터 컴포넌트
+ * 단계별 인디케이터 컴포넌트 (가로 버전)
  */
 function StepIndicator({
   label,
@@ -119,9 +125,9 @@ function StepIndicator({
   isComplete: boolean
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-center gap-1">
       <div
-        className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
           isComplete
             ? "bg-green-500"
             : isActive
@@ -130,15 +136,15 @@ function StepIndicator({
         }`}
       >
         {isComplete ? (
-          <CheckCircle2 className="w-3 h-3 text-white" />
+          <CheckCircle2 className="w-4 h-4 text-white" />
         ) : isActive ? (
-          <Loader2 className="w-3 h-3 text-white animate-spin" />
+          <Loader2 className="w-4 h-4 text-white animate-spin" />
         ) : (
-          <div className="w-1.5 h-1.5 bg-white rounded-full" />
+          <div className="w-2 h-2 bg-white rounded-full" />
         )}
       </div>
       <span
-        className={`text-xs ${
+        className={`text-[10px] whitespace-nowrap ${
           isActive
             ? "text-foreground font-medium"
             : isComplete
@@ -149,6 +155,19 @@ function StepIndicator({
         {label}
       </span>
     </div>
+  )
+}
+
+/**
+ * 단계 연결선 컴포넌트
+ */
+function StepConnector({ isComplete }: { isComplete: boolean }) {
+  return (
+    <div
+      className={`h-0.5 flex-1 mx-1 transition-all ${
+        isComplete ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
+      }`}
+    />
   )
 }
 
