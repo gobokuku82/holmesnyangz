@@ -4,13 +4,21 @@ import { useEffect, useState } from "react"
 import { CheckCircle2, XCircle, Loader2, Bot } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import type { ProcessFlowProps, ProcessStep, AgentType } from "@/types/process"
+import type { ProcessFlowStep } from "@/types/chat"
 import { AGENT_NAMES } from "@/types/process"
 
 /**
  * Process Flow Spinner Component (Inline Chat Message Style)
  * 채팅 메시지처럼 표시되는 백엔드 처리 과정 시각화 컴포넌트
+ *
+ * @param dynamicSteps - (Optional) 백엔드 API에서 전달된 동적 단계 리스트
  */
-export function ProcessFlow({ isVisible, state, onCancel }: ProcessFlowProps) {
+export function ProcessFlow({
+  isVisible,
+  state,
+  onCancel,
+  dynamicSteps
+}: ProcessFlowProps & { dynamicSteps?: ProcessFlowStep[] }) {
   const [elapsedTime, setElapsedTime] = useState(0)
 
   // 경과 시간 계산
@@ -70,32 +78,54 @@ export function ProcessFlow({ isVisible, state, onCancel }: ProcessFlowProps) {
 
           {/* 진행 단계 표시 (가로 방향) */}
           <div className="flex items-center gap-1">
-            <StepIndicator
-              label="계획"
-              isActive={state.step === "planning"}
-              isComplete={isStepComplete(state.step, "planning")}
-            />
-            <StepConnector isComplete={isStepComplete(state.step, "planning")} />
+            {dynamicSteps ? (
+              // 동적 단계 렌더링 (백엔드 API에서 전달된 데이터)
+              <>
+                {dynamicSteps.map((step, index) => (
+                  <div key={step.step} className="contents">
+                    <StepIndicator
+                      label={step.label}
+                      isActive={step.status === "in_progress"}
+                      isComplete={step.status === "completed"}
+                      progress={step.progress}
+                    />
+                    {index < dynamicSteps.length - 1 && (
+                      <StepConnector isComplete={step.status === "completed"} />
+                    )}
+                  </div>
+                ))}
+              </>
+            ) : (
+              // 정적 단계 렌더링 (fallback - 기존 로직)
+              <>
+                <StepIndicator
+                  label="계획"
+                  isActive={state.step === "planning"}
+                  isComplete={isStepComplete(state.step, "planning")}
+                />
+                <StepConnector isComplete={isStepComplete(state.step, "planning")} />
 
-            <StepIndicator
-              label="검색"
-              isActive={state.step === "searching"}
-              isComplete={isStepComplete(state.step, "searching")}
-            />
-            <StepConnector isComplete={isStepComplete(state.step, "searching")} />
+                <StepIndicator
+                  label="검색"
+                  isActive={state.step === "searching"}
+                  isComplete={isStepComplete(state.step, "searching")}
+                />
+                <StepConnector isComplete={isStepComplete(state.step, "searching")} />
 
-            <StepIndicator
-              label="분석"
-              isActive={state.step === "analyzing"}
-              isComplete={isStepComplete(state.step, "analyzing")}
-            />
-            <StepConnector isComplete={isStepComplete(state.step, "analyzing")} />
+                <StepIndicator
+                  label="분석"
+                  isActive={state.step === "analyzing"}
+                  isComplete={isStepComplete(state.step, "analyzing")}
+                />
+                <StepConnector isComplete={isStepComplete(state.step, "analyzing")} />
 
-            <StepIndicator
-              label="생성"
-              isActive={state.step === "generating"}
-              isComplete={isStepComplete(state.step, "generating")}
-            />
+                <StepIndicator
+                  label="생성"
+                  isActive={state.step === "generating"}
+                  isComplete={isStepComplete(state.step, "generating")}
+                />
+              </>
+            )}
           </div>
 
           {/* 에러 메시지 */}
@@ -118,11 +148,13 @@ export function ProcessFlow({ isVisible, state, onCancel }: ProcessFlowProps) {
 function StepIndicator({
   label,
   isActive,
-  isComplete
+  isComplete,
+  progress
 }: {
   label: string
   isActive: boolean
   isComplete: boolean
+  progress?: number
 }) {
   return (
     <div className="flex flex-col items-center gap-1">

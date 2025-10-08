@@ -18,7 +18,16 @@
       "Bash(venv\\Scripts\\python:*)",
       "Bash(cat:*)",
       "Bash(sqlite3:*)",
-      "Bash(venvScriptspython backendappservice_agentteststest_status_tracking.py)"
+      "Bash(venvScriptspython backendappservice_agentteststest_status_tracking.py)",
+      "Bash(npx tsc:*)",
+      "Bash(git checkout:*)",
+      "Bash(node -p \"const fs = require(''fs''); const code = fs.readFileSync(''components/chat-interface.tsx'', ''utf8''); try { require(''@babel/parser'').parse(code, { sourceType: ''module'', plugins: [''jsx'', ''typescript''] }); ''OK'' } catch(e) { e.message }\")",
+      "Bash(sed:*)",
+      "Bash(if [ -d \"node_modules/.cache\" ])",
+      "Bash(then rm -rf node_modules/.cache)",
+      "Bash(else echo \"No cache found\")",
+      "Bash(fi)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

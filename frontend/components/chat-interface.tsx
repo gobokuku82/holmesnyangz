@@ -9,7 +9,7 @@ import { Send, Bot, User, Maximize2 } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { chatAPI } from "@/lib/api"
-import type { ChatResponse } from "@/types/chat"
+import type { ChatResponse, ProcessFlowStep } from "@/types/chat"
 import { ProcessFlow } from "@/components/process-flow"
 import type { ProcessState, AgentType } from "@/types/process"
 import { STEP_MESSAGES } from "@/types/process"
@@ -21,6 +21,7 @@ interface Message {
   timestamp: Date
   agentType?: PageType
   isProcessing?: boolean
+  processFlowSteps?: ProcessFlowStep[]
 }
 
 interface ChatInterfaceProps {
@@ -75,12 +76,14 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     // Detect agent type for loading animation
     const agentType = detectAgentType(content) as AgentType | null
 
-    // ProcessFlow 메시지 추가 (임시)
+    // ProcessFlow 메시지 추가
+    const processFlowMessageId = `process-flow-${Date.now()}`
     const processFlowMessage: Message = {
-      id: "process-flow-temp",
+      id: processFlowMessageId,
       type: "process-flow",
       content: "",
       timestamp: new Date(),
+      processFlowSteps: undefined
     }
     setMessages((prev) => [...prev, processFlowMessage])
 
@@ -92,15 +95,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       startTime: Date.now()
     })
 
-    // 단계별 시뮬레이션 (실제로는 백엔드에서 SSE 등으로 전송)
-    setTimeout(() => {
-      setProcessState(prev => ({
-        ...prev,
-        step: "searching",
-        message: STEP_MESSAGES.searching
-      }))
-    }, 800)
-
     try {
       // 실제 API 호출
       const response = await chatAPI.sendMessage({
@@ -109,19 +103,27 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         enable_checkpointing: true,
       })
 
-      // 분석 단계로 업데이트
-      setProcessState(prev => ({
-        ...prev,
-        step: "analyzing",
-        message: STEP_MESSAGES.analyzing
-      }))
+      // API 응답에서 process_flow 데이터 추출
+      if (response.process_flow && response.process_flow.length > 0) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === processFlowMessageId
+              ? { ...msg, processFlowSteps: response.process_flow }
+              : msg
+          )
+        )
 
-      // 답변 생성 단계
-      setProcessState(prev => ({
-        ...prev,
-        step: "generating",
-        message: STEP_MESSAGES.generating
-      }))
+        const currentStep = response.process_flow.find(
+          (step) => step.status === "in_progress"
+        )
+        if (currentStep) {
+          setProcessState((prev) => ({
+            ...prev,
+            step: currentStep.step as any,
+            message: currentStep.label + " 중..."
+          }))
+        }
+      }
 
       // Agent 타입 감지 (응답 기반)
       const responseAgentType = detectAgentTypeFromResponse(response)
@@ -136,7 +138,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       }, 500)
 
       // ProcessFlow 메시지 제거
-      setMessages((prev) => prev.filter(m => m.id !== "process-flow-temp"))
+      setMessages((prev) => prev.filter(m => m.id !== processFlowMessageId))
 
       // 봇 응답 추가
       const botMessage: Message = {
@@ -179,7 +181,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       })
 
       // ProcessFlow 메시지 제거
-      setMessages((prev) => prev.filter(m => m.id !== "process-flow-temp"))
+      setMessages((prev) => prev.filter(m => m.id !== processFlowMessageId))
 
       // 세션 만료 처리 (401 또는 404)
       if (error instanceof Error && (error.message.includes("401") || error.message.includes("404") || error.message.includes("session"))) {
@@ -339,10 +341,9 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
                 <ProcessFlow
                   isVisible={processState.step !== "idle"}
                   state={processState}
+                  dynamicSteps={message.processFlowSteps}
                 />
-              ) : (
-                <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
-              {message.type === "agent-popup" ? (
+              ) : message.type === "agent-popup" ? (
                 <Card
                   className={`max-w-md p-4 ${message.agentType ? getAgentColors(message.agentType).bg : "bg-accent/10 border-accent"}`}
                 >
@@ -369,25 +370,25 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
                   </div>
                 </Card>
               ) : (
-                <div className={`flex items-start gap-3 max-w-md ${message.type === "user" ? "flex-row-reverse" : ""}`}>
-                  <div
-                    className={`rounded-full p-2 ${
-                      message.type === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {message.type === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`flex items-start gap-3 max-w-md ${message.type === "user" ? "flex-row-reverse" : ""}`}>
+                    <div
+                      className={`rounded-full p-2 ${
+                        message.type === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {message.type === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                    </div>
+                    <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : "bg-card"}`}>
+                      <p className="text-sm">{message.content}</p>
+                      <p className="text-xs opacity-70 mt-1">
+                        {message.timestamp.toLocaleTimeString("ko-KR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </Card>
                   </div>
-                  <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-                    <p className="text-sm">{message.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString("ko-KR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </Card>
-                </div>
-              )}
                 </div>
               )}
             </div>

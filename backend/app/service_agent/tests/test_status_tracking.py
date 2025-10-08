@@ -44,17 +44,17 @@ async def test_status_tracking():
     planning_state = result.get("planning_state")
 
     if not planning_state:
-        print("❌ ERROR: planning_state가 없습니다!")
+        print("[ERROR] planning_state가 없습니다!")
         return
 
     execution_steps = planning_state.get("execution_steps", [])
 
     if not execution_steps:
-        print("❌ ERROR: execution_steps가 비어있습니다!")
+        print("[ERROR] execution_steps가 비어있습니다!")
         return
 
     print("=" * 80)
-    print("📋 execution_steps 상태 확인")
+    print("[execution_steps 상태 확인]")
     print("=" * 80)
 
     # 각 step의 상태 출력
@@ -64,17 +64,17 @@ async def test_status_tracking():
         print(f"  agent_name:         {step.get('agent_name')}")
         print(f"  team:               {step.get('team')}")
         print(f"  description:        {step.get('description')}")
-        print(f"  ✅ status:          {step.get('status')}")  # ⭐ 중요
-        print(f"  ✅ progress:        {step.get('progress_percentage')}%")  # ⭐ 중요
+        print(f"  [OK] status:          {step.get('status')}")
+        print(f"  [OK] progress:        {step.get('progress_percentage')}%")
         print(f"  started_at:         {step.get('started_at')}")
         print(f"  completed_at:       {step.get('completed_at')}")
         print(f"  execution_time_ms:  {step.get('execution_time_ms')}")
 
         if step.get('error'):
-            print(f"  ❌ error:          {step.get('error')}")
+            print(f"  [ERROR] error:      {step.get('error')}")
 
     print("\n" + "=" * 80)
-    print("✅ 검증 항목")
+    print("[검증 항목]")
     print("=" * 80)
 
     # 검증
@@ -83,18 +83,18 @@ async def test_status_tracking():
     any_completed = any(step.get("status") == "completed" for step in execution_steps)
     any_in_progress = any(step.get("status") == "in_progress" for step in execution_steps)
 
-    print(f"1. 모든 step에 status 필드 존재:       {'✅' if all_have_status else '❌'}")
-    print(f"2. 모든 step에 progress 필드 존재:     {'✅' if all_have_progress else '❌'}")
-    print(f"3. 적어도 하나의 step이 completed:     {'✅' if any_completed else '❌'}")
-    print(f"4. started_at 시간 기록:               {'✅' if execution_steps[0].get('started_at') else '❌'}")
-    print(f"5. completed_at 시간 기록:             {'✅' if execution_steps[0].get('completed_at') else '❌'}")
+    print(f"1. 모든 step에 status 필드 존재:       {'[OK]' if all_have_status else '[FAIL]'}")
+    print(f"2. 모든 step에 progress 필드 존재:     {'[OK]' if all_have_progress else '[FAIL]'}")
+    print(f"3. 적어도 하나의 step이 completed:     {'[OK]' if any_completed else '[FAIL]'}")
+    print(f"4. started_at 시간 기록:               {'[OK]' if execution_steps[0].get('started_at') else '[FAIL]'}")
+    print(f"5. completed_at 시간 기록:             {'[OK]' if execution_steps[0].get('completed_at') else '[FAIL]'}")
 
     # 최종 결과
     print("\n" + "=" * 80)
     if all_have_status and all_have_progress and any_completed:
-        print("🎉 SUCCESS: Phase 1-3 구현이 올바르게 작동합니다!")
+        print("[SUCCESS] Phase 1-3 구현이 올바르게 작동합니다!")
     else:
-        print("❌ FAILED: 일부 검증 항목이 실패했습니다.")
+        print("[FAILED] 일부 검증 항목이 실패했습니다.")
     print("=" * 80)
 
     # Cleanup

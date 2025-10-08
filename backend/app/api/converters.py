@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, List
 
 from app.service_agent.foundation.separated_states import MainSupervisorState
 from app.api.schemas import ChatResponse
+from app.api.step_mapper import StepMapper  # NEW: ProcessFlow 매핑용
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,29 @@ def state_to_chat_response(
                     "failed_teams": state.get("failed_teams", [])
                 }
 
+        # ProcessFlow 데이터 생성 (NEW)
+        process_flow_data = None
+        if planning_state and planning_state.get("execution_steps"):
+            try:
+                flow_steps = StepMapper.map_execution_steps(
+                    planning_state.get("execution_steps", [])
+                )
+                # dataclass → dict 변환 (Pydantic이 자동으로 처리)
+                process_flow_data = [
+                    {
+                        "step": step.step,
+                        "label": step.label,
+                        "agent": step.agent,
+                        "status": step.status,
+                        "progress": step.progress
+                    }
+                    for step in flow_steps
+                ]
+                logger.info(f"Generated process_flow with {len(process_flow_data)} steps")
+            except Exception as e:
+                logger.warning(f"Failed to generate process_flow: {e}")
+                process_flow_data = None
+
         # ChatResponse 생성
         response = ChatResponse(
             # 기본
@@ -120,6 +144,9 @@ def state_to_chat_response(
             team_results=team_results,
             search_results=search_results,
             analysis_metrics=analysis_metrics,
+
+            # ProcessFlow (NEW)
+            process_flow=process_flow_data,
 
             # 메타데이터
             execution_time_ms=execution_time_ms,

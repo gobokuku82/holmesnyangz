@@ -18,6 +18,15 @@ export interface ChatRequest {
   user_context?: Record<string, any>
 }
 
+// ProcessFlow Step (백엔드 API에서 전달)
+export interface ProcessFlowStep {
+  step: "planning" | "searching" | "analyzing" | "generating" | "processing"
+  label: string  // "계획", "검색", "분석", "생성"
+  agent: string
+  status: "pending" | "in_progress" | "completed" | "failed" | "skipped" | "cancelled"
+  progress: number  // 0-100
+}
+
 export interface ChatResponse {
   session_id: string
   request_id: string
@@ -39,6 +48,7 @@ export interface ChatResponse {
   team_results?: Record<string, any>
   search_results?: any[]
   analysis_metrics?: any
+  process_flow?: ProcessFlowStep[]  // NEW: 프론트엔드 ProcessFlow용 데이터
   execution_time_ms?: number
   teams_executed: string[]
   error?: string

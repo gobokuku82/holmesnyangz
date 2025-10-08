@@ -60,6 +60,18 @@ class ChatRequest(BaseModel):
         }
 
 
+class ProcessFlowStep(BaseModel):
+    """
+    프론트엔드 ProcessFlow용 단계
+    StepMapper에서 생성됨
+    """
+    step: str = Field(..., description="단계 타입 (planning, searching, analyzing, generating)")
+    label: str = Field(..., description="한글 레이블 (계획, 검색, 분석, 생성)")
+    agent: str = Field(..., description="담당 agent 이름")
+    status: str = Field(..., description="상태 (pending, in_progress, completed, failed)")
+    progress: int = Field(..., description="진행률 0-100")
+
+
 class ChatResponse(BaseModel):
     """
     채팅 응답 - 상세 정보 포함 (Option B)
@@ -89,6 +101,12 @@ class ChatResponse(BaseModel):
     analysis_metrics: Optional[Dict[str, Any]] = Field(
         default=None,
         description="분석 지표 (평균, 표준편차 등)"
+    )
+
+    # ProcessFlow (NEW - 프론트엔드 시각화용)
+    process_flow: Optional[List[ProcessFlowStep]] = Field(
+        default=None,
+        description="프론트엔드 ProcessFlow 시각화 데이터"
     )
 
     # 실행 메타데이터
