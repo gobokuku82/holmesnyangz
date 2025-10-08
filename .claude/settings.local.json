@@ -27,7 +27,8 @@
       "Bash(then rm -rf node_modules/.cache)",
       "Bash(else echo \"No cache found\")",
       "Bash(fi)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []
