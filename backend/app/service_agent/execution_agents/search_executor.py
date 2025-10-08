@@ -20,6 +20,7 @@ from app.service_agent.foundation.separated_states import SearchTeamState, Searc
 from app.service_agent.foundation.agent_registry import AgentRegistry
 from app.service_agent.foundation.agent_adapter import AgentAdapter
 from app.service_agent.llm_manager import LLMService
+from app.service_agent.foundation.decision_logger import DecisionLogger
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,13 @@ class SearchExecutor:
         self.legal_search_tool = None
         self.market_data_tool = None
         self.loan_data_tool = None
+
+        # Decision Logger 초기화
+        try:
+            self.decision_logger = DecisionLogger()
+        except Exception as e:
+            logger.warning(f"DecisionLogger initialization failed: {e}")
+            self.decision_logger = None
 
         try:
             from app.service_agent.tools.hybrid_legal_search import HybridLegalSearch
@@ -219,8 +227,147 @@ class SearchExecutor:
             general=general_keywords
         )
 
+    def _get_available_tools(self) -> Dict[str, Any]:
+        """
+        현재 SearchExecutor에서 사용 가능한 tool 정보를 동적으로 수집
+        하드코딩 없이 실제 초기화된 tool만 반환
+        """
+        tools = {}
+
+        if self.legal_search_tool:
+            tools["legal_search"] = {
+                "name": "legal_search",
+                "description": "법률 정보 검색 (전세법, 임대차보호법, 부동산 관련 법규)",
+                "capabilities": [
+                    "전세금 인상률 조회",
+                    "임차인 권리 확인",
+                    "계약갱신 조건",
+                    "임대차 관련 법률"
+                ],
+                "available": True
+            }
+
+        if self.market_data_tool:
+            tools["market_data"] = {
+                "name": "market_data",
+                "description": "부동산 시세 조회 (매매가, 전세가, 월세)",
+                "capabilities": [
+                    "지역별 시세 조회",
+                    "실거래가 정보",
+                    "평균 가격 조회",
+                    "시세 동향"
+                ],
+                "available": True
+            }
+
+        if self.loan_data_tool:
+            tools["loan_data"] = {
+                "name": "loan_data",
+                "description": "대출 상품 정보 검색 (금리, 한도, 조건)",
+                "capabilities": [
+                    "전세자금대출",
+                    "주택담보대출",
+                    "금리 정보",
+                    "대출 한도"
+                ],
+                "available": True
+            }
+
+        return tools
+
+    async def _select_tools_with_llm(
+        self,
+        query: str,
+        keywords: SearchKeywords = None
+    ) -> Dict[str, Any]:
+        """
+        LLM을 사용한 tool 선택 (수정 - 키워드 제거)
+
+        Args:
+            query: 사용자 쿼리 (키워드 없이 원본만)
+            keywords: 하위 호환성을 위해 유지 (사용 안함)
+
+        Returns:
+            {
+                "selected_tools": ["legal_search", "market_data", "loan_data"],
+                "reasoning": "...",
+                "confidence": 0.9,
+                "decision_id": 123  # 로깅 ID
+            }
+        """
+        if not self.llm_service:
+            logger.warning("LLM service not available, using fallback")
+            return self._select_tools_with_fallback()
+
+        try:
+            # 동적으로 사용 가능한 tool 정보 수집
+            available_tools = self._get_available_tools()
+
+            result = await self.llm_service.complete_json_async(
+                prompt_name="tool_selection_search",  # search 전용 prompt
+                variables={
+                    "query": query,  # 키워드 없이 원본 query만
+                    "available_tools": json.dumps(available_tools, ensure_ascii=False, indent=2)
+                },
+                temperature=0.1
+            )
+
+            logger.info(f"LLM Tool Selection: {result}")
+
+            selected_tools = result.get("selected_tools", [])
+            reasoning = result.get("reasoning", "")
+            confidence = result.get("confidence", 0.0)
+
+            # Decision Logger에 기록
+            decision_id = None
+            if self.decision_logger:
+                try:
+                    decision_id = self.decision_logger.log_tool_decision(
+                        agent_type="search",
+                        query=query,
+                        available_tools=available_tools,
+                        selected_tools=selected_tools,
+                        reasoning=reasoning,
+                        confidence=confidence
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to log tool decision: {e}")
+
+            return {
+                "selected_tools": selected_tools,
+                "reasoning": reasoning,
+                "confidence": confidence,
+                "decision_id": decision_id
+            }
+
+        except Exception as e:
+            logger.error(f"LLM tool selection failed: {e}")
+            return self._select_tools_with_fallback()
+
+    def _select_tools_with_fallback(self, keywords: SearchKeywords = None) -> Dict[str, Any]:
+        """
+        규칙 기반 fallback tool 선택
+        LLM 실패 시 사용 (안전망)
+        """
+        # 모든 tool을 사용하는 것이 가장 안전
+        available_tools = self._get_available_tools()
+        scope = list(available_tools.keys())
+
+        if not scope:
+            # tool이 하나도 없으면 빈 배열
+            scope = []
+
+        return {
+            "selected_tools": scope,
+            "reasoning": "Fallback: using all available tools for safety",
+            "confidence": 0.3
+        }
+
     def _determine_search_scope(self, keywords: SearchKeywords) -> List[str]:
-        """키워드 기반 검색 범위 결정"""
+        """
+        키워드 기반 검색 범위 결정 (Deprecated - use _select_tools_with_llm)
+        하위 호환성을 위해 유지
+        """
         scope = []
 
         if keywords.get("legal"):
@@ -260,13 +407,34 @@ class SearchExecutor:
         """
         logger.info("[SearchTeam] Executing searches")
 
+        import time
+        start_time = time.time()
+
         search_scope = state.get("search_scope", [])
         keywords = state.get("keywords", {})
         shared_context = state.get("shared_context", {})
         query = shared_context.get("query", "")
 
+        # LLM 기반 도구 선택
+        tool_selection = await self._select_tools_with_llm(query, keywords)
+        selected_tools = tool_selection.get("selected_tools", [])
+        decision_id = tool_selection.get("decision_id")
+
+        logger.info(
+            f"[SearchTeam] LLM selected tools: {selected_tools}, "
+            f"confidence: {tool_selection.get('confidence')}"
+        )
+
+        # 실행 결과를 추적
+        execution_results = {}
+        tool_name_map = {
+            "legal_search": "legal",
+            "market_data": "real_estate",
+            "loan_data": "loan"
+        }
+
         # === 1. 법률 검색 (우선 실행) ===
-        if "legal" in search_scope and self.legal_search_tool:
+        if "legal_search" in selected_tools and self.legal_search_tool:
             try:
                 logger.info("[SearchTeam] Executing legal search")
 
@@ -303,17 +471,29 @@ class SearchExecutor:
 
                     state["search_progress"]["legal_search"] = "completed"
                     logger.info(f"[SearchTeam] Legal search completed: {len(legal_data)} results")
+                    execution_results["legal_search"] = {
+                        "status": "success",
+                        "result_count": len(legal_data)
+                    }
                 else:
                     state["search_progress"]["legal_search"] = "failed"
                     logger.warning(f"Legal search returned status: {result.get('status')}")
+                    execution_results["legal_search"] = {
+                        "status": "failed",
+                        "error": result.get('status')
+                    }
 
             except Exception as e:
                 logger.error(f"Legal search failed: {e}")
                 state["search_progress"]["legal_search"] = "failed"
+                execution_results["legal_search"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
                 # 실패해도 계속 진행
 
         # === 2. 부동산 시세 검색 ===
-        if "real_estate" in search_scope and self.market_data_tool:
+        if "market_data" in selected_tools and self.market_data_tool:
             try:
                 logger.info("[SearchTeam] Executing real estate search")
 
@@ -327,15 +507,27 @@ class SearchExecutor:
                     state["real_estate_results"] = market_data
                     state["search_progress"]["real_estate_search"] = "completed"
                     logger.info(f"[SearchTeam] Real estate search completed: {len(market_data)} results")
+                    execution_results["market_data"] = {
+                        "status": "success",
+                        "result_count": len(market_data)
+                    }
                 else:
                     state["search_progress"]["real_estate_search"] = "failed"
+                    execution_results["market_data"] = {
+                        "status": "failed",
+                        "error": result.get('status')
+                    }
 
             except Exception as e:
                 logger.error(f"Real estate search failed: {e}")
                 state["search_progress"]["real_estate_search"] = "failed"
+                execution_results["market_data"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
 
         # === 3. 대출 상품 검색 ===
-        if "loan" in search_scope and self.loan_data_tool:
+        if "loan_data" in selected_tools and self.loan_data_tool:
             try:
                 logger.info("[SearchTeam] Executing loan search")
 
@@ -349,12 +541,24 @@ class SearchExecutor:
                     state["loan_results"] = loan_data
                     state["search_progress"]["loan_search"] = "completed"
                     logger.info(f"[SearchTeam] Loan search completed: {len(loan_data)} results")
+                    execution_results["loan_data"] = {
+                        "status": "success",
+                        "result_count": len(loan_data)
+                    }
                 else:
                     state["search_progress"]["loan_search"] = "failed"
+                    execution_results["loan_data"] = {
+                        "status": "failed",
+                        "error": result.get('status')
+                    }
 
             except Exception as e:
                 logger.error(f"Loan search failed: {e}")
                 state["search_progress"]["loan_search"] = "failed"
+                execution_results["loan_data"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
 
         # === 4. SearchAgent 실행 (추가 검색 필요 시) ===
         # 법률/부동산/대출 검색이 이미 완료되었으므로 scope에서 제외
@@ -403,6 +607,32 @@ class SearchExecutor:
                 logger.error(f"Search execution failed: {e}")
                 state["search_progress"]["search_agent"] = "failed"
                 state["error"] = str(e)
+
+        # 실행 시간 계산 및 결과 로깅
+        total_execution_time_ms = int((time.time() - start_time) * 1000)
+
+        if decision_id and self.decision_logger:
+            try:
+                # 전체 성공 여부 판단
+                success = all(
+                    r.get("status") == "success"
+                    for r in execution_results.values()
+                )
+
+                self.decision_logger.update_tool_execution_results(
+                    decision_id=decision_id,
+                    execution_results=execution_results,
+                    total_execution_time_ms=total_execution_time_ms,
+                    success=success
+                )
+
+                logger.info(
+                    f"[SearchTeam] Logged execution results: "
+                    f"decision_id={decision_id}, success={success}, "
+                    f"time={total_execution_time_ms}ms"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log execution results: {e}")
 
         return state
 

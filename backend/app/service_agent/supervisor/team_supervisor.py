@@ -49,6 +49,9 @@ class TeamBasedSupervisor:
         # Agent 시스템 초기화
         initialize_agent_system(auto_register=True)
 
+        # Checkpointer placeholder - will be initialized later
+        self.checkpointer = None
+
         # Planning Agent
         self.planning_agent = PlanningAgent(llm_context=llm_context)
 

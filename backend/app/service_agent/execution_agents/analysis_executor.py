@@ -25,6 +25,7 @@ from app.service_agent.foundation.separated_states import (
     SharedState
 )
 from app.service_agent.llm_manager import LLMService
+from app.service_agent.foundation.decision_logger import DecisionLogger
 
 # Import analysis tools
 from app.service_agent.tools import (
@@ -57,6 +58,13 @@ class AnalysisExecutor:
         self.loan_tool = LoanSimulatorTool()
         self.policy_tool = PolicyMatcherTool()
 
+        # Decision Logger 초기화
+        try:
+            self.decision_logger = DecisionLogger()
+        except Exception as e:
+            logger.warning(f"DecisionLogger initialization failed: {e}")
+            self.decision_logger = None
+
         # 분석 메서드 매핑
         self.analysis_methods = {
             "comprehensive": self._comprehensive_analysis,
@@ -72,6 +80,171 @@ class AnalysisExecutor:
         # 서브그래프 구성
         self.app = None
         self._build_subgraph()
+
+    def _get_available_analysis_tools(self) -> Dict[str, Any]:
+        """
+        현재 AnalysisExecutor에서 사용 가능한 분석 tool 정보를 동적으로 수집
+        하드코딩 없이 실제 초기화된 tool만 반환
+        """
+        tools = {}
+
+        if self.contract_tool:
+            tools["contract_analysis"] = {
+                "name": "contract_analysis",
+                "description": "계약서 조항 분석 및 위험요소 탐지",
+                "capabilities": [
+                    "계약서 위험 조항 검토",
+                    "법적 문제점 식별",
+                    "특약사항 분석",
+                    "계약 조건 적정성 평가"
+                ],
+                "available": True
+            }
+
+        if self.market_tool:
+            tools["market_analysis"] = {
+                "name": "market_analysis",
+                "description": "시장 동향 및 가격 적정성 분석",
+                "capabilities": [
+                    "가격 적정성 평가",
+                    "시장 동향 분석",
+                    "지역 비교 분석",
+                    "투자 가치 평가"
+                ],
+                "available": True
+            }
+
+        if self.roi_tool:
+            tools["roi_calculator"] = {
+                "name": "roi_calculator",
+                "description": "투자수익률 계산 및 현금흐름 분석",
+                "capabilities": [
+                    "ROI 계산",
+                    "수익률 분석",
+                    "현금흐름 시뮬레이션",
+                    "투자 대비 수익 평가"
+                ],
+                "available": True
+            }
+
+        if self.loan_tool:
+            tools["loan_simulator"] = {
+                "name": "loan_simulator",
+                "description": "대출 한도 및 금리 시뮬레이션 (LTV, DTI, DSR)",
+                "capabilities": [
+                    "대출 한도 계산",
+                    "LTV/DTI/DSR 시뮬레이션",
+                    "월 상환액 계산",
+                    "대출 가능성 평가"
+                ],
+                "available": True
+            }
+
+        if self.policy_tool:
+            tools["policy_matcher"] = {
+                "name": "policy_matcher",
+                "description": "정부 지원 정책 매칭 및 혜택 분석",
+                "capabilities": [
+                    "청년 정책 매칭",
+                    "신혼부부 정책 매칭",
+                    "자격 조건 확인",
+                    "혜택 금액 계산"
+                ],
+                "available": True
+            }
+
+        return tools
+
+    async def _select_tools_with_llm(
+        self,
+        query: str,
+        collected_data_summary: Dict = None
+    ) -> Dict[str, Any]:
+        """
+        LLM을 사용한 분석 tool 선택
+
+        Args:
+            query: 사용자 쿼리
+            collected_data_summary: 수집된 데이터 요약 (optional)
+
+        Returns:
+            {
+                "selected_tools": ["contract_analysis", "market_analysis"],
+                "reasoning": "...",
+                "confidence": 0.9
+            }
+        """
+        if not self.llm_service:
+            logger.warning("LLM service not available, using fallback")
+            return self._select_tools_with_fallback()
+
+        try:
+            # 동적으로 사용 가능한 분석 tool 정보 수집
+            available_tools = self._get_available_analysis_tools()
+
+            # 수집된 데이터 요약 생성
+            if not collected_data_summary:
+                collected_data_summary = {"status": "no data collected yet"}
+
+            result = await self.llm_service.complete_json_async(
+                prompt_name="tool_selection_analysis",  # analysis 전용 prompt
+                variables={
+                    "query": query,
+                    "collected_data_summary": json.dumps(collected_data_summary, ensure_ascii=False),
+                    "available_tools": json.dumps(available_tools, ensure_ascii=False, indent=2)
+                },
+                temperature=0.1
+            )
+
+            logger.info(f"LLM Analysis Tool Selection: {result}")
+
+            selected_tools = result.get("selected_tools", [])
+            reasoning = result.get("reasoning", "")
+            confidence = result.get("confidence", 0.0)
+
+            # Decision Logger에 기록
+            decision_id = None
+            if self.decision_logger:
+                try:
+                    decision_id = self.decision_logger.log_tool_decision(
+                        agent_type="analysis",
+                        query=query,
+                        available_tools=available_tools,
+                        selected_tools=selected_tools,
+                        reasoning=reasoning,
+                        confidence=confidence
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to log tool decision: {e}")
+
+            return {
+                "selected_tools": selected_tools,
+                "reasoning": reasoning,
+                "confidence": confidence,
+                "decision_id": decision_id
+            }
+
+        except Exception as e:
+            logger.error(f"LLM analysis tool selection failed: {e}")
+            return self._select_tools_with_fallback()
+
+    def _select_tools_with_fallback(self) -> Dict[str, Any]:
+        """
+        규칙 기반 fallback tool 선택
+        LLM 실패 시 사용 (안전망)
+        """
+        # 모든 분석 tool을 사용하는 것이 가장 안전
+        available_tools = self._get_available_analysis_tools()
+        scope = list(available_tools.keys())
+
+        if not scope:
+            scope = []
+
+        return {
+            "selected_tools": scope,
+            "reasoning": "Fallback: using all available analysis tools for comprehensive coverage",
+            "confidence": 0.3
+        }
 
     def _build_subgraph(self):
         """서브그래프 구성"""
@@ -138,6 +311,9 @@ class AnalysisExecutor:
         """
         logger.info("[AnalysisTeam] Analyzing data with new analysis tools")
 
+        import time
+        start_time = time.time()
+
         state["analysis_status"] = "analyzing"
         state["analysis_progress"] = {"current": "analyze", "percent": 0.3}
 
@@ -146,58 +322,143 @@ class AnalysisExecutor:
             query = state.get("shared_context", {}).get("query", "")
             analysis_type = state.get("analysis_type", "comprehensive")
 
+            # LLM 기반 도구 선택
+            collected_data_summary = {
+                "has_legal_data": bool(preprocessed_data.get("legal_search")),
+                "has_market_data": bool(preprocessed_data.get("real_estate_search")),
+                "has_loan_data": bool(preprocessed_data.get("loan_search")),
+                "has_contract": bool(preprocessed_data.get("contract")),
+                "data_types": list(preprocessed_data.keys())
+            }
+
+            tool_selection = await self._select_tools_with_llm(query, collected_data_summary)
+            selected_tools = tool_selection.get("selected_tools", [])
+            decision_id = tool_selection.get("decision_id")
+
+            logger.info(
+                f"[AnalysisTeam] LLM selected tools: {selected_tools}, "
+                f"confidence: {tool_selection.get('confidence')}"
+            )
+
+            # 실행 결과 추적
+            execution_results = {}
             results = {}
 
-            # 분석 유형에 따라 적절한 도구 사용
-            if analysis_type == "market" or "시세" in query or "가격" in query:
-                # 시장 분석
-                property_data = self._extract_property_data(preprocessed_data, query)
-                market_data = preprocessed_data.get("real_estate_search", {})
-                results["market"] = await self.market_tool.execute(
-                    property_data=property_data,
-                    market_data=market_data
-                )
-                logger.info("[AnalysisTools] Market analysis completed")
-
-            if analysis_type == "contract" or "계약" in query:
-                # 계약서 분석
-                contract_text = preprocessed_data.get("contract", "")
-                legal_refs = preprocessed_data.get("legal_search", [])
-                if contract_text:
-                    results["contract"] = await self.contract_tool.execute(
-                        contract_text=contract_text,
-                        legal_references=legal_refs
+            # LLM이 선택한 도구들을 실행
+            if "market_analysis" in selected_tools:
+                try:
+                    property_data = self._extract_property_data(preprocessed_data, query)
+                    market_data = preprocessed_data.get("real_estate_search", {})
+                    results["market"] = await self.market_tool.execute(
+                        property_data=property_data,
+                        market_data=market_data
                     )
-                    logger.info("[AnalysisTools] Contract analysis completed")
+                    logger.info("[AnalysisTools] Market analysis completed")
+                    execution_results["market_analysis"] = {
+                        "status": "success",
+                        "has_result": bool(results["market"])
+                    }
+                except Exception as e:
+                    logger.error(f"Market analysis failed: {e}")
+                    execution_results["market_analysis"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
 
-            if analysis_type == "investment" or "투자" in query or "수익" in query:
-                # ROI 계산
-                property_price = self._extract_price(preprocessed_data, query)
-                if property_price:
-                    results["roi"] = await self.roi_tool.execute(
-                        property_price=property_price,
-                        monthly_rent=self._extract_rent(preprocessed_data, query)
+            if "contract_analysis" in selected_tools:
+                try:
+                    contract_text = preprocessed_data.get("contract", "")
+                    legal_refs = preprocessed_data.get("legal_search", [])
+                    if contract_text:
+                        results["contract"] = await self.contract_tool.execute(
+                            contract_text=contract_text,
+                            legal_references=legal_refs
+                        )
+                        logger.info("[AnalysisTools] Contract analysis completed")
+                        execution_results["contract_analysis"] = {
+                            "status": "success",
+                            "has_result": bool(results["contract"])
+                        }
+                    else:
+                        execution_results["contract_analysis"] = {
+                            "status": "skipped",
+                            "reason": "no contract data"
+                        }
+                except Exception as e:
+                    logger.error(f"Contract analysis failed: {e}")
+                    execution_results["contract_analysis"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+
+            if "roi_calculator" in selected_tools:
+                try:
+                    property_price = self._extract_price(preprocessed_data, query)
+                    if property_price:
+                        results["roi"] = await self.roi_tool.execute(
+                            property_price=property_price,
+                            monthly_rent=self._extract_rent(preprocessed_data, query)
+                        )
+                        logger.info("[AnalysisTools] ROI calculation completed")
+                        execution_results["roi_calculator"] = {
+                            "status": "success",
+                            "has_result": bool(results["roi"])
+                        }
+                    else:
+                        execution_results["roi_calculator"] = {
+                            "status": "skipped",
+                            "reason": "no price data"
+                        }
+                except Exception as e:
+                    logger.error(f"ROI calculation failed: {e}")
+                    execution_results["roi_calculator"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+
+            if "loan_simulator" in selected_tools:
+                try:
+                    property_price = self._extract_price(preprocessed_data, query)
+                    income = self._extract_income(preprocessed_data, query)
+                    if property_price and income:
+                        results["loan"] = await self.loan_tool.execute(
+                            property_price=property_price,
+                            annual_income=income
+                        )
+                        logger.info("[AnalysisTools] Loan simulation completed")
+                        execution_results["loan_simulator"] = {
+                            "status": "success",
+                            "has_result": bool(results["loan"])
+                        }
+                    else:
+                        execution_results["loan_simulator"] = {
+                            "status": "skipped",
+                            "reason": "insufficient data"
+                        }
+                except Exception as e:
+                    logger.error(f"Loan simulation failed: {e}")
+                    execution_results["loan_simulator"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+
+            if "policy_matcher" in selected_tools:
+                try:
+                    user_profile = self._extract_user_profile(preprocessed_data, query)
+                    results["policy"] = await self.policy_tool.execute(
+                        user_profile=user_profile
                     )
-                    logger.info("[AnalysisTools] ROI calculation completed")
-
-            if analysis_type == "loan" or "대출" in query:
-                # 대출 시뮬레이션
-                property_price = self._extract_price(preprocessed_data, query)
-                income = self._extract_income(preprocessed_data, query)
-                if property_price and income:
-                    results["loan"] = await self.loan_tool.execute(
-                        property_price=property_price,
-                        annual_income=income
-                    )
-                    logger.info("[AnalysisTools] Loan simulation completed")
-
-            if analysis_type == "policy" or "정책" in query or "지원" in query:
-                # 정책 매칭
-                user_profile = self._extract_user_profile(preprocessed_data, query)
-                results["policy"] = await self.policy_tool.execute(
-                    user_profile=user_profile
-                )
-                logger.info("[AnalysisTools] Policy matching completed")
+                    logger.info("[AnalysisTools] Policy matching completed")
+                    execution_results["policy_matcher"] = {
+                        "status": "success",
+                        "has_result": bool(results["policy"])
+                    }
+                except Exception as e:
+                    logger.error(f"Policy matching failed: {e}")
+                    execution_results["policy_matcher"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
 
             # 맞춤 분석 (전세금 인상률 등)
             results["custom"] = self._perform_custom_analysis(query, preprocessed_data)
@@ -208,6 +469,32 @@ class AnalysisExecutor:
             state["raw_analysis"] = results
             state["analysis_status"] = "completed"
             state["analysis_progress"] = {"current": "analyze", "percent": 0.6}
+
+            # 실행 시간 계산 및 결과 로깅
+            total_execution_time_ms = int((time.time() - start_time) * 1000)
+
+            if decision_id and self.decision_logger:
+                try:
+                    # 전체 성공 여부 판단
+                    success = all(
+                        r.get("status") in ["success", "skipped"]
+                        for r in execution_results.values()
+                    )
+
+                    self.decision_logger.update_tool_execution_results(
+                        decision_id=decision_id,
+                        execution_results=execution_results,
+                        total_execution_time_ms=total_execution_time_ms,
+                        success=success
+                    )
+
+                    logger.info(
+                        f"[AnalysisTeam] Logged execution results: "
+                        f"decision_id={decision_id}, success={success}, "
+                        f"time={total_execution_time_ms}ms"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to log execution results: {e}")
 
         except Exception as e:
             logger.error(f"Analysis failed: {e}", exc_info=True)
