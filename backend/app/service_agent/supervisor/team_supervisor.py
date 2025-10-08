@@ -120,9 +120,27 @@ class TeamBasedSupervisor:
     def _route_after_planning(self, state: MainSupervisorState) -> str:
         """계획 후 라우팅"""
         planning_state = state.get("planning_state")
+
+        # 기능 외 질문 필터링
+        if planning_state:
+            analyzed_intent = planning_state.get("analyzed_intent", {})
+            intent_type = analyzed_intent.get("intent_type", "")
+            confidence = analyzed_intent.get("confidence", 0.0)
+
+            # IRRELEVANT 또는 낮은 confidence의 UNCLEAR는 바로 응답
+            if intent_type == "irrelevant":
+                logger.info("[TeamSupervisor] Detected IRRELEVANT query, routing to respond with guidance")
+                return "respond"
+
+            if intent_type == "unclear" and confidence < 0.3:
+                logger.info(f"[TeamSupervisor] Low confidence UNCLEAR query ({confidence:.2f}), routing to respond")
+                return "respond"
+
+        # 정상적인 실행 계획이 있으면 실행
         if planning_state and planning_state.get("execution_steps"):
             logger.info(f"[TeamSupervisor] Routing to execute - {len(planning_state['execution_steps'])} steps found")
             return "execute"
+
         logger.info("[TeamSupervisor] No execution steps found, routing to respond")
         return "respond"
 
@@ -511,11 +529,22 @@ class TeamBasedSupervisor:
 
         state["current_phase"] = "response_generation"
 
-        # LLM을 사용한 자연어 응답 생성
-        if self.planning_agent.llm_service:
-            response = await self._generate_llm_response(state)
+        # 기능 외 질문 체크
+        planning_state = state.get("planning_state", {})
+        analyzed_intent = planning_state.get("analyzed_intent", {})
+        intent_type = analyzed_intent.get("intent_type", "")
+        confidence = analyzed_intent.get("confidence", 0.0)
+
+        # IRRELEVANT 또는 낮은 confidence UNCLEAR는 안내 메시지 반환
+        if intent_type == "irrelevant" or (intent_type == "unclear" and confidence < 0.3):
+            logger.info(f"[TeamSupervisor] Generating guidance response for {intent_type}")
+            response = self._generate_out_of_scope_response(state)
         else:
-            response = self._generate_simple_response(state)
+            # 정상적인 응답 생성
+            if self.planning_agent.llm_service:
+                response = await self._generate_llm_response(state)
+            else:
+                response = self._generate_simple_response(state)
 
         state["final_response"] = response
         state["status"] = "completed"
@@ -667,6 +696,55 @@ class TeamBasedSupervisor:
             "summary": ", ".join(summary_parts) if summary_parts else "처리 완료",
             "teams_used": list(aggregated.keys()),
             "data": aggregated
+        }
+
+    def _generate_out_of_scope_response(self, state: MainSupervisorState) -> Dict:
+        """기능 외 질문에 대한 안내 응답 생성"""
+        planning_state = state.get("planning_state", {})
+        analyzed_intent = planning_state.get("analyzed_intent", {})
+        intent_type = analyzed_intent.get("intent_type", "")
+        query = state.get("query", "")
+
+        # Intent 타입에 따른 메시지
+        if intent_type == "irrelevant":
+            message = """안녕하세요! 저는 부동산 전문 상담 AI입니다.
+
+현재 질문은 부동산과 관련이 없는 것으로 보입니다.
+
+**제가 도와드릴 수 있는 분야:**
+- 전세/월세/매매 관련 법률 상담
+- 부동산 시세 조회 및 시장 분석
+- 주택담보대출 및 전세자금대출 상담
+- 임대차 계약서 작성 및 검토
+- 부동산 투자 리스크 분석
+
+부동산과 관련된 질문을 해주시면 자세히 안내해드리겠습니다."""
+
+        elif intent_type == "unclear":
+            message = f"""질문의 의도를 명확히 파악하기 어렵습니다.
+
+**더 구체적으로 질문해주시면 도움이 됩니다:**
+- 어떤 상황인지 구체적으로 설명해주세요
+- 무엇을 알고 싶으신지 명확히 해주세요
+- 관련된 정보(지역, 금액, 계약 조건 등)를 포함해주세요
+
+**예시:**
+- "강남구 아파트 전세 시세 알려주세요"
+- "전세금 5% 인상이 가능한가요?"
+- "임대차 계약서 검토해주세요"
+
+다시 한번 질문을 구체적으로 말씀해주시면 정확히 답변드리겠습니다."""
+
+        else:
+            message = "질문을 이해하는데 어려움이 있습니다. 부동산 관련 질문을 명확히 해주시면 도움을 드리겠습니다."
+
+        return {
+            "type": "guidance",
+            "message": message,
+            "original_query": query,
+            "detected_intent": intent_type,
+            "teams_used": [],
+            "data": {}
         }
 
     async def _ensure_checkpointer(self):

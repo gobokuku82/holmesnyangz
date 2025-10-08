@@ -507,6 +507,30 @@ class PlanningAgent:
         """
         logger.info(f"Creating execution plan for intent: {intent.intent_type.value}")
 
+        # IRRELEVANT 의도는 빈 계획 반환 (에이전트 실행하지 않음)
+        if intent.intent_type == IntentType.IRRELEVANT:
+            logger.info("Intent is IRRELEVANT, returning empty execution plan")
+            return ExecutionPlan(
+                steps=[],
+                strategy=ExecutionStrategy.SEQUENTIAL,
+                intent=intent,
+                estimated_time=0.0,
+                parallel_groups=[],
+                metadata={"created_by": "PlanningAgent", "reason": "irrelevant_query"}
+            )
+
+        # UNCLEAR이고 confidence가 낮으면 빈 계획 반환
+        if intent.intent_type == IntentType.UNCLEAR and intent.confidence < 0.3:
+            logger.info(f"Intent is UNCLEAR with low confidence ({intent.confidence:.2f}), returning empty execution plan")
+            return ExecutionPlan(
+                steps=[],
+                strategy=ExecutionStrategy.SEQUENTIAL,
+                intent=intent,
+                estimated_time=0.0,
+                parallel_groups=[],
+                metadata={"created_by": "PlanningAgent", "reason": "unclear_low_confidence"}
+            )
+
         # 사용 가능한 Agent 확인
         if available_agents is None:
             available_agents = AgentRegistry.list_agents(enabled_only=True)
