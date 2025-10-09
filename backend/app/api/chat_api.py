@@ -190,9 +190,11 @@ async def websocket_chat(
 
         Server → Client:
             - {"type": "connected", "session_id": "..."}
-            - {"type": "plan_ready", "plan": {...}, "todos": [...]}
-            - {"type": "todo_created", "todos": [...]}
-            - {"type": "todo_updated", "todo": {...}}
+            - {"type": "planning_start", "message": "계획을 수립하고 있습니다..."}
+            - {"type": "plan_ready", "intent": "...", "execution_steps": [...], "estimated_total_time": ..., "keywords": [...]}
+            - {"type": "execution_start", "message": "작업 실행을 시작합니다...", "execution_steps": [...]}
+            - {"type": "todo_created", "execution_steps": [...]}
+            - {"type": "todo_updated", "execution_steps": [...]}
             - {"type": "step_start", "agent": "...", "task": "..."}
             - {"type": "step_progress", "agent": "...", "progress": 50}
             - {"type": "step_complete", "agent": "...", "result": {...}}

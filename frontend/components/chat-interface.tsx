@@ -139,21 +139,35 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
           setMessages((prev) => [...prev, planMessage])
           setTodos(message.execution_steps)
 
-          // 800ms 후 ExecutionProgressPage 자동 생성
-          setTimeout(() => {
-            const progressMessage: Message = {
-              id: `execution-progress-${Date.now()}`,
-              type: "execution-progress",
-              content: "",
-              timestamp: new Date(),
-              executionPlan: planMessage.executionPlan,
-              executionSteps: message.execution_steps.map((step: ExecutionStep) => ({
-                ...step,
-                status: step.status || "pending"
-              }))
-            }
-            setMessages((prev) => [...prev, progressMessage])
-          }, 800)
+          // ExecutionProgressPage는 execution_start에서 생성됨
+        }
+        break
+
+      case 'execution_start':
+        // 실행 시작 - ExecutionProgressPage 생성
+        // Backend 전송 형식: { message, execution_steps }
+        if (message.execution_steps) {
+          // ExecutionPlan 찾기
+          const planMsg = messages.find(m => m.type === "execution-plan")
+
+          const progressMessage: Message = {
+            id: `execution-progress-${Date.now()}`,
+            type: "execution-progress",
+            content: "",
+            timestamp: new Date(),
+            executionPlan: planMsg?.executionPlan,
+            executionSteps: message.execution_steps.map((step: ExecutionStep) => ({
+              ...step,
+              status: step.status || "pending"
+            }))
+          }
+          setMessages((prev) => [...prev, progressMessage])
+
+          setProcessState({
+            step: "executing",
+            agentType: null,
+            message: message.message || "작업을 실행하고 있습니다..."
+          })
         }
         break
 

@@ -482,6 +482,20 @@ class TeamBasedSupervisor:
 
         state["current_phase"] = "executing"
 
+        # WebSocket: 실행 시작 알림
+        session_id = state.get("session_id")
+        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+        planning_state = state.get("planning_state")
+        if progress_callback and planning_state:
+            try:
+                await progress_callback("execution_start", {
+                    "message": "작업 실행을 시작합니다...",
+                    "execution_steps": planning_state.get("execution_steps", [])
+                })
+                logger.info("[TeamSupervisor] Sent execution_start via WebSocket")
+            except Exception as e:
+                logger.error(f"[TeamSupervisor] Failed to send execution_start: {e}")
+
         execution_strategy = state.get("execution_plan", {}).get("strategy", "sequential")
         active_teams = state.get("active_teams", [])
 
