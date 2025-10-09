@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { ProgressBar } from "@/components/ui/progress-bar"
 import { StepItem } from "@/components/step-item"
-import { Settings, Clock } from "lucide-react"
+import { Settings } from "lucide-react"
 import type { ExecutionStep, ExecutionPlan } from "@/types/execution"
 import type { ProcessState } from "@/types/process"
 
@@ -20,32 +19,12 @@ interface ExecutionProgressPageProps {
  * execution_steps 기반 실시간 진행 상황 표시
  * - 개별 작업 진행 상황 (StepItem)
  * - 전체 진행률
- * - 경과 시간 / 예상 시간
  */
 export function ExecutionProgressPage({
   steps,
   plan,
   processState
 }: ExecutionProgressPageProps) {
-  const [elapsedTime, setElapsedTime] = useState(0)
-
-  const estimatedTime = plan.estimated_total_time
-  const startTime = processState.startTime
-
-  // 경과 시간 계산
-  useEffect(() => {
-    if (!startTime) {
-      setElapsedTime(0)
-      return
-    }
-
-    const interval = setInterval(() => {
-      setElapsedTime(Date.now() - startTime)
-    }, 100)
-
-    return () => clearInterval(interval)
-  }, [startTime])
-
   // 진행 상황 계산
   const totalSteps = steps.length
   const completedSteps = steps.filter(s => s.status === "completed").length
@@ -54,19 +33,6 @@ export function ExecutionProgressPage({
 
   // 전체 진행률 (0-100)
   const overallProgress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
-
-  // 예상 남은 시간
-  const estimatedTimeMs = estimatedTime * 1000
-  const remainingTime = Math.max(estimatedTimeMs - elapsedTime, 0)
-
-  // 시간 포맷팅
-  const formatTime = (ms: number) => {
-    const seconds = ms / 1000
-    if (seconds < 60) return `${seconds.toFixed(1)}초`
-    const minutes = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${minutes}분 ${secs}초`
-  }
 
   return (
     <div className="flex justify-start mb-4">
@@ -106,7 +72,7 @@ export function ExecutionProgressPage({
           </div>
 
           {/* 작업 리스트 */}
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             <div className="text-sm font-medium mb-2">진행 상황:</div>
             {steps.map((step, index) => (
               <StepItem
@@ -115,37 +81,6 @@ export function ExecutionProgressPage({
                 index={index}
               />
             ))}
-          </div>
-
-          {/* 타이머 */}
-          <div className="border-t pt-3 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>경과 시간</span>
-              </div>
-              <span className="font-mono">{formatTime(elapsedTime)}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">예상 시간</span>
-              <span className="font-mono">{formatTime(estimatedTimeMs)}</span>
-            </div>
-
-            {elapsedTime < estimatedTimeMs && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">남은 시간</span>
-                <span className="font-mono text-primary">
-                  약 {formatTime(remainingTime)}
-                </span>
-              </div>
-            )}
-
-            {elapsedTime > estimatedTimeMs && (
-              <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                ⚠️ 예상 시간을 초과했습니다
-              </div>
-            )}
           </div>
 
           {/* 실패한 작업이 있을 경우 */}
