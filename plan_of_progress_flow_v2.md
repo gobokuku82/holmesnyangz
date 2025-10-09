@@ -1167,60 +1167,274 @@ async def execute(self, ...):
 
 ## 8. 추후 확장 계획
 
-### 8.1 Human-in-the-Loop (Interrupt)
+### 8.1 Human-in-the-Loop (Interrupt) ⭐ **LangGraph 0.6.6+ 핵심 기능**
 
-**LangGraph 0.6.6+ 기능:**
-- Planning 완료 후 사용자에게 계획 확인 요청
-- 사용자가 계획 수정 가능
-- 수정된 계획으로 실행
+#### 8.1.1 Interrupt 동작 원리
 
-**WebSocket 메시지:**
+**LangGraph의 Interrupt는 실행 중간에 사용자 입력을 받는 메커니즘입니다.**
+
+```python
+# team_supervisor.py
+from langgraph.types import interrupt, Command
+
+async def planning_node(self, state: MainSupervisorState):
+    # 1. 계획 수립
+    execution_plan = await self.planning_agent.create_execution_plan(...)
+    state["planning_state"]["execution_steps"] = execution_plan["execution_steps"]
+    state["todo_list"] = [...]  # TODO 생성
+
+    # 2. ⭐ Interrupt 발생: 여기서 실행 멈춤!
+    user_response = interrupt({
+        "type": "plan_approval",
+        "plan": execution_plan,
+        "todos": state["todo_list"],
+        "message": "이 계획대로 진행할까요? TODO를 수정하시려면 변경해주세요."
+    })
+
+    # ⭐ Checkpoint 저장되고 사용자 응답 대기...
+    # Frontend에서 interrupt_response를 보내면 여기서부터 재개됨
+
+    # 3. 사용자 응답 처리
+    if user_response.get("action") == "modify":
+        # TODO 수정 반영
+        state["todo_list"] = user_response["modified_todos"]
+        state["todo_modified_by_user"] = True
+
+        # execution_steps도 수정
+        state["planning_state"]["execution_steps"] = user_response["modified_plan"]
+
+    return state
+```
+
+**Interrupt 재개 (Backend):**
+```python
+# chat_api.py
+elif message_type == "interrupt_response":
+    interrupt_id = data.get("interrupt_id")
+    response = data.get("response")
+
+    # ⭐ LangGraph Command로 실행 재개
+    from langgraph.types import Command
+
+    result = await supervisor.app.ainvoke(
+        Command(resume=response),  # 사용자 응답 전달
+        config={
+            "configurable": {
+                "thread_id": session_id,
+                "checkpoint_ns": session_id
+            }
+        }
+    )
+
+    # 재개된 실행 계속 진행...
+```
+
+#### 8.1.2 WebSocket 메시지 프로토콜
+
 ```typescript
-// Server → Client
+// Server → Client: Interrupt 요청
 {
   type: "interrupt_request",
+  interrupt_id: "int_1633024800_abc123",  // 고유 ID
   data: {
-    interrupt_type: "plan_approval",
-    plan: {...},
+    interrupt_type: "plan_approval" | "todo_modification",
+    plan: ExecutionPlan,
+    todos: TodoItem[],
     message: "이 계획대로 진행할까요?"
   }
 }
 
-// Client → Server
+// Client → Server: Interrupt 응답
 {
   type: "interrupt_response",
+  interrupt_id: "int_1633024800_abc123",
   response: {
     action: "approve" | "modify" | "cancel",
-    modified_plan: {...}  // action === "modify" 시
+    modified_plan?: ExecutionStep[],  // action === "modify" 시
+    modified_todos?: TodoItem[]       // TODO 수정 시
+  }
+}
+
+// Server → Client: 재개 확인
+{
+  type: "execution_resumed",
+  data: {
+    message: "수정된 계획으로 진행합니다",
+    updated_plan: ExecutionPlan,
+    updated_todos: TodoItem[]
   }
 }
 ```
 
-### 8.2 TodoList 관리
+#### 8.1.3 작업 중 Interrupt (실시간 수정)
 
-**실시간 Todo 동기화:**
-- Backend에서 todo 생성/업데이트 시 WebSocket으로 전송
-- Frontend에서 todo 수정 시 WebSocket으로 전송
-- 양방향 동기화
+**시나리오: Step 실행 중 사용자가 TODO 수정**
 
-**WebSocket 메시지:**
+```
+[Timeline]
+0ms:     질문 입력
+800ms:   Planning 완료 → Interrupt 발생
+         TODO: [검색, 분석, 문서생성]
+1000ms:  사용자가 "분석" 제거 → interrupt_response 전송
+1050ms:  Backend가 Command로 재개
+         TODO: [검색, 문서생성]  ← 수정됨
+1100ms:  검색 시작 (step_update)
+2000ms:  검색 완료
+2050ms:  ⚠️ 사용자가 "문서생성 취소" 요청
+         → 어떻게 처리?
+```
+
+**해결책: 작업 중 Interrupt는 불가, 대신 Skip 기능 제공**
+
+```python
+# execute_teams_node
+async def execute_teams_node(self, state: MainSupervisorState):
+    todos = state["todo_list"]
+    callback = state.get("_progress_callback")
+
+    for todo in todos:
+        if todo["status"] == "skipped":  # ⭐ 사용자가 skip 요청
+            if callback:
+                await callback("todo_skipped", {"todo": todo})
+            continue
+
+        # TODO 실행...
+```
+
+**Frontend에서 Skip 요청:**
 ```typescript
-// Server → Client: Todo 업데이트
+// 사용자가 "문서생성 건너뛰기" 클릭
+ws.send({
+  type: "todo_skip",
+  todo_id: "step_3"
+})
+
+// Backend에서 State 업데이트 (Interrupt 없이)
+// → 다음 루프에서 자동 스킵
+```
+
+### 8.2 TodoList 관리 (State 기반)
+
+#### 8.2.1 TodoList는 MainSupervisorState에 저장
+
+**저장 위치:**
+- ✅ **State (`todo_list` 필드)**: LangGraph Checkpoint에 저장
+- ❌ **별도 DB**: State와 동기화 복잡, 비권장
+
+**이유:**
+1. **Checkpoint와 함께 저장** → 브라우저 새로고침 시에도 복원
+2. **노드에서 직접 접근** → 실행 중 TODO 상태 업데이트 가능
+3. **Interrupt에서 수정 가능** → 사용자가 TODO 수정 시 State에 반영
+
+#### 8.2.2 TodoList 생성 및 업데이트 플로우
+
+```
+[Planning Node]
+  ├─ execution_plan 생성
+  ├─ TODO 리스트 생성 (execution_steps 기반)
+  │  └─ state["todo_list"] = [...]
+  │
+  ├─ WebSocket 전송: todo_created
+  │  └─ Frontend: TodoListUI 표시
+  │
+  ├─ (선택) Interrupt: 사용자에게 TODO 수정 요청
+  │  └─ user_response = interrupt({"type": "todo_approval", ...})
+  │
+  └─ 사용자 수정 반영
+     └─ state["todo_list"] = user_response["modified_todos"]
+
+[Execution Node]
+  ├─ todos = state["todo_list"]
+  │
+  └─ for todo in todos:
+       ├─ todo["status"] = "in_progress"
+       ├─ WebSocket 전송: todo_progress
+       ├─ 팀 실행
+       ├─ todo["status"] = "completed"
+       └─ WebSocket 전송: todo_progress
+```
+
+#### 8.2.3 WebSocket 메시지 프로토콜
+
+```typescript
+// Server → Client: TODO 생성
 {
-  type: "todo_update",
+  type: "todo_created",
   data: {
-    todos: [...]
+    todos: [
+      {
+        todo_id: "step_1",
+        task: "법률 정보 검색",
+        description: "관련 법률 조항 검색",
+        status: "pending",
+        agent_type: "search_team",
+        estimated_time: 2.5,
+        created_at: "2025-10-09T10:30:00"
+      },
+      // ...
+    ]
   }
 }
 
-// Client → Server: Todo 수정
+// Server → Client: TODO 진행 상황
 {
-  type: "todo_modify",
+  type: "todo_progress",
   data: {
-    todo_id: "...",
-    status: "completed"
+    todo_id: "step_1",
+    status: "in_progress" | "completed" | "failed",
+    actual_time: 2.3,  // 완료 시
+    error: "...",       // 실패 시
+    updated_at: "2025-10-09T10:30:02.3"
   }
 }
+
+// Client → Server: TODO Skip 요청 (작업 중)
+{
+  type: "todo_skip",
+  todo_id: "step_2"
+}
+
+// Server → Client: TODO Skip 확인
+{
+  type: "todo_skipped",
+  data: {
+    todo_id: "step_2",
+    status: "skipped"
+  }
+}
+```
+
+#### 8.2.4 실시간 TODO 수정 시나리오
+
+**시나리오 1: Planning 단계에서 수정 (Interrupt 사용)**
+```
+1. Planning 완료 → TODO 생성
+2. Interrupt 발생 → 사용자에게 TODO 보여줌
+3. 사용자가 TODO 수정 (추가/삭제/순서변경)
+4. interrupt_response로 수정된 TODO 전송
+5. Backend가 state["todo_list"] 업데이트
+6. 수정된 TODO로 실행 시작
+```
+
+**시나리오 2: 실행 중 Skip 요청 (Interrupt 없이)**
+```
+1. Step 1 실행 중
+2. 사용자가 "Step 3 건너뛰기" 클릭
+3. Frontend가 todo_skip 메시지 전송
+4. Backend가 state["todo_list"][2]["status"] = "skipped" 업데이트
+5. Step 3 차례가 되면 자동 스킵
+```
+
+**시나리오 3: 브라우저 새로고침 (Checkpoint 복원)**
+```
+1. 사용자가 Step 2 진행 중 브라우저 새로고침
+2. Frontend가 /api/chat/restore?session_id=xxx 호출
+3. Backend가 Checkpoint에서 State 복원
+   - state["todo_list"] 포함
+4. WebSocket 재연결
+5. Backend가 복원된 TODO 전송: todo_restored
+6. Frontend가 TodoListUI 복원
+7. 실행 재개 (Step 2부터)
 ```
 
 ### 8.3 Plan 수정 기능
@@ -1251,17 +1465,195 @@ async def execute(self, ...):
 1. **세션당 1개 연결**: 동일 세션에서 여러 연결 방지
 2. **연결 해제 처리**: 정상/비정상 종료 구분
 3. **재연결 로직**: 네트워크 끊김 시 자동 재연결
-4. **메시지 손실 방지**: 연결 끊김 시 큐잉 (추후)
+4. **메시지 손실 방지**: ⚠️ **Phase 1에서 반드시 구현 필요**
 
-### 9.3 State 크기 제한
+**메시지 큐잉 구현 (필수):**
 
-**문제:**
+```python
+# ws_manager.py
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.message_queues: Dict[str, asyncio.Queue] = {}  # ⭐ 추가
+        self._lock = asyncio.Lock()
+
+    async def send_message(self, session_id: str, message: dict) -> bool:
+        websocket = self.active_connections.get(session_id)
+
+        if not websocket:
+            # ⭐ 연결 없으면 큐에 저장
+            if session_id not in self.message_queues:
+                self.message_queues[session_id] = asyncio.Queue()
+            await self.message_queues[session_id].put(message)
+            logger.warning(f"WebSocket not connected, queued message for {session_id}")
+            return False
+
+        try:
+            await websocket.send_json(message)
+            return True
+        except Exception as e:
+            # ⭐ 전송 실패 시 재큐잉
+            logger.error(f"Failed to send message to {session_id}: {e}")
+            await self.disconnect(session_id)
+            if session_id not in self.message_queues:
+                self.message_queues[session_id] = asyncio.Queue()
+            await self.message_queues[session_id].put(message)
+            return False
+```
+
+**재연결 시 State 동기화:**
+
+```python
+# chat_api.py WebSocket endpoint
+@router.websocket("/ws/{session_id}")
+async def websocket_chat(websocket: WebSocket, session_id: str):
+    await connection_manager.connect(session_id, websocket)
+
+    # ⭐ 큐에 저장된 메시지 flush
+    if session_id in connection_manager.message_queues:
+        queue = connection_manager.message_queues[session_id]
+        while not queue.empty():
+            msg = await queue.get()
+            await websocket.send_json(msg)
+        logger.info(f"Flushed {queue.qsize()} queued messages for {session_id}")
+
+    # 이후 정상 메시지 수신 루프...
+```
+
+### 9.3 State 크기 제한 및 TodoList 저장
+
+**문제 1: Callback 함수 직렬화**
 - Callback 함수는 직렬화 불가
-- Checkpoint에 저장되면 안 됨
+- Checkpoint에 저장되면 Exception 발생
 
 **해결:**
-- `_progress_callback` 필드는 runtime only
-- Checkpoint 시 자동 제외 (TypedDict `total=False`)
+```python
+# team_supervisor.py
+async def process_query_streaming(...):
+    initial_state = MainSupervisorState(...)
+    initial_state["_progress_callback"] = progress_callback
+
+    final_state = await self.app.ainvoke(initial_state, config=config)
+
+    # ⭐ Checkpoint 저장 전에 callback 제거
+    if "_progress_callback" in final_state:
+        del final_state["_progress_callback"]
+
+    return final_state
+```
+
+**문제 2: TodoList 저장 위치**
+
+✅ **TodoList는 MainSupervisorState에 저장해야 함**
+
+**이유:**
+1. **Checkpoint와 함께 저장** → 브라우저 새로고침 시에도 복원
+2. **LangGraph 노드에서 직접 접근** → 실행 중 TODO 상태 업데이트
+3. **Interrupt에서 수정 가능** → 사용자가 TODO 수정 시 State 업데이트
+
+```python
+# separated_states.py
+
+class TodoItem(TypedDict):
+    """TODO 아이템 구조"""
+    todo_id: str
+    task: str
+    description: str
+    status: Literal["pending", "in_progress", "completed", "failed", "skipped"]
+    agent_type: str  # "search_team", "analysis_team", "document_team"
+    estimated_time: float
+    actual_time: Optional[float]
+    created_at: str
+    updated_at: str
+    error: Optional[str]
+
+class MainSupervisorState(TypedDict, total=False):
+    """메인 Supervisor의 State"""
+    # 기존 필드들...
+    query: str
+    session_id: str
+    planning_state: Optional[PlanningState]
+
+    # ⭐ TodoList 추가
+    todo_list: List[TodoItem]
+    todo_modified_by_user: bool
+
+    # ⭐ Callback (runtime only, Checkpoint에서 제외됨)
+    _progress_callback: Optional[Callable[[str, dict], Awaitable[None]]]
+```
+
+**TodoList 동작 플로우:**
+
+```python
+# planning_node
+async def planning_node(self, state: MainSupervisorState):
+    # 1. 실행 계획 생성
+    execution_plan = await self.planning_agent.create_execution_plan(...)
+
+    # 2. TODO 리스트 생성
+    todos = [
+        TodoItem(
+            todo_id=step["step_id"],
+            task=step["description"],
+            status="pending",
+            agent_type=step["team"],
+            estimated_time=step["estimated_time"],
+            created_at=datetime.now().isoformat()
+        )
+        for step in execution_plan["execution_steps"]
+    ]
+    state["todo_list"] = todos
+
+    # 3. Callback으로 Frontend에 전송
+    callback = state.get("_progress_callback")
+    if callback:
+        await callback("todo_created", {"todos": todos})
+
+    # 4. (선택) Interrupt로 사용자 승인/수정 요청
+    from langgraph.types import interrupt
+    user_response = interrupt({
+        "type": "todo_approval",
+        "todos": todos,
+        "message": "이 작업들을 진행할까요?"
+    })
+
+    # 5. 사용자가 수정했으면 반영
+    if user_response.get("action") == "modify":
+        state["todo_list"] = user_response["modified_todos"]
+        state["todo_modified_by_user"] = True
+
+    return state
+
+# execute_teams_node
+async def execute_teams_node(self, state: MainSupervisorState):
+    todos = state.get("todo_list", [])
+    callback = state.get("_progress_callback")
+
+    for todo in todos:
+        if todo["status"] != "pending":
+            continue
+
+        # TODO 시작
+        todo["status"] = "in_progress"
+        if callback:
+            await callback("todo_progress", {"todo": todo})
+
+        # 실제 팀 실행
+        try:
+            result = await self._execute_team(todo["agent_type"], state)
+            todo["status"] = "completed"
+            todo["actual_time"] = ...
+        except Exception as e:
+            todo["status"] = "failed"
+            todo["error"] = str(e)
+
+        # TODO 완료
+        if callback:
+            await callback("todo_progress", {"todo": todo})
+
+    state["todo_list"] = todos
+    return state
+```
 
 ### 9.4 성능 고려사항
 
@@ -1283,53 +1675,200 @@ async def execute(self, ...):
 
 ---
 
-## 10. 예상 시간 (Option B 기준)
+## 10. 예상 시간 (Option B 기준, 수정됨)
 
-| 단계 | 세부 작업 | 예상 시간 |
-|------|-----------|----------|
-| **Backend** | ConnectionManager | 1시간 |
-| | WebSocket Endpoint | 1-1.5시간 |
-| | MainSupervisorState 수정 | 0.5시간 |
-| | process_query_streaming() | 0.5-1시간 |
-| | planning_node 수정 | 1-1.5시간 |
-| | execute_teams_node 수정 | 2-2.5시간 |
-| **Frontend** | WebSocket Client | 1.5-2시간 |
-| | chat-interface.tsx 수정 | 2-3시간 |
-| | 타입 정의 | 0.5-1시간 |
-| **테스트** | 기능 테스트 | 1시간 |
-| | 에러 시나리오 | 0.5-1시간 |
-| | UI/UX 개선 | 0.5-1시간 |
-| **총계** | | **12-15시간** |
+| 단계 | 세부 작업 | 예상 시간 | 비고 |
+|------|-----------|----------|------|
+| **Backend** | ConnectionManager (메시지 큐잉 포함) | 2시간 | ⬆️ +1시간 |
+| | WebSocket Endpoint (resync 포함) | 2시간 | ⬆️ +0.5시간 |
+| | MainSupervisorState 수정 (todo_list 추가) | 1시간 | ⬆️ +0.5시간 |
+| | process_query_streaming() | 1시간 | 동일 |
+| | planning_node 수정 (Interrupt 포함) | 2-3시간 | ⬆️ +1-1.5시간 |
+| | execute_teams_node 수정 (TODO 연동) | 2-3시간 | ⬆️ +0.5시간 |
+| **Frontend** | WebSocket Client (재연결 강화) | 2-3시간 | ⬆️ +1시간 |
+| | chat-interface.tsx 수정 | 2-3시간 | 동일 |
+| | TodoListUI 컴포넌트 | 1-2시간 | ⭐ 신규 |
+| | 타입 정의 | 1시간 | ⬆️ +0.5시간 |
+| **테스트** | 기본 기능 테스트 | 1시간 | 동일 |
+| | Interrupt + TODO 수정 테스트 | 2시간 | ⭐ 신규 |
+| | 재연결 + State 복원 테스트 | 1-2시간 | ⭐ 신규 |
+| | 에러 시나리오 | 1시간 | 동일 |
+| **총계** | | **20-27시간** | ⬆️ +8-12시간 |
+
+### 추가 시간 이유:
+
+1. **메시지 큐잉 (+1-2시간)**: 연결 끊김 시 메시지 손실 방지
+2. **Interrupt 구현 (+2-3시간)**: LangGraph interrupt + Command 연동
+3. **TodoList State 관리 (+1-2시간)**: State 구조 설계 및 노드 수정
+4. **TodoListUI (+1-2시간)**: Frontend TODO 표시 및 수정 UI
+5. **재연결 State 동기화 (+1-2시간)**: resync 로직 및 테스트
+6. **추가 테스트 (+3-4시간)**: Interrupt, TODO, 재연결 시나리오
 
 ---
 
-## 11. 체크리스트
+## 11. 체크리스트 (수정됨)
 
 ### Backend
+
+#### Phase 1: 기반 구축
 - [ ] `ws_manager.py` 생성 (ConnectionManager)
+  - [ ] 메시지 큐잉 구현
+  - [ ] 재연결 시 큐 flush
 - [ ] `chat_api.py`에 `/ws/{session_id}` 엔드포인트 추가
-- [ ] `separated_states.py`에 `_progress_callback` 필드 추가
-- [ ] `team_supervisor.py`에 `process_query_streaming()` 메서드 추가
-- [ ] `planning_node`에서 `plan_ready` 이벤트 전송
-- [ ] `execute_teams_node`에서 `step_update` 이벤트 전송
-- [ ] 에러 핸들링 (WebSocket 연결 해제, Step 실패)
+  - [ ] 메시지 수신 루프
+  - [ ] interrupt_response 처리
+  - [ ] todo_skip 처리
+- [ ] `separated_states.py` 수정
+  - [ ] `TodoItem` TypedDict 추가
+  - [ ] `MainSupervisorState`에 `todo_list` 필드 추가
+  - [ ] `_progress_callback` 필드 추가 (total=False)
+- [ ] `team_supervisor.py`에 `process_query_streaming()` 추가
+  - [ ] Callback 전달
+  - [ ] Checkpoint 저장 전 callback 제거
+
+#### Phase 2: LangGraph 노드 수정
+- [ ] `planning_node` 수정
+  - [ ] `plan_ready` 이벤트 전송
+  - [ ] `todo_created` 이벤트 전송
+  - [ ] Interrupt 구현 (선택적)
+  - [ ] 사용자 수정 반영 로직
+- [ ] `execute_teams_node` 수정
+  - [ ] `step_update` 이벤트 전송
+  - [ ] `todo_progress` 이벤트 전송
+  - [ ] TODO 상태 업데이트
+  - [ ] Skip 처리
+- [ ] 에러 핸들링
+  - [ ] WebSocket 연결 해제
+  - [ ] Step 실패
+  - [ ] Callback Exception
 
 ### Frontend
+
+#### Phase 3: WebSocket 클라이언트
 - [ ] `lib/ws.ts` 생성 (ChatWSClient)
-- [ ] `chat-interface.tsx`에 WebSocket 연결 관리
-- [ ] `handleWSMessage` 구현 (plan_ready, step_update, complete)
-- [ ] ExecutionPlanPage 즉시 표시
-- [ ] ExecutionProgressPage 실시간 업데이트
-- [ ] 재연결 로직 구현
-- [ ] 타입 정의 업데이트 (ExecutionStep, ExecutionPlan)
+  - [ ] 연결/해제 관리
+  - [ ] 재연결 로직 (exponential backoff)
+  - [ ] 메시지 송수신
+  - [ ] Interrupt 응답 전송
+  - [ ] TODO Skip 요청 전송
+- [ ] `types/execution.ts` 업데이트
+  - [ ] `TodoItem` 타입 정의
+  - [ ] `ExecutionStep` 타입 업데이트
+  - [ ] `WSMessage` 타입 확장
+
+#### Phase 4: UI 구현
+- [ ] `chat-interface.tsx` 수정
+  - [ ] WebSocket 연결 관리
+  - [ ] `handleWSMessage` 구현
+    - [ ] plan_ready 처리
+    - [ ] step_update 처리
+    - [ ] todo_created 처리
+    - [ ] todo_progress 처리
+    - [ ] interrupt_request 처리
+  - [ ] ExecutionPlanPage 즉시 표시
+  - [ ] ExecutionProgressPage 실시간 업데이트
+  - [ ] Interrupt UI (사용자 승인/수정)
+- [ ] `components/todo-list.tsx` 생성 (신규)
+  - [ ] TODO 리스트 표시
+  - [ ] TODO 상태별 색상
+  - [ ] Skip 버튼
+  - [ ] 진행률 표시
 
 ### 테스트
+
+#### Phase 5: 기능 테스트
 - [ ] 정상 플로우 (시세 조회)
-- [ ] Step 실패 시나리오
-- [ ] WebSocket 재연결
+  - [ ] ExecutionPlanPage 즉시 표시
+  - [ ] Step별 실시간 업데이트
+  - [ ] TODO 생성 및 진행 상황
+- [ ] Interrupt 시나리오
+  - [ ] Planning 후 사용자 승인
+  - [ ] TODO 수정 (추가/삭제)
+  - [ ] 수정된 계획으로 실행
+- [ ] TODO Skip 시나리오
+  - [ ] 실행 중 Skip 요청
+  - [ ] Skip된 TODO 표시
+- [ ] 에러 시나리오
+  - [ ] Step 실패 처리
+  - [ ] WebSocket 연결 끊김 → 재연결
+  - [ ] 메시지 큐잉 검증
+- [ ] State 복원 시나리오
+  - [ ] 브라우저 새로고침
+  - [ ] TODO 복원 확인
 - [ ] Unclear/Irrelevant intent
 - [ ] UI/UX 타이밍 확인
 
 ---
 
-**다음 단계**: Phase 1 Backend 기반 구축부터 시작
+---
+
+## 12. SSE vs WebSocket 최종 비교 (사용자 질문 반영)
+
+### 질문: "SSE + HTTP POST 방식도 사용자와 실시간으로 대화하면서 todo list를 수정할 수 있는가?"
+
+#### ✅ **답변: 가능하지만 WebSocket보다 제약이 많음**
+
+| 항목 | SSE + HTTP POST | WebSocket | 결론 |
+|------|-----------------|-----------|------|
+| **진행 상황 스트리밍** | ✅ SSE로 가능 | ✅ WebSocket으로 가능 | 동일 |
+| **Interrupt 응답** | ✅ HTTP POST로 가능 | ✅ WebSocket으로 가능 | 동일 |
+| **TODO 실시간 수정** | ⚠️ 가능하지만 지연 (+100-200ms) | ✅ 즉시 가능 | **WebSocket 우세** |
+| **작업 중 Skip 요청** | ⚠️ HTTP POST (별도 요청) | ✅ 같은 연결 | **WebSocket 우세** |
+| **재연결 자동 처리** | ✅ 브라우저 자동 | ❌ 수동 구현 필요 | SSE 우세 |
+| **메시지 순서 보장** | ⚠️ POST는 별도 연결 | ✅ 단일 연결 | **WebSocket 우세** |
+| **구현 복잡도** | **낮음** | **중간** | SSE 우세 |
+| **Race Condition 위험** | ⚠️ 존재 (동일) | ⚠️ 존재 (동일) | 동일 |
+
+### TodoList 저장 위치에 대한 답변
+
+#### ✅ **TodoList는 MainSupervisorState에 저장해야 함**
+
+**이유:**
+1. **LangGraph Checkpoint와 함께 저장**
+   - 브라우저 새로고침 시에도 TODO 복원
+   - Session 복구 가능
+
+2. **노드에서 직접 접근 가능**
+   ```python
+   async def execute_teams_node(self, state):
+       todos = state["todo_list"]  # State에서 직접 읽기
+       for todo in todos:
+           if todo["status"] == "pending":
+               # 실행
+   ```
+
+3. **Interrupt에서 수정 가능**
+   ```python
+   async def planning_node(self, state):
+       state["todo_list"] = [...]  # TODO 생성
+
+       # Interrupt로 사용자에게 수정 요청
+       user_response = interrupt({"todos": state["todo_list"]})
+
+       # 수정 반영
+       if user_response["action"] == "modify":
+           state["todo_list"] = user_response["modified_todos"]
+   ```
+
+4. **별도 DB 저장은 비권장**
+   - State와 DB 동기화 복잡
+   - Checkpoint 복원 시 불일치 가능
+   - 실시간 업데이트 어려움
+
+### 최종 권장: WebSocket 방식
+
+**결론:**
+- ✅ **WebSocket 유지**
+- ✅ **메시지 큐잉 반드시 구현** (연결 끊김 대비)
+- ✅ **TodoList는 State에 저장**
+- ✅ **LangGraph Interrupt 활용** (사용자 승인/수정)
+
+**이유:**
+1. TODO 실시간 수정의 latency가 중요 (100ms vs 200-400ms)
+2. 단일 연결로 모든 통신 (진행 상황 + Interrupt + TODO)
+3. 메시지 순서 보장 쉬움
+4. 추후 확장성 (실시간 협업, 알림)
+
+---
+
+**다음 단계**: Phase 1 Backend 기반 구축 (ConnectionManager 메시지 큐잉부터 시작)
