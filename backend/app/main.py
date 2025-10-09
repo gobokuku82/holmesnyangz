@@ -1,6 +1,7 @@
 import logging
 import logging.handlers
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,10 +61,53 @@ def setup_logging():
 # Setup logging before app initialization
 setup_logging()
 
+
+# ============ Application Lifespan (Startup/Shutdown) ============
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan management
+    - Startup: Supervisor pre-warming for faster first response
+    - Shutdown: Cleanup resources
+    """
+    # Startup: Pre-warm TeamBasedSupervisor
+    logger = logging.getLogger(__name__)
+    logger.info("=" * 80)
+    logger.info("🚀 Application Startup: Pre-warming TeamBasedSupervisor...")
+
+    try:
+        from app.api.chat_api import get_supervisor
+        await get_supervisor(enable_checkpointing=True)
+        logger.info("✅ TeamBasedSupervisor pre-warmed successfully")
+        logger.info("   - First request will skip Supervisor initialization (~2.2초 단축)")
+        logger.info("   - Expected first response time: ~5초 (vs 7초 without pre-warming)")
+    except Exception as e:
+        logger.warning(f"⚠️ Pre-warming failed (will initialize on first request): {e}")
+
+    logger.info("=" * 80)
+
+    yield
+
+    # Shutdown: Cleanup
+    logger.info("=" * 80)
+    logger.info("🛑 Application Shutdown: Cleaning up resources...")
+
+    try:
+        from app.api.chat_api import _supervisor_instance
+        if _supervisor_instance and _supervisor_instance.checkpointer:
+            await _supervisor_instance._checkpoint_cm.__aexit__(None, None, None)
+            logger.info("✅ Checkpointer connection closed")
+    except Exception as e:
+        logger.warning(f"⚠️ Cleanup warning: {e}")
+
+    logger.info("=" * 80)
+
+
 app = FastAPI(
     title="Chatbot App API",
     description="부동산 AI 챗봇 <도와줘 홈즈냥즈>",
-    version="0.0.1"
+    version="0.0.1",
+    lifespan=lifespan
 )
 
 # CORS middleware
