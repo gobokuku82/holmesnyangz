@@ -156,7 +156,8 @@ class PlanningAgent:
             result = await self.llm_service.complete_json_async(
                 prompt_name="intent_analysis",
                 variables={"query": query},
-                temperature=0.1
+                temperature=0.0,  # 더 빠른 샘플링 (deterministic)
+                max_tokens=500    # 불필요하게 긴 reasoning 방지
             )
 
             logger.info(f"LLM Intent Analysis Result: {result}")
@@ -169,12 +170,16 @@ class PlanningAgent:
                 logger.warning(f"Unknown intent type from LLM: {intent_str}, using UNCLEAR")
                 intent_type = IntentType.UNCLEAR
 
-            # Agent 선택 (LLM 사용)
-            suggested_agents = await self._suggest_agents(
-                intent_type=intent_type,
-                query=query,
-                keywords=result.get("keywords", [])
-            )
+            # Agent 선택 (IRRELEVANT/UNCLEAR은 생략하여 성능 최적화)
+            if intent_type in [IntentType.IRRELEVANT, IntentType.UNCLEAR]:
+                suggested_agents = []
+                logger.info(f"⚡ Skipping agent selection for {intent_type.value} (performance optimization)")
+            else:
+                suggested_agents = await self._suggest_agents(
+                    intent_type=intent_type,
+                    query=query,
+                    keywords=result.get("keywords", [])
+                )
 
             return IntentResult(
                 intent_type=intent_type,

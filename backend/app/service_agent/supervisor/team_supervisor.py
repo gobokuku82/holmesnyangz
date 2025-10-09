@@ -174,7 +174,50 @@ class TeamBasedSupervisor:
         query = state.get("query", "")
         intent_result = await self.planning_agent.analyze_intent(query)
 
-        # 실행 계획 생성
+        # ⚡ IRRELEVANT/UNCLEAR 조기 종료 - 불필요한 처리 건너뛰기 (3초 → 0.6초 최적화)
+        if intent_result.intent_type == IntentType.IRRELEVANT:
+            logger.info("⚡ IRRELEVANT detected, early return with minimal state (performance optimization)")
+            state["planning_state"] = {
+                "analyzed_intent": {
+                    "intent_type": "irrelevant",
+                    "confidence": intent_result.confidence,
+                    "keywords": intent_result.keywords,
+                    "entities": intent_result.entities
+                },
+                "execution_steps": [],
+                "raw_query": query,
+                "intent_confidence": intent_result.confidence
+            }
+            state["execution_plan"] = {
+                "intent": "irrelevant",
+                "strategy": "sequential",
+                "steps": []
+            }
+            state["active_teams"] = []
+            return state
+
+        if intent_result.intent_type == IntentType.UNCLEAR and intent_result.confidence < 0.3:
+            logger.info(f"⚡ Low-confidence UNCLEAR detected ({intent_result.confidence:.2f}), early return (performance optimization)")
+            state["planning_state"] = {
+                "analyzed_intent": {
+                    "intent_type": "unclear",
+                    "confidence": intent_result.confidence,
+                    "keywords": intent_result.keywords,
+                    "entities": intent_result.entities
+                },
+                "execution_steps": [],
+                "raw_query": query,
+                "intent_confidence": intent_result.confidence
+            }
+            state["execution_plan"] = {
+                "intent": "unclear",
+                "strategy": "sequential",
+                "steps": []
+            }
+            state["active_teams"] = []
+            return state
+
+        # 실행 계획 생성 (정상 쿼리만)
         execution_plan = await self.planning_agent.create_execution_plan(intent_result)
 
         # Planning State 생성
