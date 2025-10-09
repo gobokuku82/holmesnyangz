@@ -57,6 +57,11 @@ class TeamBasedSupervisor:
         self._checkpointer_initialized = False
         self._checkpoint_cm = None  # Async context manager for checkpointer
 
+        # Progress Callbacks - WebSocket 실시간 통신용 (State와 분리)
+        # session_id → callback 매핑
+        # Callable은 직렬화 불가능하므로 State에 포함하지 않음
+        self._progress_callbacks: Dict[str, Callable[[str, dict], Awaitable[None]]] = {}
+
         # Planning Agent
         self.planning_agent = PlanningAgent(llm_context=llm_context)
 
@@ -170,6 +175,18 @@ class TeamBasedSupervisor:
 
         state["current_phase"] = "planning"
 
+        # WebSocket: Planning 시작 알림
+        session_id = state.get("session_id")
+        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+        if progress_callback:
+            try:
+                await progress_callback("planning_start", {
+                    "message": "계획을 수립하고 있습니다..."
+                })
+                logger.debug("[TeamSupervisor] Sent planning_start via WebSocket")
+            except Exception as e:
+                logger.error(f"[TeamSupervisor] Failed to send planning_start: {e}")
+
         # 의도 분석
         query = state.get("query", "")
         intent_result = await self.planning_agent.analyze_intent(query)
@@ -234,19 +251,15 @@ class TeamBasedSupervisor:
             available_teams=list(self.teams.keys()),
             execution_steps=[
                 {
-                    # 기본 정보
+                    # 식별 정보
                     "step_id": f"step_{i}",
+                    "step_type": self._get_step_type_for_agent(step.agent_name),
                     "agent_name": step.agent_name,
                     "team": self._get_team_for_agent(step.agent_name),
-                    "description": f"{step.agent_name} 실행",  # TODO: 더 나은 설명 필요
-                    "priority": step.priority,
-                    "dependencies": step.dependencies,
 
-                    # 실행 설정
-                    "timeout": step.timeout,
-                    "retry_count": step.retry_count,
-                    "optional": step.optional,
-                    "input_mapping": step.input_mapping,
+                    # 작업 정보
+                    "task": self._get_task_name_for_agent(step.agent_name, intent_result),
+                    "description": self._get_task_description_for_agent(step.agent_name, intent_result),
 
                     # 상태 추적 (초기값)
                     "status": "pending",
@@ -255,16 +268,10 @@ class TeamBasedSupervisor:
                     # 타이밍 (초기값)
                     "started_at": None,
                     "completed_at": None,
-                    "execution_time_ms": None,
 
                     # 결과 (초기값)
                     "result": None,
-                    "error": None,
-                    "error_details": None,
-
-                    # 사용자 수정 (초기값)
-                    "modified_by_user": False,
-                    "original_values": None
+                    "error": None
                 }
                 for i, step in enumerate(execution_plan.steps)
             ],
@@ -295,10 +302,26 @@ class TeamBasedSupervisor:
 
         # 디버그: execution_steps 내용 로깅
         for step in planning_state["execution_steps"]:
-            logger.debug(f"  Step: agent={step.get('agent_name')}, team={step.get('team')}, priority={step.get('priority')}")
+            logger.debug(f"  Step: agent={step.get('agent_name')}, team={step.get('team')}, status={step.get('status')}")
 
         if not planning_state["execution_steps"]:
             logger.warning("[TeamSupervisor] WARNING: No execution steps created in planning phase!")
+
+        # WebSocket: 계획 완료 알림
+        session_id = state.get("session_id")
+        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+        if progress_callback:
+            try:
+                await progress_callback("plan_ready", {
+                    "intent": intent_result.intent_type.value,
+                    "confidence": intent_result.confidence,
+                    "execution_steps": planning_state["execution_steps"],
+                    "estimated_total_time": execution_plan.estimated_time,
+                    "keywords": intent_result.keywords
+                })
+                logger.info("[TeamSupervisor] Sent plan_ready via WebSocket")
+            except Exception as e:
+                logger.error(f"[TeamSupervisor] Failed to send plan_ready: {e}")
 
         return state
 
@@ -319,6 +342,112 @@ class TeamBasedSupervisor:
         from app.service_agent.foundation.agent_adapter import AgentAdapter
         dependencies = AgentAdapter.get_agent_dependencies(agent_name)
         return dependencies.get("team", "search")
+
+    def _get_step_type_for_agent(self, agent_name: str) -> str:
+        """
+        Agent 이름을 step_type으로 매핑
+
+        Args:
+            agent_name: Agent 이름 (예: "search_team", "analysis_team")
+
+        Returns:
+            step_type (예: "search", "analysis", "document")
+        """
+        team = self._get_team_for_agent(agent_name)
+
+        # Team 이름이 곧 step_type
+        step_type_mapping = {
+            "search": "search",
+            "document": "document",
+            "analysis": "analysis"
+        }
+
+        return step_type_mapping.get(team, "planning")
+
+    def _get_task_name_for_agent(self, agent_name: str, intent_result) -> str:
+        """
+        Agent별 간단한 작업명 생성
+
+        Args:
+            agent_name: Agent 이름
+            intent_result: Intent 분석 결과
+
+        Returns:
+            간단한 작업명 (예: "정보 검색", "데이터 분석")
+        """
+        team = self._get_team_for_agent(agent_name)
+        intent_type = intent_result.intent_type.value
+
+        # 팀별 기본 작업명
+        base_names = {
+            "search": "정보 검색",
+            "analysis": "데이터 분석",
+            "document": "문서 처리"
+        }
+
+        base_name = base_names.get(team, "작업 실행")
+
+        # Intent에 따라 구체화
+        if intent_type == "legal_consult":
+            return f"법률 {base_name}"
+        elif intent_type == "market_inquiry":
+            return f"시세 {base_name}"
+        elif intent_type == "loan_consult":
+            return f"대출 {base_name}"
+        elif intent_type == "contract_review":
+            return f"계약서 {base_name}"
+        elif intent_type == "contract_creation":
+            return f"계약서 생성"
+        else:
+            return base_name
+
+    def _get_task_description_for_agent(self, agent_name: str, intent_result) -> str:
+        """
+        Agent별 상세 설명 생성
+
+        Args:
+            agent_name: Agent 이름
+            intent_result: Intent 분석 결과
+
+        Returns:
+            상세 작업 설명
+        """
+        team = self._get_team_for_agent(agent_name)
+        intent_type = intent_result.intent_type.value
+        keywords = intent_result.keywords[:3] if intent_result.keywords else []
+
+        # 팀별 + Intent별 설명 생성
+        if team == "search":
+            if intent_type == "legal_consult":
+                return f"법률 관련 정보 및 판례 검색"
+            elif intent_type == "market_inquiry":
+                return f"부동산 시세 및 거래 정보 조회"
+            elif intent_type == "loan_consult":
+                return f"대출 관련 정보 및 금융상품 검색"
+            else:
+                keyword_text = f" ({', '.join(keywords)})" if keywords else ""
+                return f"관련 정보 검색{keyword_text}"
+
+        elif team == "analysis":
+            if intent_type == "legal_consult":
+                return f"법률 데이터 분석 및 리스크 평가"
+            elif intent_type == "market_inquiry":
+                return f"시세 데이터 분석 및 시장 동향 파악"
+            elif intent_type == "loan_consult":
+                return f"대출 조건 분석 및 금리 비교"
+            else:
+                return f"데이터 분석 및 인사이트 도출"
+
+        elif team == "document":
+            if intent_type == "contract_creation":
+                return f"계약서 초안 작성"
+            elif intent_type == "contract_review":
+                return f"계약서 검토 및 리스크 분석"
+            else:
+                return f"문서 처리 및 생성"
+
+        else:
+            return f"{agent_name} 실행"
 
     def _find_step_id_for_team(
         self,
@@ -431,6 +560,17 @@ class TeamBasedSupervisor:
                         )
                         main_state["planning_state"] = planning_state
 
+                        # WebSocket: TODO 상태 변경 알림 (in_progress)
+                        session_id = main_state.get("session_id")
+                        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+                        if progress_callback:
+                            try:
+                                await progress_callback("todo_updated", {
+                                    "execution_steps": planning_state["execution_steps"]
+                                })
+                            except Exception as ws_error:
+                                logger.error(f"[TeamSupervisor] Failed to send todo_updated (in_progress): {ws_error}")
+
                     # 팀 실행
                     result = await self._execute_single_team(team_name, shared_state, main_state)
                     results[team_name] = result
@@ -449,6 +589,17 @@ class TeamBasedSupervisor:
                                 step["result"] = result
                                 break
                         main_state["planning_state"] = planning_state
+
+                        # WebSocket: TODO 상태 변경 알림 (completed)
+                        session_id = main_state.get("session_id")
+                        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+                        if progress_callback:
+                            try:
+                                await progress_callback("todo_updated", {
+                                    "execution_steps": planning_state["execution_steps"]
+                                })
+                            except Exception as ws_error:
+                                logger.error(f"[TeamSupervisor] Failed to send todo_updated (completed): {ws_error}")
 
                     logger.info(f"[TeamSupervisor] Team '{team_name}' completed")
 
@@ -469,6 +620,17 @@ class TeamBasedSupervisor:
                             error=str(e)
                         )
                         main_state["planning_state"] = planning_state
+
+                        # WebSocket: TODO 상태 변경 알림 (failed)
+                        session_id = main_state.get("session_id")
+                        progress_callback = self._progress_callbacks.get(session_id) if session_id else None
+                        if progress_callback:
+                            try:
+                                await progress_callback("todo_updated", {
+                                    "execution_steps": planning_state["execution_steps"]
+                                })
+                            except Exception as ws_error:
+                                logger.error(f"[TeamSupervisor] Failed to send todo_updated (failed): {ws_error}")
 
                     results[team_name] = {"status": "failed", "error": str(e)}
 
@@ -877,7 +1039,12 @@ class TeamBasedSupervisor:
         # Checkpointer 초기화 (최초 1회)
         await self._ensure_checkpointer()
 
-        # 초기 상태 생성
+        # Progress Callback 별도 저장 (State와 분리)
+        if progress_callback:
+            self._progress_callbacks[session_id] = progress_callback
+            logger.debug(f"[TeamSupervisor] Progress callback registered for session: {session_id}")
+
+        # 초기 상태 생성 (Callback은 State에 포함하지 않음)
         initial_state = MainSupervisorState(
             query=query,
             session_id=session_id,
@@ -898,11 +1065,7 @@ class TeamBasedSupervisor:
             end_time=None,
             total_execution_time=None,
             error_log=[],
-            status="initialized",
-            # Progress Flow 필드
-            todo_list=[],
-            todo_modified_by_user=False,
-            _progress_callback=progress_callback  # Runtime only, Checkpoint 제외
+            status="initialized"
         )
 
         # 워크플로우 실행
@@ -920,23 +1083,29 @@ class TeamBasedSupervisor:
                 logger.info("Running without checkpointer")
                 final_state = await self.app.ainvoke(initial_state)
 
-            # Callback 제거 후 반환 (Checkpoint 저장 안 됨)
-            if "_progress_callback" in final_state:
-                del final_state["_progress_callback"]
+            # Callback 정리 (메모리 관리)
+            if session_id in self._progress_callbacks:
+                del self._progress_callbacks[session_id]
+                logger.debug(f"[TeamSupervisor] Progress callback cleaned up for session: {session_id}")
 
             return final_state
         except Exception as e:
             logger.error(f"Query processing failed: {e}", exc_info=True)
 
             # 에러 발생 시에도 callback으로 전송
-            if progress_callback:
+            callback = self._progress_callbacks.get(session_id)
+            if callback:
                 try:
-                    await progress_callback("error", {
+                    await callback("error", {
                         "error": str(e),
                         "message": "처리 중 오류가 발생했습니다."
                     })
                 except:
                     pass
+
+            # Callback 정리
+            if session_id in self._progress_callbacks:
+                del self._progress_callbacks[session_id]
 
             return {
                 "status": "error",

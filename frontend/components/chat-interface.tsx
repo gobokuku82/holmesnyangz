@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Maximize2 } from "lucide-react"
+import { Send, Bot, User, Maximize2, Loader2 } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { ChatWSClient, createWSClient, type WSMessage } from "@/lib/ws"
@@ -109,36 +109,44 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         // 연결 확인 - 아무것도 하지 않음
         break
 
+      case 'planning_start':
+        // Planning 시작 알림
+        setProcessState({
+          step: "planning",
+          agentType: null,
+          message: message.message || "계획을 수립하고 있습니다..."
+        })
+        break
+
       case 'plan_ready':
         // 실행 계획 수신
-        if (message.plan && message.todos) {
+        // Backend 전송 형식: { intent, confidence, execution_steps, estimated_total_time, keywords }
+        if (message.intent && message.execution_steps) {
           const planMessage: Message = {
             id: `execution-plan-${Date.now()}`,
             type: "execution-plan",
             content: "",
             timestamp: new Date(),
             executionPlan: {
-              intent: message.plan.intent || "unknown",
-              confidence: message.plan.confidence || 0,
-              execution_steps: message.todos,
-              execution_strategy: message.plan.execution_strategy || "sequential",
-              estimated_total_time: message.plan.estimated_total_time || 5
+              intent: message.intent,
+              confidence: message.confidence || 0,
+              execution_steps: message.execution_steps,
+              execution_strategy: "sequential", // Backend에서 보내지 않으므로 기본값
+              estimated_total_time: message.estimated_total_time || 5,
+              keywords: message.keywords
             }
           }
           setMessages((prev) => [...prev, planMessage])
-          setTodos(message.todos)
+          setTodos(message.execution_steps)
         }
         break
 
       case 'todo_created':
       case 'todo_updated':
         // TODO 리스트 업데이트
-        if (message.todos) {
-          setTodos(message.todos)
-        } else if (message.todo) {
-          setTodos((prev) =>
-            prev.map((t) => (t.step_id === message.todo.step_id ? message.todo : t))
-          )
+        // Backend 전송 형식: { execution_steps }
+        if (message.execution_steps) {
+          setTodos(message.execution_steps)
         }
         break
 
@@ -314,6 +322,16 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
               )}
             </div>
           ))}
+
+          {/* 프로세스 진행 중일 때 로딩 표시 */}
+          {processState.step !== "idle" && (
+            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm text-muted-foreground">
+                {processState.message || "처리 중..."}
+              </span>
+            </div>
+          )}
         </div>
       </ScrollArea>
 

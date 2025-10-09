@@ -8,6 +8,7 @@ import { ExecutionStepState } from './types';
 // WebSocket Message Types (Server → Client)
 export type WSMessageType =
   | 'connected'
+  | 'planning_start'
   | 'plan_ready'
   | 'todo_created'
   | 'todo_updated'

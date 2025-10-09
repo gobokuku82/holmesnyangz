@@ -238,41 +238,32 @@ class ExecutionStepState(TypedDict):
     """
     execution_steps의 표준 형식 - TODO 아이템 + ProcessFlow 호환
 
-    통합: TODO 관리 시스템 + ProcessFlow 시각화
-    - TODO: 사용자 수정, 승인, 진행률 추적
-    - ProcessFlow: 프론트엔드 시각화용 데이터 소스
+    간소화된 TODO 관리: 실시간 WebSocket 업데이트용
+    - Planning Agent가 생성
+    - StateManager가 상태 업데이트
+    - WebSocket으로 Frontend에 전송
     """
-    # 기본 정보
+    # 식별 정보 (4개)
     step_id: str                    # 고유 ID (예: "step_0", "step_1")
-    agent_name: str                 # 담당 에이전트
-    team: str                       # 담당 팀 (ProcessFlow용 매핑)
-    description: str                # 작업 설명 (사용자에게 표시)
-    priority: int                   # 우선순위
-    dependencies: List[str]         # 선행 작업 ID들
+    step_type: str                  # 'planning'|'search'|'document'|'analysis'|'synthesis'|'generation'
+    agent_name: str                 # 담당 에이전트 (예: "search_team")
+    team: str                       # 담당 팀 (예: "search")
 
-    # 실행 설정
-    timeout: int                    # 타임아웃 (초)
-    retry_count: int                # 재시도 횟수
-    optional: bool                  # 선택적 작업 여부
-    input_mapping: Dict[str, str]   # 입력 매핑
+    # 작업 정보 (2개)
+    task: str                       # 간단한 작업명 (예: "법률 정보 검색")
+    description: str                # 상세 설명 (사용자에게 표시)
 
-    # 상태 추적 (TODO + ProcessFlow 공통)
-    status: Literal["pending", "in_progress", "completed", "failed", "skipped", "cancelled"]
+    # 상태 추적 (2개)
+    status: Literal["pending", "in_progress", "completed", "failed", "skipped"]
     progress_percentage: int        # 진행률 0-100
 
-    # 타이밍
+    # 타이밍 (2개)
     started_at: Optional[str]       # 시작 시간 (ISO format datetime)
     completed_at: Optional[str]     # 완료 시간 (ISO format datetime)
-    execution_time_ms: Optional[int] # 실행 시간 (밀리초)
 
-    # 결과
+    # 결과/에러 (2개)
     result: Optional[Dict[str, Any]]  # 실행 결과 데이터
     error: Optional[str]              # 에러 메시지
-    error_details: Optional[str]      # 에러 상세 정보
-
-    # 사용자 수정 (TODO 전용)
-    modified_by_user: bool                          # 사용자가 수정했는지 여부
-    original_values: Optional[Dict[str, Any]]       # 수정 전 원본 값
 
 
 class PlanningState(TypedDict):
@@ -332,15 +323,17 @@ class MainSupervisorState(TypedDict, total=False):
     # ============================================================================
     # Progress Flow - WebSocket Real-time Integration
     # ============================================================================
-
-    # TODO List (저장됨: Checkpoint에 포함)
-    # ExecutionStepState를 그대로 사용하여 PlanningState와 동기화
-    todo_list: List[ExecutionStepState]
-    todo_modified_by_user: bool
-
-    # Progress Callback (저장 안 됨: Runtime only, Checkpoint 제외)
-    # LangGraph Checkpoint 저장 시 자동으로 제외됨 (Callable은 직렬화 불가)
-    _progress_callback: Optional[Callable[[str, dict], Awaitable[None]]]
+    #
+    # ⚠️ _progress_callback은 State에 포함되지 않습니다
+    #
+    # 이유: LangGraph Checkpoint가 State를 직렬화할 때 Callable 타입은
+    #       msgpack으로 직렬화할 수 없어 "Type is not msgpack serializable: function" 에러 발생
+    #
+    # 해결: TeamBasedSupervisor 인스턴스에서 별도 관리
+    #       - self._progress_callbacks: Dict[session_id, callback]
+    #       - 각 노드에서 self._progress_callbacks.get(session_id)로 접근
+    #
+    # TODO 관리: PlanningState.execution_steps에서 처리
 
 # ============================================================================
 # STATE MANAGEMENT UTILITIES

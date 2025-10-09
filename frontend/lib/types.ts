@@ -3,37 +3,11 @@
  * Backend State와 동기화된 타입 정의
  */
 
-// ExecutionStepState (Backend separated_states.py와 동일)
-export interface ExecutionStepState {
-  // 식별
-  step_id: string;
-  step_type: 'planning' | 'search' | 'document' | 'analysis' | 'synthesis' | 'generation';
-  agent_type: string;
+// ExecutionStep types re-exported from types/execution
+export type { ExecutionStep, StepStatus, StepType } from '@/types/execution'
 
-  // 작업 정보
-  task: string;
-  description: string;
-  dependencies: string[];
-  required_data: string[];
-
-  // 상태
-  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped' | 'cancelled';
-  progress_percentage: number;
-
-  // 타이밍
-  started_at: string | null;
-  completed_at: string | null;
-  execution_time_ms: number | null;
-
-  // 결과
-  result: Record<string, any> | null;
-  error: string | null;
-  error_details: string | null;
-
-  // 사용자 수정
-  modified_by_user: boolean;
-  original_values: Record<string, any> | null;
-}
+// Alias for consistency with backend naming
+export type ExecutionStepState = import('@/types/execution').ExecutionStep
 
 // Session
 export interface Session {
@@ -51,12 +25,8 @@ export interface ChatMessage {
   metadata?: Record<string, any>;
 }
 
-// Plan (Frontend representation)
-export interface ExecutionPlan {
-  execution_strategy: 'sequential' | 'parallel' | 'hybrid';
-  execution_steps: ExecutionStepState[];
-  estimated_total_time: number;
-}
+// ExecutionPlan re-exported from types/execution
+export type { ExecutionPlan } from '@/types/execution'
 
 // Final Response
 export interface FinalResponse {

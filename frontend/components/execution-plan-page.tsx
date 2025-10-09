@@ -37,6 +37,9 @@ export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
 
   // 팀 이름 매핑
   const teamNameMap: Record<string, string> = {
+    search: "검색",
+    analysis: "분석",
+    document: "문서",
     search_team: "검색팀",
     analysis_team: "분석팀",
     document_team: "문서팀"
@@ -98,14 +101,14 @@ export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{step.description}</span>
+                    <span className="text-sm font-medium">{step.task || step.description}</span>
                     <Badge variant="outline" className="text-xs">
                       {teamNameMap[step.team] || step.team}
                     </Badge>
                   </div>
-                  {step.dependencies.length > 0 && (
+                  {step.task && step.task !== step.description && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      의존성: {step.dependencies.join(", ")}
+                      {step.description}
                     </div>
                   )}
                 </div>

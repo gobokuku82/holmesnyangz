@@ -335,7 +335,7 @@ async def _process_query_async(
     try:
         logger.info(f"Processing query for {session_id}: {query[:100]}...")
 
-        # Streaming 방식으로 쿼리 처리 (추후 구현)
+        # Streaming 방식으로 쿼리 처리
         result = await supervisor.process_query_streaming(
             query=query,
             session_id=session_id,
@@ -343,9 +343,12 @@ async def _process_query_async(
         )
 
         # 최종 응답 전송
+        # final_response만 추출 (result에는 datetime 필드가 있어 JSON 직렬화 불가)
+        final_response = result.get("final_response", {})
+
         await conn_mgr.send_message(session_id, {
             "type": "final_response",
-            "response": result.get("final_response", {}),
+            "response": final_response,
             "timestamp": datetime.now().isoformat()
         })
 

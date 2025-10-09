@@ -25,19 +25,27 @@ interface StepItemProps {
  */
 export function StepItem({ step, index, isExpanded = false }: StepItemProps) {
   const {
+    task,
     description,
     team,
     status,
     progress_percentage,
-    execution_time_ms,
     result,
     error,
     started_at,
     completed_at
   } = step
 
+  // 실행 시간 계산 (started_at, completed_at으로부터)
+  const execution_time_ms = started_at && completed_at
+    ? new Date(completed_at).getTime() - new Date(started_at).getTime()
+    : null
+
   // 팀 이름 매핑
   const teamNameMap: Record<string, string> = {
+    search: "검색",
+    analysis: "분석",
+    document: "문서",
     search_team: "검색팀",
     analysis_team: "분석팀",
     document_team: "문서팀"
@@ -145,13 +153,13 @@ export function StepItem({ step, index, isExpanded = false }: StepItemProps) {
 
       {/* 작업 내용 */}
       <div className="flex-1 min-w-0">
-        {/* 작업 설명 + 팀 + 상태 */}
+        {/* 작업명 + 팀 + 상태 */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className={cn(
             "text-sm font-medium",
             status === "completed" && "line-through text-muted-foreground"
           )}>
-            {description}
+            {task || description}
           </span>
           <Badge variant="outline" className="text-xs">
             {teamNameMap[team] || team}
@@ -165,6 +173,13 @@ export function StepItem({ step, index, isExpanded = false }: StepItemProps) {
             </Badge>
           )}
         </div>
+
+        {/* 상세 설명 (task와 description이 다를 경우) */}
+        {task && task !== description && (
+          <div className="text-xs text-muted-foreground mt-1">
+            {description}
+          </div>
+        )}
 
         {/* 진행 중: 진행률 바 */}
         {status === "in_progress" && (
