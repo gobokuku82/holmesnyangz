@@ -8,8 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Bot, User, Maximize2 } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
-import { chatAPI } from "@/lib/api"
-import type { ChatResponse } from "@/types/chat"
+import { ChatWSClient, createWSClient, type WSMessage } from "@/lib/ws"
+import type { ExecutionStepState } from "@/lib/types"
 import { ExecutionPlanPage } from "@/components/execution-plan-page"
 import { ExecutionProgressPage } from "@/components/execution-progress-page"
 import type { ProcessState, AgentType } from "@/types/process"
@@ -47,7 +47,10 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     agentType: null,
     message: ""
   })
+  const [todos, setTodos] = useState<ExecutionStepState[]>([])
+  const [wsConnected, setWsConnected] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const wsClientRef = useRef<ChatWSClient | null>(null)
 
   const exampleQuestions = [
     "계약서를 분석해주세요",
@@ -57,6 +60,37 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     "정부 지원 정책을 알려주세요",
   ]
 
+  // WebSocket 초기화
+  useEffect(() => {
+    if (!sessionId) return
+
+    const wsClient = createWSClient({
+      baseUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
+      sessionId,
+      onMessage: handleWSMessage,
+      onConnected: () => {
+        console.log('[ChatInterface] WebSocket connected')
+        setWsConnected(true)
+      },
+      onDisconnected: () => {
+        console.log('[ChatInterface] WebSocket disconnected')
+        setWsConnected(false)
+      },
+      onError: (error) => {
+        console.error('[ChatInterface] WebSocket error:', error)
+      }
+    })
+
+    wsClient.connect()
+    wsClientRef.current = wsClient
+
+    return () => {
+      wsClient.disconnect()
+      wsClientRef.current = null
+    }
+  }, [sessionId])
+
+  // 스크롤 자동 이동
   useEffect(() => {
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
@@ -66,8 +100,107 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     }
   }, [messages])
 
+  // WebSocket 메시지 핸들러
+  const handleWSMessage = (message: WSMessage) => {
+    console.log('[ChatInterface] Received WS message:', message.type)
+
+    switch (message.type) {
+      case 'connected':
+        // 연결 확인 - 아무것도 하지 않음
+        break
+
+      case 'plan_ready':
+        // 실행 계획 수신
+        if (message.plan && message.todos) {
+          const planMessage: Message = {
+            id: `execution-plan-${Date.now()}`,
+            type: "execution-plan",
+            content: "",
+            timestamp: new Date(),
+            executionPlan: {
+              intent: message.plan.intent || "unknown",
+              confidence: message.plan.confidence || 0,
+              execution_steps: message.todos,
+              execution_strategy: message.plan.execution_strategy || "sequential",
+              estimated_total_time: message.plan.estimated_total_time || 5
+            }
+          }
+          setMessages((prev) => [...prev, planMessage])
+          setTodos(message.todos)
+        }
+        break
+
+      case 'todo_created':
+      case 'todo_updated':
+        // TODO 리스트 업데이트
+        if (message.todos) {
+          setTodos(message.todos)
+        } else if (message.todo) {
+          setTodos((prev) =>
+            prev.map((t) => (t.step_id === message.todo.step_id ? message.todo : t))
+          )
+        }
+        break
+
+      case 'step_start':
+        setProcessState({
+          step: "executing",
+          agentType: message.agent as AgentType,
+          message: `${message.task} 실행 중...`
+        })
+        break
+
+      case 'step_progress':
+        // Progress 업데이트 (TODO 리스트에 반영됨)
+        break
+
+      case 'step_complete':
+        // Step 완료
+        break
+
+      case 'final_response':
+        // 최종 응답 수신
+        setProcessState({
+          step: "complete",
+          agentType: null,
+          message: STEP_MESSAGES.complete
+        })
+
+        // Execution Progress 메시지 제거
+        setMessages((prev) => prev.filter(m =>
+          m.type !== "execution-plan" && m.type !== "execution-progress"
+        ))
+
+        // 봇 응답 추가
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content: message.response?.content || message.response?.answer || "응답을 받지 못했습니다.",
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, botMessage])
+        setTodos([])
+        break
+
+      case 'error':
+        console.error('[ChatInterface] Error from server:', message.error)
+        setProcessState({
+          step: "idle",
+          agentType: null,
+          message: ""
+        })
+        setMessages((prev) => [...prev, {
+          id: Date.now().toString(),
+          type: "bot",
+          content: `오류가 발생했습니다: ${message.error}`,
+          timestamp: new Date()
+        }])
+        break
+    }
+  }
+
   const handleSendMessage = async (content: string) => {
-    if (!content.trim() || !sessionId) return
+    if (!content.trim() || !sessionId || !wsClientRef.current) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -82,177 +215,25 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     // Detect agent type for loading animation
     const agentType = detectAgentType(content) as AgentType | null
 
-    const startTime = Date.now()
-
     // 프로세스 시작
     setProcessState({
       step: "planning",
       agentType,
       message: STEP_MESSAGES.planning,
-      startTime
+      startTime: Date.now()
     })
 
-    try {
-      // 실제 API 호출
-      const response = await chatAPI.sendMessage({
-        query: content,
-        session_id: sessionId,
-        enable_checkpointing: true,
-      })
+    // WebSocket으로 쿼리 전송
+    wsClientRef.current.send({
+      type: "query",
+      query: content,
+      enable_checkpointing: true
+    })
 
-      // ⚡ IRRELEVANT/UNCLEAR는 새 페이지 표시 안함 (즉시 응답)
-      const isGuidanceResponse = response.response.type === "guidance"
-
-      if (!isGuidanceResponse && response.planning_info) {
-        // Page 1: 실행 계획 표시
-        if (response.planning_info.execution_steps && response.planning_info.execution_steps.length > 0) {
-          const planMessage: Message = {
-            id: `execution-plan-${Date.now()}`,
-            type: "execution-plan",
-            content: "",
-            timestamp: new Date(),
-            executionPlan: {
-              intent: response.planning_info.intent || "unknown",
-              confidence: response.planning_info.confidence || 0,
-              execution_steps: response.planning_info.execution_steps,
-              execution_strategy: response.planning_info.execution_strategy || "sequential",
-              estimated_total_time: response.planning_info.estimated_total_time || 5
-            }
-          }
-          setMessages((prev) => [...prev, planMessage])
-
-          // 짧은 딜레이 후 Page 2로 전환
-          setTimeout(() => {
-            // Page 2: 작업 실행 중 표시
-            const progressMessage: Message = {
-              id: `execution-progress-${Date.now()}`,
-              type: "execution-progress",
-              content: "",
-              timestamp: new Date(),
-              executionSteps: response.planning_info!.execution_steps,
-              executionPlan: {
-                intent: response.planning_info!.intent || "unknown",
-                confidence: response.planning_info!.confidence || 0,
-                execution_steps: response.planning_info!.execution_steps!,
-                execution_strategy: response.planning_info!.execution_strategy || "sequential",
-                estimated_total_time: response.planning_info!.estimated_total_time || 5
-              }
-            }
-
-            // 계획 메시지 제거하고 진행 중 메시지 추가
-            setMessages((prev) =>
-              prev.filter(m => m.type !== "execution-plan").concat(progressMessage)
-            )
-          }, 800) // 계획 표시 800ms
-        }
-      }
-
-      // Agent 타입 감지 (응답 기반)
-      const responseAgentType = detectAgentTypeFromResponse(response)
-
-      // ⚡ IRRELEVANT/UNCLEAR는 딜레이 없이 즉시 완료 (성능 최적화)
-      const completionDelay = isGuidanceResponse ? 100 : 500
-
-      // 완료 상태로 변경
-      setTimeout(() => {
-        setProcessState({
-          step: "complete",
-          agentType: agentType,
-          message: STEP_MESSAGES.complete
-        })
-
-        // Execution Progress 메시지 제거
-        setMessages((prev) => prev.filter(m =>
-          m.type !== "execution-plan" && m.type !== "execution-progress"
-        ))
-      }, completionDelay)
-
-      // 봇 응답 추가
-      // IRRELEVANT/UNCLEAR 응답은 message 필드 사용, 일반 응답은 answer 필드 사용
-      const responseContent = response.response.type === "guidance"
-        ? response.response.message
-        : response.response.answer || response.response.message || "응답을 받지 못했습니다.";
-
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "bot",
-        content: responseContent,
-        timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, botMessage])
-
-      // Agent 팝업 표시 (필요시)
-      if (responseAgentType && response.teams_executed.length > 0) {
-        const agentPopup: Message = {
-          id: (Date.now() + 2).toString(),
-          type: "agent-popup",
-          content: getAgentResponseFromAPI(responseAgentType, response),
-          timestamp: new Date(),
-          agentType: responseAgentType,
-        }
-        setMessages((prev) => [...prev, agentPopup])
-      }
-
-      // ⚡ IRRELEVANT/UNCLEAR는 빠르게 idle 복귀 (성능 최적화)
-      const idleDelay = isGuidanceResponse ? 300 : 1500
-
-      setTimeout(() => {
-        setProcessState({
-          step: "idle",
-          agentType: null,
-          message: ""
-        })
-      }, idleDelay)
-
-    } catch (error) {
-      // 에러 상태로 변경
-      setProcessState({
-        step: "error",
-        agentType: agentType,
-        message: "오류가 발생했습니다",
-        error: error instanceof Error ? error.message : "알 수 없는 오류"
-      })
-
-      // Execution Plan/Progress 메시지 제거
-      setMessages((prev) => prev.filter(m =>
-        m.type !== "execution-plan" && m.type !== "execution-progress"
-      ))
-
-      // 세션 만료 처리 (401 또는 404)
-      if (error instanceof Error && (error.message.includes("401") || error.message.includes("404") || error.message.includes("session"))) {
-        console.warn("⚠️ Session expired during message send, resetting session...")
-        await resetSession()
-
-        const retryMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "bot",
-          content: "세션이 만료되어 새로 고침합니다. 잠시 후 다시 시도해주세요.",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, retryMessage])
-      } else {
-        // 일반 에러 메시지 표시
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "bot",
-          content: `오류가 발생했습니다: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, errorMessage])
-      }
-
-      // 3초 후 idle로 복귀
-      setTimeout(() => {
-        setProcessState({
-          step: "idle",
-          agentType: null,
-          message: ""
-        })
-      }, 3000)
-    }
+    // 나머지 처리는 handleWSMessage에서 실시간으로 처리됨
   }
 
+  // Helper: Agent 타입 감지 (클라이언트 측 추론)
   const detectAgentType = (content: string): PageType | null => {
     const analysisKeywords = ["계약서", "분석", "등기부등본", "건축물대장"]
     const verificationKeywords = ["허위매물", "전세사기", "위험도", "검증", "신용도"]
@@ -270,62 +251,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
     return null
   }
-
-  const detectAgentTypeFromResponse = (response: ChatResponse): PageType | null => {
-    const teams = response.teams_executed
-
-    if (teams.includes("analysis_team")) return "analysis"
-    if (teams.includes("search_team")) return "verification"
-    if (teams.includes("document_team")) return "consultation"
-
-    return null
-  }
-
-  const getAgentResponseFromAPI = (agentType: PageType, response: ChatResponse): string => {
-    const executionTime = response.execution_time_ms || 0
-    const teamCount = response.teams_executed.length
-
-    switch (agentType) {
-      case "analysis":
-        return `분석 에이전트가 ${teamCount}개 팀을 사용하여 ${executionTime}ms 동안 처리했습니다.`
-      case "verification":
-        return `검증 에이전트가 처리를 완료했습니다. ${response.search_results?.length || 0}개의 결과를 찾았습니다.`
-      case "consultation":
-        return `상담 에이전트가 처리를 완료했습니다. 처리 시간: ${executionTime}ms`
-      default:
-        return `처리가 완료되었습니다.`
-    }
-  }
-
-  const getAgentColors = (agentType: PageType) => {
-    switch (agentType) {
-      case "analysis":
-        return {
-          bg: "bg-blue-50 border-blue-200",
-          icon: "bg-blue-500 text-white",
-          button: "border-blue-300 hover:bg-blue-50",
-        }
-      case "verification":
-        return {
-          bg: "bg-red-50 border-red-200",
-          icon: "bg-red-500 text-white",
-          button: "border-red-300 hover:bg-red-50",
-        }
-      case "consultation":
-        return {
-          bg: "bg-green-50 border-green-200",
-          icon: "bg-green-500 text-white",
-          button: "border-green-300 hover:bg-green-50",
-        }
-      default:
-        return {
-          bg: "bg-accent/10 border-accent",
-          icon: "bg-accent text-accent-foreground",
-          button: "border-accent hover:bg-accent/10",
-        }
-    }
-  }
-
 
   const handleExampleClick = (question: string) => {
     handleSendMessage(question)
@@ -351,80 +276,38 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
   if (sessionError) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-sm text-destructive mb-4">{sessionError}</p>
-          <Button onClick={resetSession}>다시 시도</Button>
+        <div className="text-center text-destructive">
+          <p className="font-semibold mb-2">세션 생성 실패</p>
+          <p className="text-sm">{sessionError}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full bg-background relative">
-      {/* Header */}
-      <div className="border-b border-border p-4">
-        <h2 className="text-xl font-semibold text-foreground">부동산 챗봇</h2>
-        <p className="text-sm text-muted-foreground">AI 에이전트와 대화하며 부동산 관련 도움을 받으세요</p>
-      </div>
-
-      {/* Chat Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
+    <div className="flex flex-col h-full bg-background">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        <div className="space-y-4 max-w-3xl mx-auto">
           {messages.map((message) => (
-            <div key={message.id}>
-              {/* Execution Plan 메시지 타입 처리 */}
-              {message.type === "execution-plan" && message.executionPlan ? (
+            <div key={message.id} className="space-y-2">
+              {message.type === "execution-plan" && message.executionPlan && (
                 <ExecutionPlanPage plan={message.executionPlan} />
-              ) : message.type === "execution-progress" && message.executionSteps && message.executionPlan ? (
+              )}
+              {message.type === "execution-progress" && message.executionSteps && message.executionPlan && (
                 <ExecutionProgressPage
                   steps={message.executionSteps}
-                  estimatedTime={message.executionPlan.estimated_total_time}
-                  startTime={processState.startTime}
+                  plan={message.executionPlan}
+                  processState={processState}
                 />
-              ) : message.type === "agent-popup" ? (
-                <Card
-                  className={`max-w-md p-4 ${message.agentType ? getAgentColors(message.agentType).bg : "bg-accent/10 border-accent"}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`rounded-full p-2 ${message.agentType ? getAgentColors(message.agentType).icon : "bg-accent text-accent-foreground"}`}
-                    >
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-foreground">{message.content}</p>
-                      <div className="mt-3 flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => message.agentType && handleMaximize(message.agentType)}
-                          className={`text-xs ${message.agentType ? getAgentColors(message.agentType).button : ""}`}
-                        >
-                          <Maximize2 className="h-3 w-3 mr-1" />
-                          에이전트 사용하기
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ) : (
+              )}
+              {(message.type === "user" || message.type === "bot") && (
                 <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`flex items-start gap-3 max-w-md ${message.type === "user" ? "flex-row-reverse" : ""}`}>
-                    <div
-                      className={`rounded-full p-2 ${
-                        message.type === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {message.type === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                  <div className={`flex gap-2 max-w-[80%] ${message.type === "user" ? "flex-row-reverse" : ""}`}>
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.type === "user" ? "bg-primary" : "bg-secondary"}`}>
+                      {message.type === "user" ? <User className="h-4 w-4 text-primary-foreground" /> : <Bot className="h-4 w-4" />}
                     </div>
-                    <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {message.timestamp.toLocaleTimeString("ko-KR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                    <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : ""}`}>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     </Card>
                   </div>
                 </div>
@@ -474,3 +357,4 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     </div>
   )
 }
+// DEPRECATED CODE REMOVED - WebSocket으로 완전 전환됨
