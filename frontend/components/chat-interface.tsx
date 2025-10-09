@@ -138,6 +138,22 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
           }
           setMessages((prev) => [...prev, planMessage])
           setTodos(message.execution_steps)
+
+          // 800ms 후 ExecutionProgressPage 자동 생성
+          setTimeout(() => {
+            const progressMessage: Message = {
+              id: `execution-progress-${Date.now()}`,
+              type: "execution-progress",
+              content: "",
+              timestamp: new Date(),
+              executionPlan: planMessage.executionPlan,
+              executionSteps: message.execution_steps.map((step: ExecutionStep) => ({
+                ...step,
+                status: step.status || "pending"
+              }))
+            }
+            setMessages((prev) => [...prev, progressMessage])
+          }, 800)
         }
         break
 
@@ -147,6 +163,19 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         // Backend 전송 형식: { execution_steps }
         if (message.execution_steps) {
           setTodos(message.execution_steps)
+
+          // ExecutionProgressPage 메시지 찾아서 steps 업데이트
+          setMessages((prev) => {
+            return prev.map(msg => {
+              if (msg.type === "execution-progress") {
+                return {
+                  ...msg,
+                  executionSteps: message.execution_steps
+                }
+              }
+              return msg
+            })
+          })
         }
         break
 
@@ -168,12 +197,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
       case 'final_response':
         // 최종 응답 수신
-        setProcessState({
-          step: "complete",
-          agentType: null,
-          message: STEP_MESSAGES.complete
-        })
-
         // Execution Progress 메시지 제거
         setMessages((prev) => prev.filter(m =>
           m.type !== "execution-plan" && m.type !== "execution-progress"
@@ -183,11 +206,18 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: "bot",
-          content: message.response?.content || message.response?.answer || "응답을 받지 못했습니다.",
+          content: message.response?.content || message.response?.answer || message.response?.message || "응답을 받지 못했습니다.",
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, botMessage])
         setTodos([])
+
+        // 프로세스 완료 - idle 상태로 전환하여 입력 활성화
+        setProcessState({
+          step: "idle",
+          agentType: null,
+          message: ""
+        })
         break
 
       case 'error':
@@ -323,8 +353,8 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
             </div>
           ))}
 
-          {/* 프로세스 진행 중일 때 로딩 표시 */}
-          {processState.step !== "idle" && (
+          {/* 프로세스 진행 중일 때 로딩 표시 (ExecutionProgressPage 없을 때만) */}
+          {processState.step !== "idle" && !messages.some(m => m.type === "execution-progress") && (
             <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg animate-pulse">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm text-muted-foreground">

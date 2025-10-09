@@ -5,12 +5,13 @@ import { Card } from "@/components/ui/card"
 import { ProgressBar } from "@/components/ui/progress-bar"
 import { StepItem } from "@/components/step-item"
 import { Settings, Clock } from "lucide-react"
-import type { ExecutionStep } from "@/types/execution"
+import type { ExecutionStep, ExecutionPlan } from "@/types/execution"
+import type { ProcessState } from "@/types/process"
 
 interface ExecutionProgressPageProps {
   steps: ExecutionStep[]
-  estimatedTime: number      // 초
-  startTime?: number          // timestamp
+  plan: ExecutionPlan        // ExecutionPlan 전체
+  processState: ProcessState // Process state 정보
 }
 
 /**
@@ -23,10 +24,13 @@ interface ExecutionProgressPageProps {
  */
 export function ExecutionProgressPage({
   steps,
-  estimatedTime,
-  startTime
+  plan,
+  processState
 }: ExecutionProgressPageProps) {
   const [elapsedTime, setElapsedTime] = useState(0)
+
+  const estimatedTime = plan.estimated_total_time
+  const startTime = processState.startTime
 
   // 경과 시간 계산
   useEffect(() => {

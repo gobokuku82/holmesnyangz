@@ -5,7 +5,8 @@ Real-time communication with message queuing and reconnection support
 
 import logging
 import asyncio
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
+from datetime import datetime
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,27 @@ class ConnectionManager:
             del self.active_connections[session_id]
             logger.info(f"❌ WebSocket disconnected: {session_id}")
 
+    def _serialize_datetimes(self, obj: Any) -> Any:
+        """
+        재귀적으로 datetime 객체를 ISO 형식 문자열로 변환
+
+        Args:
+            obj: 변환할 객체
+
+        Returns:
+            변환된 객체 (datetime은 문자열로 변환됨)
+        """
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, dict):
+            return {key: self._serialize_datetimes(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self._serialize_datetimes(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return tuple(self._serialize_datetimes(item) for item in obj)
+        else:
+            return obj
+
     async def send_message(self, session_id: str, message: dict) -> bool:
         """
         세션에 메시지 전송 (연결 없으면 큐잉)
@@ -72,7 +94,9 @@ class ConnectionManager:
 
         if websocket:
             try:
-                await websocket.send_json(message)
+                # datetime 객체를 ISO 형식 문자열로 자동 변환
+                serialized_message = self._serialize_datetimes(message)
+                await websocket.send_json(serialized_message)
                 logger.debug(f"📤 Sent to {session_id}: {message.get('type', 'unknown')}")
                 return True
             except Exception as e:
