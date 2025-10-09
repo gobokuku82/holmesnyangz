@@ -5,7 +5,7 @@ SearchTeam, DocumentTeam, AnalysisTeam을 오케스트레이션
 
 import logging
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable, Awaitable
 from datetime import datetime
 import asyncio
 from langgraph.graph import StateGraph, START, END
@@ -854,22 +854,25 @@ class TeamBasedSupervisor:
         self.app = workflow.compile(checkpointer=self.checkpointer)
         logger.info("Team-based workflow graph built with checkpointer")
 
-    async def process_query(
+    async def process_query_streaming(
         self,
         query: str,
-        session_id: str = "default"
+        session_id: str = "default",
+        progress_callback: Optional[Callable[[str, dict], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
         """
-        쿼리 처리 메인 메서드
+        실시간 스트리밍 쿼리 처리 메인 메서드 (WebSocket 전용)
 
         Args:
             query: 사용자 쿼리
             session_id: 세션 ID
+            progress_callback: 진행 상황 콜백 함수 (WebSocket 전송용)
+                               async def callback(event_type: str, event_data: dict)
 
         Returns:
             처리 결과
         """
-        logger.info(f"[TeamSupervisor] Processing query: {query[:100]}...")
+        logger.info(f"[TeamSupervisor] Processing query (streaming): {query[:100]}...")
 
         # Checkpointer 초기화 (최초 1회)
         await self._ensure_checkpointer()
@@ -895,7 +898,11 @@ class TeamBasedSupervisor:
             end_time=None,
             total_execution_time=None,
             error_log=[],
-            status="initialized"
+            status="initialized",
+            # Progress Flow 필드
+            todo_list=[],
+            todo_modified_by_user=False,
+            _progress_callback=progress_callback  # Runtime only, Checkpoint 제외
         )
 
         # 워크플로우 실행
@@ -913,9 +920,24 @@ class TeamBasedSupervisor:
                 logger.info("Running without checkpointer")
                 final_state = await self.app.ainvoke(initial_state)
 
+            # Callback 제거 후 반환 (Checkpoint 저장 안 됨)
+            if "_progress_callback" in final_state:
+                del final_state["_progress_callback"]
+
             return final_state
         except Exception as e:
             logger.error(f"Query processing failed: {e}", exc_info=True)
+
+            # 에러 발생 시에도 callback으로 전송
+            if progress_callback:
+                try:
+                    await progress_callback("error", {
+                        "error": str(e),
+                        "message": "처리 중 오류가 발생했습니다."
+                    })
+                except:
+                    pass
+
             return {
                 "status": "error",
                 "error": str(e),

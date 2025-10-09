@@ -1,28 +1,28 @@
 """
 Chat API Router
-FastAPI endpoints for chat functionality with service_agent integration
+FastAPI WebSocket endpoints for real-time chat with service_agent integration
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from datetime import datetime
 import logging
 import asyncio
+import json
 
 from app.api.schemas import (
     SessionStartRequest, SessionStartResponse,
-    ChatRequest, ChatResponse,
     SessionInfo, DeleteSessionResponse,
     ErrorResponse
 )
 from app.api.session_manager import get_session_manager, SessionManager
-from app.api.converters import state_to_chat_response
+from app.api.ws_manager import get_connection_manager, ConnectionManager
 from app.service_agent.supervisor.team_supervisor import TeamBasedSupervisor
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# Supervisor Singleton Pattern (성능 최적화)
+# Supervisor Singleton Pattern
 # ============================================================================
 
 _supervisor_instance = None
@@ -32,9 +32,6 @@ _supervisor_lock = asyncio.Lock()
 async def get_supervisor(enable_checkpointing: bool = True) -> TeamBasedSupervisor:
     """
     Supervisor 싱글톤 인스턴스 반환
-
-    첫 요청 시 인스턴스 생성 (~2.2초), 이후 요청은 재사용 (0초)
-    성능 개선: 이후 요청 70% 단축 (2초 → 0.6초)
 
     Args:
         enable_checkpointing: Checkpointing 활성화 여부
@@ -140,7 +137,8 @@ async def get_session_info(
 @router.delete("/{session_id}", response_model=DeleteSessionResponse)
 async def delete_session(
     session_id: str,
-    session_mgr: SessionManager = Depends(get_session_manager)
+    session_mgr: SessionManager = Depends(get_session_manager),
+    conn_mgr: ConnectionManager = Depends(get_connection_manager)
 ):
     """
     세션 삭제 (로그아웃)
@@ -159,6 +157,9 @@ async def delete_session(
             detail=f"Session not found: {session_id}"
         )
 
+    # WebSocket 연결도 정리
+    conn_mgr.cleanup_session(session_id)
+
     logger.info(f"Session deleted: {session_id}")
 
     return DeleteSessionResponse(
@@ -168,109 +169,197 @@ async def delete_session(
 
 
 # ============================================================================
-# Chat Endpoint
+# WebSocket Chat Endpoint
 # ============================================================================
 
-@router.post("/", response_model=ChatResponse)
-async def chat(
-    request: ChatRequest,
-    session_mgr: SessionManager = Depends(get_session_manager)
+@router.websocket("/ws/{session_id}")
+async def websocket_chat(
+    websocket: WebSocket,
+    session_id: str,
+    session_mgr: SessionManager = Depends(get_session_manager),
+    conn_mgr: ConnectionManager = Depends(get_connection_manager)
 ):
     """
-    채팅 메시지 처리
+    실시간 채팅 WebSocket 엔드포인트
 
-    사용자 질문을 TeamBasedSupervisor로 전달하여 처리
+    Protocol:
+        Client → Server:
+            - {"type": "query", "query": "...", "enable_checkpointing": true}
+            - {"type": "interrupt_response", "action": "approve|modify", "modified_todos": [...]}
+            - {"type": "todo_skip", "todo_id": "..."}
+
+        Server → Client:
+            - {"type": "connected", "session_id": "..."}
+            - {"type": "plan_ready", "plan": {...}, "todos": [...]}
+            - {"type": "todo_created", "todos": [...]}
+            - {"type": "todo_updated", "todo": {...}}
+            - {"type": "step_start", "agent": "...", "task": "..."}
+            - {"type": "step_progress", "agent": "...", "progress": 50}
+            - {"type": "step_complete", "agent": "...", "result": {...}}
+            - {"type": "final_response", "response": {...}}
+            - {"type": "error", "error": "...", "details": {...}}
 
     Args:
-        request: ChatRequest
-            - query: 사용자 질문 (필수)
-            - session_id: 세션 ID (필수)
-            - enable_checkpointing: Checkpoint 활성화 여부
-            - user_context: 추가 컨텍스트
-
-    Returns:
-        ChatResponse: 상세한 처리 결과
-            - response: 최종 사용자 응답
-            - planning_info: 계획 정보 (상세)
-            - team_results: 팀별 실행 결과 (상세)
-            - search_results: 검색 결과 원본 (상세)
-            - analysis_metrics: 분석 지표 (상세)
-            - execution_time_ms: 실행 시간
-            - teams_executed: 실행된 팀 목록
-
-    Raises:
-        HTTPException: 세션 없음, 처리 실패 등
+        websocket: WebSocket 연결
+        session_id: 세션 ID
     """
     # 1. 세션 검증
-    if not session_mgr.validate_session(request.session_id):
-        logger.warning(f"Invalid or expired session: {request.session_id}")
-        raise HTTPException(
-            status_code=404,
-            detail=ErrorResponse(
-                error_code="SESSION_NOT_FOUND",
-                message=f"Session not found or expired: {request.session_id}",
-                details={"session_id": request.session_id},
-                timestamp=datetime.now().isoformat()
-            ).dict()
-        )
+    if not session_mgr.validate_session(session_id):
+        await websocket.close(code=4004, reason="Session not found or expired")
+        logger.warning(f"WebSocket rejected: invalid session {session_id}")
+        return
 
-    # 2. Supervisor 인스턴스 가져오기 (싱글톤 패턴으로 재사용)
-    supervisor = await get_supervisor(enable_checkpointing=request.enable_checkpointing)
+    # 2. WebSocket 연결
+    await conn_mgr.connect(session_id, websocket)
+
+    # 3. 연결 확인 메시지
+    await conn_mgr.send_message(session_id, {
+        "type": "connected",
+        "session_id": session_id,
+        "timestamp": datetime.now().isoformat()
+    })
+
+    # 4. Supervisor 인스턴스 가져오기
+    supervisor = await get_supervisor(enable_checkpointing=True)
 
     try:
-        # 3. 쿼리 처리
-        logger.info(
-            f"Processing query for session {request.session_id}: "
-            f"{request.query[:100]}{'...' if len(request.query) > 100 else ''}"
-        )
+        # 5. 메시지 수신 루프
+        while True:
+            try:
+                # 메시지 수신 (JSON)
+                data = await websocket.receive_json()
+                message_type = data.get("type")
 
-        start_time = datetime.now()
+                logger.info(f"📥 Received from {session_id}: {message_type}")
 
-        result = await supervisor.process_query(
-            query=request.query,
-            session_id=request.session_id
-        )
+                # === Query 처리 ===
+                if message_type == "query":
+                    query = data.get("query")
+                    enable_checkpointing = data.get("enable_checkpointing", True)
 
-        execution_time = (datetime.now() - start_time).total_seconds() * 1000
+                    if not query:
+                        await conn_mgr.send_message(session_id, {
+                            "type": "error",
+                            "error": "Query cannot be empty",
+                            "timestamp": datetime.now().isoformat()
+                        })
+                        continue
 
-        # 4. Cleanup
-        await supervisor.cleanup()
+                    # Progress callback 정의
+                    async def progress_callback(event_type: str, event_data: dict):
+                        """실시간 진행 상황 전송"""
+                        await conn_mgr.send_message(session_id, {
+                            "type": event_type,
+                            **event_data,
+                            "timestamp": datetime.now().isoformat()
+                        })
 
-        # 5. State → Response 변환
-        response = state_to_chat_response(result, int(execution_time))
+                    # 비동기 쿼리 처리 시작
+                    asyncio.create_task(
+                        _process_query_async(
+                            supervisor=supervisor,
+                            query=query,
+                            session_id=session_id,
+                            enable_checkpointing=enable_checkpointing,
+                            progress_callback=progress_callback,
+                            conn_mgr=conn_mgr
+                        )
+                    )
 
-        logger.info(
-            f"Query completed for session {request.session_id}: "
-            f"status={response.status}, time={execution_time:.0f}ms, "
-            f"teams={response.teams_executed}"
-        )
+                # === Interrupt Response (계획 승인/수정) ===
+                elif message_type == "interrupt_response":
+                    # TODO: LangGraph interrupt 처리 (추후 구현)
+                    action = data.get("action")  # "approve" or "modify"
+                    modified_todos = data.get("modified_todos", [])
 
-        return response
+                    logger.info(f"Interrupt response: {action}")
+                    # 현재는 로그만, 추후 LangGraph Command로 전달
+
+                # === Todo Skip (실행 중 작업 건너뛰기) ===
+                elif message_type == "todo_skip":
+                    todo_id = data.get("todo_id")
+                    logger.info(f"Todo skip requested: {todo_id}")
+                    # TODO: 추후 구현
+
+                # === 알 수 없는 메시지 ===
+                else:
+                    await conn_mgr.send_message(session_id, {
+                        "type": "error",
+                        "error": f"Unknown message type: {message_type}",
+                        "timestamp": datetime.now().isoformat()
+                    })
+
+            except json.JSONDecodeError:
+                await conn_mgr.send_message(session_id, {
+                    "type": "error",
+                    "error": "Invalid JSON format",
+                    "timestamp": datetime.now().isoformat()
+                })
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: {session_id}")
 
     except Exception as e:
-        # Cleanup on error
-        try:
-            await supervisor.cleanup()
-        except:
-            pass
+        logger.error(f"WebSocket error for {session_id}: {e}", exc_info=True)
+        await conn_mgr.send_message(session_id, {
+            "type": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
 
-        logger.error(
-            f"Query processing failed for session {request.session_id}: {e}",
-            exc_info=True
+    finally:
+        # 6. 연결 해제
+        conn_mgr.disconnect(session_id)
+        logger.info(f"WebSocket closed: {session_id}")
+
+
+async def _process_query_async(
+    supervisor: TeamBasedSupervisor,
+    query: str,
+    session_id: str,
+    enable_checkpointing: bool,
+    progress_callback,
+    conn_mgr: ConnectionManager
+):
+    """
+    비동기로 쿼리 처리 (백그라운드 태스크)
+
+    Args:
+        supervisor: TeamBasedSupervisor 인스턴스
+        query: 사용자 질문
+        session_id: 세션 ID
+        enable_checkpointing: Checkpoint 활성화 여부
+        progress_callback: 진행 상황 콜백
+        conn_mgr: ConnectionManager
+    """
+    try:
+        logger.info(f"Processing query for {session_id}: {query[:100]}...")
+
+        # Streaming 방식으로 쿼리 처리 (추후 구현)
+        result = await supervisor.process_query_streaming(
+            query=query,
+            session_id=session_id,
+            progress_callback=progress_callback
         )
 
-        raise HTTPException(
-            status_code=500,
-            detail=ErrorResponse(
-                error_code="PROCESSING_FAILED",
-                message="Query processing failed",
-                details={
-                    "session_id": request.session_id,
-                    "error": str(e)
-                },
-                timestamp=datetime.now().isoformat()
-            ).dict()
-        )
+        # 최종 응답 전송
+        await conn_mgr.send_message(session_id, {
+            "type": "final_response",
+            "response": result.get("final_response", {}),
+            "timestamp": datetime.now().isoformat()
+        })
+
+        logger.info(f"Query completed for {session_id}")
+
+    except Exception as e:
+        logger.error(f"Query processing failed for {session_id}: {e}", exc_info=True)
+
+        await conn_mgr.send_message(session_id, {
+            "type": "error",
+            "error": "Query processing failed",
+            "details": {"error": str(e)},
+            "timestamp": datetime.now().isoformat()
+        })
 
 
 # ============================================================================
@@ -281,12 +370,7 @@ async def chat(
 async def get_session_stats(
     session_mgr: SessionManager = Depends(get_session_manager)
 ):
-    """
-    세션 통계 조회 (관리용)
-
-    Returns:
-        세션 통계 정보
-    """
+    """세션 통계 조회"""
     active_count = session_mgr.get_active_session_count()
 
     return {
@@ -295,16 +379,22 @@ async def get_session_stats(
     }
 
 
+@router.get("/stats/websockets")
+async def get_websocket_stats(
+    conn_mgr: ConnectionManager = Depends(get_connection_manager)
+):
+    """WebSocket 연결 통계 조회"""
+    return {
+        "active_connections": conn_mgr.get_active_count(),
+        "timestamp": datetime.now().isoformat()
+    }
+
+
 @router.post("/cleanup/sessions")
 async def cleanup_expired_sessions(
     session_mgr: SessionManager = Depends(get_session_manager)
 ):
-    """
-    만료된 세션 정리 (관리용)
-
-    Returns:
-        정리된 세션 수
-    """
+    """만료된 세션 정리"""
     cleaned = session_mgr.cleanup_expired_sessions()
 
     logger.info(f"Cleaned up {cleaned} expired sessions")

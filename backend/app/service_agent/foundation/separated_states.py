@@ -7,10 +7,11 @@ Refactored for better organization and maintainability
 - Improved error handling
 - Better type hints
 - Added standard result format for Phase 2
+- Added TodoItem for Progress Flow WebSocket integration
 """
 
 import logging
-from typing import TypedDict, Dict, List, Any, Optional, Literal, Union
+from typing import TypedDict, Dict, List, Any, Optional, Literal, Union, Callable, Awaitable
 from datetime import datetime
 from dataclasses import dataclass, field
 
@@ -289,9 +290,12 @@ class PlanningState(TypedDict):
     estimated_total_time: float
 
 
-class MainSupervisorState(TypedDict):
-    """메인 Supervisor의 State"""
-    # Core fields
+class MainSupervisorState(TypedDict, total=False):
+    """
+    메인 Supervisor의 State
+    total=False로 설정하여 모든 필드를 선택적으로 만듦
+    """
+    # Core fields (required)
     query: str
     session_id: str
     request_id: str
@@ -324,6 +328,19 @@ class MainSupervisorState(TypedDict):
     # Error handling
     error_log: List[str]
     status: str
+
+    # ============================================================================
+    # Progress Flow - WebSocket Real-time Integration
+    # ============================================================================
+
+    # TODO List (저장됨: Checkpoint에 포함)
+    # ExecutionStepState를 그대로 사용하여 PlanningState와 동기화
+    todo_list: List[ExecutionStepState]
+    todo_modified_by_user: bool
+
+    # Progress Callback (저장 안 됨: Runtime only, Checkpoint 제외)
+    # LangGraph Checkpoint 저장 시 자동으로 제외됨 (Callable은 직렬화 불가)
+    _progress_callback: Optional[Callable[[str, dict], Awaitable[None]]]
 
 # ============================================================================
 # STATE MANAGEMENT UTILITIES
