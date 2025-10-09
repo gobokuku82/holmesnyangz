@@ -9,19 +9,22 @@ import { Send, Bot, User, Maximize2 } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { chatAPI } from "@/lib/api"
-import type { ChatResponse, ProcessFlowStep } from "@/types/chat"
-import { ProcessFlow } from "@/components/process-flow"
+import type { ChatResponse } from "@/types/chat"
+import { ExecutionPlanPage } from "@/components/execution-plan-page"
+import { ExecutionProgressPage } from "@/components/execution-progress-page"
 import type { ProcessState, AgentType } from "@/types/process"
+import type { ExecutionPlan, ExecutionStep } from "@/types/execution"
 import { STEP_MESSAGES } from "@/types/process"
 
 interface Message {
   id: string
-  type: "user" | "bot" | "agent-popup" | "process-flow"
+  type: "user" | "bot" | "agent-popup" | "execution-plan" | "execution-progress"
   content: string
   timestamp: Date
   agentType?: PageType
   isProcessing?: boolean
-  processFlowSteps?: ProcessFlowStep[]
+  executionPlan?: ExecutionPlan
+  executionSteps?: ExecutionStep[]
 }
 
 interface ChatInterfaceProps {
@@ -56,7 +59,10 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
     }
   }, [messages])
 
@@ -76,23 +82,14 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     // Detect agent type for loading animation
     const agentType = detectAgentType(content) as AgentType | null
 
-    // ProcessFlow 메시지 추가
-    const processFlowMessageId = `process-flow-${Date.now()}`
-    const processFlowMessage: Message = {
-      id: processFlowMessageId,
-      type: "process-flow",
-      content: "",
-      timestamp: new Date(),
-      processFlowSteps: undefined
-    }
-    setMessages((prev) => [...prev, processFlowMessage])
+    const startTime = Date.now()
 
     // 프로세스 시작
     setProcessState({
       step: "planning",
       agentType,
       message: STEP_MESSAGES.planning,
-      startTime: Date.now()
+      startTime
     })
 
     try {
@@ -103,30 +100,58 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         enable_checkpointing: true,
       })
 
-      // API 응답에서 process_flow 데이터 추출
-      if (response.process_flow && response.process_flow.length > 0) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === processFlowMessageId
-              ? { ...msg, processFlowSteps: response.process_flow }
-              : msg
-          )
-        )
+      // ⚡ IRRELEVANT/UNCLEAR는 새 페이지 표시 안함 (즉시 응답)
+      const isGuidanceResponse = response.response.type === "guidance"
 
-        const currentStep = response.process_flow.find(
-          (step) => step.status === "in_progress"
-        )
-        if (currentStep) {
-          setProcessState((prev) => ({
-            ...prev,
-            step: currentStep.step as any,
-            message: currentStep.label + " 중..."
-          }))
+      if (!isGuidanceResponse && response.planning_info) {
+        // Page 1: 실행 계획 표시
+        if (response.planning_info.execution_steps && response.planning_info.execution_steps.length > 0) {
+          const planMessage: Message = {
+            id: `execution-plan-${Date.now()}`,
+            type: "execution-plan",
+            content: "",
+            timestamp: new Date(),
+            executionPlan: {
+              intent: response.planning_info.intent || "unknown",
+              confidence: response.planning_info.confidence || 0,
+              execution_steps: response.planning_info.execution_steps,
+              execution_strategy: response.planning_info.execution_strategy || "sequential",
+              estimated_total_time: response.planning_info.estimated_total_time || 5
+            }
+          }
+          setMessages((prev) => [...prev, planMessage])
+
+          // 짧은 딜레이 후 Page 2로 전환
+          setTimeout(() => {
+            // Page 2: 작업 실행 중 표시
+            const progressMessage: Message = {
+              id: `execution-progress-${Date.now()}`,
+              type: "execution-progress",
+              content: "",
+              timestamp: new Date(),
+              executionSteps: response.planning_info!.execution_steps,
+              executionPlan: {
+                intent: response.planning_info!.intent || "unknown",
+                confidence: response.planning_info!.confidence || 0,
+                execution_steps: response.planning_info!.execution_steps!,
+                execution_strategy: response.planning_info!.execution_strategy || "sequential",
+                estimated_total_time: response.planning_info!.estimated_total_time || 5
+              }
+            }
+
+            // 계획 메시지 제거하고 진행 중 메시지 추가
+            setMessages((prev) =>
+              prev.filter(m => m.type !== "execution-plan").concat(progressMessage)
+            )
+          }, 800) // 계획 표시 800ms
         }
       }
 
       // Agent 타입 감지 (응답 기반)
       const responseAgentType = detectAgentTypeFromResponse(response)
+
+      // ⚡ IRRELEVANT/UNCLEAR는 딜레이 없이 즉시 완료 (성능 최적화)
+      const completionDelay = isGuidanceResponse ? 100 : 500
 
       // 완료 상태로 변경
       setTimeout(() => {
@@ -135,10 +160,12 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
           agentType: agentType,
           message: STEP_MESSAGES.complete
         })
-      }, 500)
 
-      // ProcessFlow 메시지 제거
-      setMessages((prev) => prev.filter(m => m.id !== processFlowMessageId))
+        // Execution Progress 메시지 제거
+        setMessages((prev) => prev.filter(m =>
+          m.type !== "execution-plan" && m.type !== "execution-progress"
+        ))
+      }, completionDelay)
 
       // 봇 응답 추가
       // IRRELEVANT/UNCLEAR 응답은 message 필드 사용, 일반 응답은 answer 필드 사용
@@ -167,14 +194,16 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         setMessages((prev) => [...prev, agentPopup])
       }
 
-      // 1초 후 idle로 복귀
+      // ⚡ IRRELEVANT/UNCLEAR는 빠르게 idle 복귀 (성능 최적화)
+      const idleDelay = isGuidanceResponse ? 300 : 1500
+
       setTimeout(() => {
         setProcessState({
           step: "idle",
           agentType: null,
           message: ""
         })
-      }, 1500)
+      }, idleDelay)
 
     } catch (error) {
       // 에러 상태로 변경
@@ -185,8 +214,10 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         error: error instanceof Error ? error.message : "알 수 없는 오류"
       })
 
-      // ProcessFlow 메시지 제거
-      setMessages((prev) => prev.filter(m => m.id !== processFlowMessageId))
+      // Execution Plan/Progress 메시지 제거
+      setMessages((prev) => prev.filter(m =>
+        m.type !== "execution-plan" && m.type !== "execution-progress"
+      ))
 
       // 세션 만료 처리 (401 또는 404)
       if (error instanceof Error && (error.message.includes("401") || error.message.includes("404") || error.message.includes("session"))) {
@@ -341,12 +372,14 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         <div className="space-y-4">
           {messages.map((message) => (
             <div key={message.id}>
-              {/* Process Flow 메시지 타입 처리 */}
-              {message.type === "process-flow" ? (
-                <ProcessFlow
-                  isVisible={processState.step !== "idle"}
-                  state={processState}
-                  dynamicSteps={message.processFlowSteps}
+              {/* Execution Plan 메시지 타입 처리 */}
+              {message.type === "execution-plan" && message.executionPlan ? (
+                <ExecutionPlanPage plan={message.executionPlan} />
+              ) : message.type === "execution-progress" && message.executionSteps && message.executionPlan ? (
+                <ExecutionProgressPage
+                  steps={message.executionSteps}
+                  estimatedTime={message.executionPlan.estimated_total_time}
+                  startTime={processState.startTime}
                 />
               ) : message.type === "agent-popup" ? (
                 <Card

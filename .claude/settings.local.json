@@ -28,7 +28,8 @@
       "Bash(else echo \"No cache found\")",
       "Bash(fi)",
       "Bash(npm run dev:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
