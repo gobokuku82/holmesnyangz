@@ -1,6 +1,6 @@
 """
 주택임대차 표준계약서 생성 Tool
-템플릿 기반으로 주택임대차 계약서를 생성
+DOCX 템플릿 기반으로 주택임대차 계약서를 생성
 """
 
 import logging
@@ -14,16 +14,11 @@ logger = logging.getLogger(__name__)
 class LeaseContractGeneratorTool:
     """
     주택임대차 표준계약서 생성 도구
-    템플릿을 로드하여 계약서 필드를 채워 생성
+    DOCX 템플릿을 로드하여 표(table) 셀에 값을 채워 계약서 생성
     """
 
     def __init__(self, template_path: Optional[str] = None):
-        """
-        초기화
-
-        Args:
-            template_path: 템플릿 파일 경로 (선택적)
-        """
+        """초기화"""
         self.name = "lease_contract_generator"
 
         # 기본 템플릿 경로
@@ -33,206 +28,258 @@ class LeaseContractGeneratorTool:
             backend_dir = Path(__file__).parent.parent.parent.parent
             self.template_path = backend_dir / "data" / "storage" / "documents" / "주택임대차 표준계약서.docx"
 
-        # 템플릿 내용 (fallback)
-        self.template_content = None
-        self._load_template()
+        # python-docx 가용성 확인
+        self.docx_available = self._check_docx_availability()
+        logger.info(f"LeaseContractGeneratorTool initialized (docx: {self.docx_available})")
 
-        logger.info(f"LeaseContractGeneratorTool initialized with template: {self.template_path}")
-
-    def _load_template(self):
-        """템플릿 파일 로드"""
+    def _check_docx_availability(self) -> bool:
+        """python-docx 라이브러리 가용성 확인"""
         try:
-            if not self.template_path.exists():
-                logger.warning(f"Template file not found: {self.template_path}")
-                self.template_content = None
-                return
-
-            # docx 파일 로드 시도
-            if self.template_path.suffix == ".docx":
-                try:
-                    from docx import Document
-                    doc = Document(str(self.template_path))
-
-                    # docx를 텍스트로 변환
-                    full_text = []
-                    for para in doc.paragraphs:
-                        full_text.append(para.text)
-
-                    self.template_content = "\n".join(full_text)
-                    logger.info("Template loaded successfully from .docx")
-
-                except ImportError:
-                    logger.error("python-docx not installed. Cannot load .docx template")
-                    self.template_content = None
-                except Exception as e:
-                    logger.error(f"Failed to load .docx template: {e}")
-                    self.template_content = None
-
-            # txt/md 파일 로드
-            elif self.template_path.suffix in [".txt", ".md"]:
-                with open(self.template_path, "r", encoding="utf-8") as f:
-                    self.template_content = f.read()
-                logger.info(f"Template loaded successfully from {self.template_path.suffix}")
-
-            else:
-                logger.warning(f"Unsupported template format: {self.template_path.suffix}")
-                self.template_content = None
-
-        except Exception as e:
-            logger.error(f"Template loading failed: {e}")
-            self.template_content = None
+            import docx
+            return True
+        except ImportError:
+            return False
 
     async def execute(
         self,
-        lessor: Optional[str] = None,
-        lessee: Optional[str] = None,
-        address: Optional[str] = None,
+        # 물건 정보
+        address_road: Optional[str] = None,
+        address_detail: Optional[str] = None,
+        land_area: Optional[str] = None,
+        building_area: Optional[str] = None,
+        rental_area: Optional[str] = None,
+        # 금액
         deposit: Optional[str] = None,
+        deposit_hangeul: Optional[str] = None,
+        contract_payment: Optional[str] = None,
         monthly_rent: Optional[str] = None,
-        contract_period: Optional[str] = None,
+        monthly_rent_day: Optional[str] = None,
+        management_fee: Optional[str] = None,
+        # 기간
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        # 당사자
+        lessor_name: Optional[str] = None,
+        lessor_address: Optional[str] = None,
+        lessor_phone: Optional[str] = None,
+        lessee_name: Optional[str] = None,
+        lessee_address: Optional[str] = None,
+        lessee_phone: Optional[str] = None,
+        # 특약
         special_terms: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
-        """
-        주택임대차 계약서 생성
-
-        Args:
-            lessor: 임대인 (집주인)
-            lessee: 임차인 (세입자)
-            address: 임대물 주소
-            deposit: 보증금
-            monthly_rent: 월세
-            contract_period: 계약기간
-            start_date: 계약 시작일
-            end_date: 계약 종료일
-            special_terms: 특약사항
-            **kwargs: 추가 파라미터
-
-        Returns:
-            생성된 계약서 정보
-        """
+        """주택임대차 계약서 생성"""
         try:
-            logger.info("Generating lease contract")
+            if not self.docx_available:
+                return self._return_docx_unavailable_error()
 
-            # 템플릿 없는 경우 에러 안내
-            if self.template_content is None:
-                return {
-                    "status": "error",
-                    "error_type": "template_not_loaded",
-                    "message": (
-                        "주택임대차 표준계약서 템플릿을 로드할 수 없습니다.\n"
-                        f"템플릿 파일 ({self.template_path})을 다음 형식으로 변환해주세요:\n"
-                        "- .txt (텍스트 파일)\n"
-                        "- .md (마크다운 파일)\n\n"
-                        "또는 python-docx 라이브러리가 제대로 설치되어 있는지 확인해주세요."
-                    ),
-                    "template_path": str(self.template_path),
-                    "timestamp": datetime.now().isoformat()
-                }
+            if not self.template_path.exists():
+                return self._return_template_not_found_error()
 
-            # 필드 값 준비
-            fields = {
-                "임대인": lessor or "[임대인명]",
-                "임차인": lessee or "[임차인명]",
-                "주소": address or "[임대물 주소]",
-                "보증금": deposit or "[보증금 금액]",
-                "월세": monthly_rent or "[월세 금액]",
-                "계약기간": contract_period or f"{start_date or '[시작일]'} ~ {end_date or '[종료일]'}",
-                "시작일": start_date or "[계약 시작일]",
-                "종료일": end_date or "[계약 종료일]",
-                "특약사항": special_terms or "[특약사항이 있는 경우 기재]",
-                "작성일": datetime.now().strftime("%Y년 %m월 %d일")
-            }
+            # docx 로드
+            from docx import Document
 
-            # 템플릿에 필드 적용
-            contract_content = self._fill_template(self.template_content, fields)
+            try:
+                doc = Document(str(self.template_path))
+            except Exception as e:
+                logger.error(f"Failed to load docx: {e}")
+                return self._return_template_load_error(e)
 
-            # 계약서 메타데이터
-            metadata = {
-                "document_type": "주택임대차 표준계약서",
-                "template_version": "v1.0",
-                "generated_at": datetime.now().isoformat(),
-                "fields_filled": {k: v for k, v in fields.items() if not v.startswith("[")}
-            }
+            # 필드 준비
+            fields = self._build_fields(locals())
+
+            # 표 셀 채우기
+            self._fill_tables(doc, fields)
+
+            # 출력 파일 저장
+            output_path = self._get_output_path()
+            doc.save(str(output_path))
+
+            # Markdown 생성
+            markdown = self._to_markdown(doc, fields)
 
             return {
                 "status": "success",
-                "content": contract_content,
+                "content": markdown,
                 "title": "주택임대차 표준계약서",
-                "metadata": metadata,
+                "docx_path": str(output_path),
                 "fields": fields,
-                "sections": self._extract_sections(contract_content),
+                "sections": self._extract_sections(markdown),
+                "metadata": {
+                    "generated_at": datetime.now().isoformat(),
+                    "output_docx": str(output_path)
+                },
                 "timestamp": datetime.now().isoformat()
             }
 
         except Exception as e:
-            logger.error(f"Lease contract generation failed: {e}")
+            logger.error(f"Contract generation failed: {e}", exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _fill_template(self, template: str, fields: Dict[str, str]) -> str:
-        """
-        템플릿에 필드 값 채우기
+    def _build_fields(self, params: Dict) -> Dict:
+        """필드 딕셔너리 구성"""
+        fields = {k: v for k, v in params.items() if k not in ['self', 'kwargs'] and v}
 
-        Args:
-            template: 템플릿 텍스트
-            fields: 채울 필드 딕셔너리
+        # 기본값
+        defaults = {
+            "address_road": "[도로명주소]",
+            "deposit": "[보증금]",
+            "start_date": "[시작일]",
+            "end_date": "[종료일]",
+            "lessor_name": "[임대인명]",
+            "lessee_name": "[임차인명]"
+        }
 
-        Returns:
-            필드가 채워진 계약서
-        """
-        content = template
+        for k, v in defaults.items():
+            if k not in fields or not fields[k]:
+                fields[k] = v
 
-        # 필드 치환 (여러 패턴 지원)
-        for key, value in fields.items():
-            # [필드명] 형식
-            content = content.replace(f"[{key}]", value)
-            # {필드명} 형식
-            content = content.replace(f"{{{key}}}", value)
-            # {{필드명}} 형식
-            content = content.replace(f"{{{{{key}}}}}", value)
+        return fields
 
-        return content
+    def _fill_tables(self, doc, fields: Dict):
+        """표 셀 채우기"""
+        try:
+            if len(doc.tables) == 0:
+                return
+
+            main_table = doc.tables[0]
+
+            # 주소 (2행)
+            self._set_cell(main_table, 2, 2, fields.get("address_road", ""))
+
+            # 임차할 부분 (5행)
+            self._set_cell(main_table, 5, 2, fields.get("address_detail", ""))
+            self._set_cell(main_table, 5, 5, fields.get("rental_area", ""))
+
+            # 보증금
+            deposit_text = f"금 {fields.get('deposit_hangeul', '')} 원정(₩{fields.get('deposit', '')})"
+            self._fill_row_by_label(main_table, "보 증 금", deposit_text)
+
+            # 계약금
+            if fields.get("contract_payment"):
+                contract_text = f"금 {fields['contract_payment']} 원정 계약시 지불"
+                self._fill_row_by_label(main_table, "계 약 금", contract_text)
+
+            # 월세
+            if fields.get("monthly_rent"):
+                rent_text = f"금 {fields['monthly_rent']} 원정 매월 {fields.get('monthly_rent_day', '[]')}일 지불"
+                self._fill_row_by_label(main_table, "차임", rent_text)
+
+            # 관리비
+            if fields.get("management_fee"):
+                self._fill_row_by_label(main_table, "관 리 비", f"금 {fields['management_fee']} 원정")
+
+            # 당사자 정보 (Table 4)
+            if len(doc.tables) > 4:
+                party_table = doc.tables[4]
+                self._fill_party_info(party_table, fields)
+
+        except Exception as e:
+            logger.error(f"Failed to fill tables: {e}")
+
+    def _set_cell(self, table, row: int, col: int, text: str):
+        """셀 값 설정"""
+        try:
+            if row < len(table.rows) and col < len(table.rows[row].cells):
+                table.rows[row].cells[col].text = str(text)
+        except Exception as e:
+            logger.warning(f"Failed to set cell [{row}][{col}]: {e}")
+
+    def _fill_row_by_label(self, table, label: str, value: str):
+        """레이블로 행 찾아서 값 채우기"""
+        try:
+            for row_idx, row in enumerate(table.rows):
+                if len(row.cells) > 0 and label in row.cells[0].text:
+                    if len(row.cells) > 1:
+                        row.cells[1].text = value
+                    break
+        except Exception as e:
+            logger.warning(f"Failed to fill row by label '{label}': {e}")
+
+    def _fill_party_info(self, table, fields: Dict):
+        """당사자 정보 채우기"""
+        try:
+            for row_idx, row in enumerate(table.rows):
+                if len(row.cells) == 0:
+                    continue
+
+                cell_text = row.cells[0].text
+
+                # 임대인
+                if "임\n대\n인" in cell_text or "임대인" in cell_text:
+                    if len(row.cells) > 2 and "주        소" in (row.cells[1].text if len(row.cells) > 1 else ""):
+                        self._set_cell(table, row_idx, 2, fields.get("lessor_address", ""))
+                    if len(row.cells) > 9 and fields.get("lessor_name"):
+                        self._set_cell(table, row_idx, 9, fields["lessor_name"])
+
+                # 임차인
+                if "임\n차\n인" in cell_text or "임차인" in cell_text:
+                    if len(row.cells) > 2 and "주        소" in (row.cells[1].text if len(row.cells) > 1 else ""):
+                        self._set_cell(table, row_idx, 2, fields.get("lessee_address", ""))
+                    if len(row.cells) > 9 and fields.get("lessee_name"):
+                        self._set_cell(table, row_idx, 9, fields["lessee_name"])
+
+        except Exception as e:
+            logger.warning(f"Failed to fill party info: {e}")
+
+    def _to_markdown(self, doc, fields: Dict) -> str:
+        """Markdown 변환"""
+        lines = ["# 주택임대차 표준계약서\n"]
+        lines.append(f"**작성일**: {datetime.now().strftime('%Y년 %m월 %d일')}\n")
+
+        lines.append("## 물건 정보")
+        lines.append(f"- **소재지**: {fields.get('address_road', '[주소]')}")
+        lines.append(f"- **상세주소**: {fields.get('address_detail', '[동/층/호]')}")
+        lines.append(f"- **임차면적**: {fields.get('rental_area', '[면적]')} ㎡\n")
+
+        lines.append("## 계약 금액")
+        lines.append(f"- **보증금**: {fields.get('deposit', '[보증금]')} 원")
+        if fields.get('monthly_rent'):
+            lines.append(f"- **월세**: {fields['monthly_rent']} 원")
+        if fields.get('management_fee'):
+            lines.append(f"- **관리비**: {fields['management_fee']} 원\n")
+
+        lines.append("## 임대차 기간")
+        lines.append(f"- **시작일**: {fields.get('start_date', '[시작일]')}")
+        lines.append(f"- **종료일**: {fields.get('end_date', '[종료일]')}\n")
+
+        lines.append("## 당사자")
+        lines.append(f"- **임대인**: {fields.get('lessor_name', '[임대인명]')}")
+        if fields.get('lessor_phone'):
+            lines.append(f"  - 연락처: {fields['lessor_phone']}")
+        lines.append(f"- **임차인**: {fields.get('lessee_name', '[임차인명]')}")
+        if fields.get('lessee_phone'):
+            lines.append(f"  - 연락처: {fields['lessee_phone']}\n")
+
+        if fields.get('special_terms'):
+            lines.append("## 특약사항")
+            lines.append(f"{fields['special_terms']}\n")
+
+        return "\n".join(lines)
 
     def _extract_sections(self, content: str) -> list:
-        """
-        계약서 내용에서 섹션 추출
-
-        Args:
-            content: 계약서 전문
-
-        Returns:
-            섹션 리스트
-        """
+        """섹션 추출"""
         sections = []
         current_section = None
         current_content = []
 
         for line in content.split("\n"):
-            # 섹션 제목 감지 (예: "제1조", "1.", "가.", 등)
-            if (line.strip().startswith("제") and "조" in line) or \
-               (line.strip() and line.strip()[0].isdigit() and "." in line[:3]):
-
-                # 이전 섹션 저장
+            if line.strip().startswith("#"):
                 if current_section:
                     sections.append({
                         "title": current_section,
                         "content": "\n".join(current_content).strip()
                     })
-
-                # 새 섹션 시작
-                current_section = line.strip()
+                current_section = line.strip().replace("#", "").strip()
                 current_content = []
-            else:
-                if current_section:
-                    current_content.append(line)
+            elif current_section:
+                current_content.append(line)
 
-        # 마지막 섹션 저장
         if current_section:
             sections.append({
                 "title": current_section,
@@ -241,46 +288,107 @@ class LeaseContractGeneratorTool:
 
         return sections
 
+    def _get_output_path(self) -> Path:
+        """출력 파일 경로"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = self.template_path.parent / "generated"
+        output_dir.mkdir(exist_ok=True)
+        return output_dir / f"주택임대차계약서_{timestamp}.docx"
+
+    def _return_docx_unavailable_error(self) -> Dict:
+        """python-docx 없음 에러"""
+        return {
+            "status": "error",
+            "error_type": "docx_unavailable",
+            "message": (
+                "python-docx 라이브러리가 설치되어 있지 않습니다.\n"
+                "설치 명령: pip install python-docx"
+            ),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def _return_template_not_found_error(self) -> Dict:
+        """템플릿 없음 에러"""
+        return {
+            "status": "error",
+            "error_type": "template_not_found",
+            "message": (
+                f"주택임대차 표준계약서 템플릿을 찾을 수 없습니다.\n"
+                f"템플릿 경로: {self.template_path}\n\n"
+                f"템플릿 파일을 해당 위치에 배치하거나,\n"
+                f".txt 또는 .md 형식으로 변환해주세요."
+            ),
+            "template_path": str(self.template_path),
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def _return_template_load_error(self, error: Exception) -> Dict:
+        """템플릿 로드 실패 에러"""
+        return {
+            "status": "error",
+            "error_type": "template_load_failed",
+            "message": (
+                f"주택임대차 표준계약서 템플릿을 로드할 수 없습니다.\n"
+                f"오류: {str(error)}\n\n"
+                f"템플릿 파일 ({self.template_path})을 확인하거나,\n"
+                f".txt 또는 .md 형식으로 변환해주세요."
+            ),
+            "template_path": str(self.template_path),
+            "error": str(error),
+            "timestamp": datetime.now().isoformat()
+        }
+
     def get_required_fields(self) -> list:
-        """필수 필드 목록 반환"""
-        return ["lessor", "lessee", "address", "deposit", "monthly_rent", "start_date", "end_date"]
+        """필수 필드"""
+        return ["address_road", "deposit", "start_date", "end_date", "lessor_name", "lessee_name"]
 
     def get_optional_fields(self) -> list:
-        """선택 필드 목록 반환"""
-        return ["special_terms", "utilities", "maintenance", "broker"]
+        """선택 필드"""
+        return [
+            "address_detail", "land_area", "building_area", "rental_area",
+            "deposit_hangeul", "contract_payment", "monthly_rent", "monthly_rent_day",
+            "management_fee", "lessor_address", "lessor_phone",
+            "lessee_address", "lessee_phone", "special_terms"
+        ]
 
 
-# 테스트용
+# 테스트
 if __name__ == "__main__":
     import asyncio
 
-    async def test_lease_contract_generator():
+    async def test():
         tool = LeaseContractGeneratorTool()
 
-        # 테스트 데이터
-        test_params = {
-            "lessor": "홍길동",
-            "lessee": "김철수",
-            "address": "서울특별시 강남구 테헤란로 123, 456호",
-            "deposit": "5억원",
-            "monthly_rent": "200만원",
+        params = {
+            "address_road": "서울특별시 강남구 테헤란로 123",
+            "address_detail": "456호 (101동 10층)",
+            "rental_area": "85",
+            "deposit": "500,000,000",
+            "deposit_hangeul": "오억",
+            "contract_payment": "50,000,000",
+            "monthly_rent": "2,000,000",
+            "monthly_rent_day": "1",
+            "management_fee": "150,000",
             "start_date": "2024년 1월 1일",
             "end_date": "2026년 1월 1일",
-            "contract_period": "2024년 1월 1일 ~ 2026년 1월 1일 (2년)",
+            "lessor_name": "홍길동",
+            "lessor_address": "서울시 서초구",
+            "lessor_phone": "010-1234-5678",
+            "lessee_name": "김철수",
+            "lessee_address": "서울시 강남구",
+            "lessee_phone": "010-9876-5432",
             "special_terms": "반려동물 사육 가능"
         }
 
-        result = await tool.execute(**test_params)
+        result = await tool.execute(**params)
 
-        print("=== Lease Contract Generation Result ===")
+        print("=== Result ===")
         print(f"Status: {result['status']}")
-
         if result['status'] == 'success':
-            print(f"Title: {result['title']}")
+            print(f"DOCX: {result.get('docx_path')}")
             print(f"Sections: {len(result.get('sections', []))}")
-            print(f"\n[Contract Preview]")
-            print(result['content'][:500] + "...")
+            print(f"\nPreview:\n{result['content'][:500]}...")
         else:
             print(f"Error: {result.get('error') or result.get('message')}")
 
-    asyncio.run(test_lease_contract_generator())
+    asyncio.run(test())
