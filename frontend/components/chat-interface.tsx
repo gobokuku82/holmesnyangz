@@ -112,8 +112,8 @@ export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps)
       case 'plan_ready':
         // 실행 계획 수신 - 기존 로딩 중인 ExecutionPlanPage 업데이트
         // Backend 전송 형식: { intent, confidence, execution_steps, execution_strategy, estimated_total_time, keywords }
-        if (message.intent && message.execution_steps) {
-          // ✅ 기존 로딩 상태의 ExecutionPlanPage를 찾아서 업데이트
+        if (message.intent && message.execution_steps && message.execution_steps.length > 0) {
+          // ✅ 정상 케이스: execution_steps가 있는 경우만 업데이트
           setMessages((prev) =>
             prev.map(m =>
               m.type === "execution-plan" && m.executionPlan?.isLoading
@@ -135,6 +135,9 @@ export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps)
           setTodos(message.execution_steps)
 
           // ExecutionProgressPage는 execution_start에서 생성됨
+        } else {
+          // ✅ IRRELEVANT/UNCLEAR: execution_steps가 빈 배열이므로 ExecutionPlanPage 제거
+          setMessages((prev) => prev.filter(m => m.type !== "execution-plan"))
         }
         break
 
@@ -209,9 +212,9 @@ export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps)
 
       case 'final_response':
         // 최종 응답 수신
-        // ✅ ExecutionPlan은 유지, Progress만 제거 (사용자가 Plan을 계속 볼 수 있음)
+        // ✅ ExecutionPlan과 Progress 모두 제거
         setMessages((prev) => prev.filter(m =>
-          m.type !== "execution-progress"
+          m.type !== "execution-progress" && m.type !== "execution-plan"
         ))
 
         // 봇 응답 추가
