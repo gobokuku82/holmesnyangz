@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Target } from "lucide-react"
+import { Target, Loader2 } from "lucide-react"
 import type { ExecutionPlan } from "@/types/execution"
 
 interface ExecutionPlanPageProps {
@@ -17,7 +17,37 @@ interface ExecutionPlanPageProps {
  * - 예정 작업 리스트
  */
 export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
-  const { intent, confidence, execution_steps, keywords } = plan
+  const { intent, confidence, execution_steps, keywords, isLoading } = plan
+
+  // ✅ 로딩 상태 UI
+  if (isLoading) {
+    return (
+      <div className="flex justify-start mb-4">
+        <div className="flex items-start gap-3 max-w-2xl w-full">
+          <Card className="p-4 bg-card border flex-1">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <div>
+                <h3 className="text-lg font-semibold">작업 계획 분석 중...</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  질문을 분석하고 실행 계획을 수립하고 있습니다
+                </p>
+              </div>
+            </div>
+
+            {/* 스켈레톤 로딩 */}
+            <div className="mt-4 space-y-3">
+              <div className="h-20 bg-muted/50 animate-pulse rounded-lg"></div>
+              <div className="space-y-2">
+                <div className="h-12 bg-muted/30 animate-pulse rounded-md"></div>
+                <div className="h-12 bg-muted/30 animate-pulse rounded-md"></div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   // 의도 타입에 따른 한글 이름 매핑
   const intentNameMap: Record<string, string> = {

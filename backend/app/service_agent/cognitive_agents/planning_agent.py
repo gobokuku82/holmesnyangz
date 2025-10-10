@@ -106,15 +106,46 @@ class PlanningAgent:
         self.query_decomposer = QueryDecomposer(self.llm_service)
 
     def _initialize_intent_patterns(self) -> Dict[IntentType, List[str]]:
-        """의도 패턴 초기화"""
+        """의도 패턴 초기화 - 자연스러운 표현 추가"""
         return {
-            IntentType.LEGAL_CONSULT: ["법", "전세", "임대", "보증금", "계약", "권리", "의무", "갱신"],
-            IntentType.MARKET_INQUIRY: ["시세", "가격", "매매가", "전세가", "시장", "동향", "평균"],
-            IntentType.LOAN_CONSULT: ["대출", "금리", "한도", "조건", "상환", "LTV", "DTI"],
-            IntentType.CONTRACT_CREATION: ["작성", "만들", "생성", "초안"],
-            IntentType.CONTRACT_REVIEW: ["검토", "확인", "점검", "리뷰", "분석해"],
-            IntentType.COMPREHENSIVE: ["종합", "전체", "모든", "분석", "평가"],
-            IntentType.RISK_ANALYSIS: ["위험", "리스크", "주의", "문제점"]
+            IntentType.LEGAL_CONSULT: [
+                # 기존 키워드
+                "법", "전세", "임대", "보증금", "계약", "권리", "의무", "갱신",
+                # 자연스러운 표현 추가
+                "살다", "거주", "세입자", "집주인", "임차인", "임대인", "해지", "계약서",
+                "대항력", "확정일자", "우선변제", "임차권"
+            ],
+            IntentType.MARKET_INQUIRY: [
+                "시세", "가격", "매매가", "전세가", "시장", "동향", "평균",
+                # 자연스러운 표현 추가
+                "얼마", "비싸", "싸", "오르다", "내리다", "올랐", "떨어졌",
+                "시장", "매물", "호가"
+            ],
+            IntentType.LOAN_CONSULT: [
+                "대출", "금리", "한도", "조건", "상환", "LTV", "DTI",
+                # 자연스러운 표현 추가
+                "DSR", "담보대출", "전세자금", "빌리다", "대출받다", "이자"
+            ],
+            IntentType.CONTRACT_CREATION: [
+                "작성", "만들", "생성", "초안",
+                # 자연스러운 표현 추가
+                "써줘", "만들어줘", "작성해줘", "계약서"
+            ],
+            IntentType.CONTRACT_REVIEW: [
+                "검토", "확인", "점검", "리뷰", "분석해",
+                # 자연스러운 표현 추가
+                "봐줘", "살펴봐", "체크", "괜찮", "문제"
+            ],
+            IntentType.COMPREHENSIVE: [
+                "종합", "전체", "모든", "분석", "평가",
+                # 자연스러운 표현 추가
+                "어떻게", "방법", "해결", "대처", "도움", "조언", "추천"
+            ],
+            IntentType.RISK_ANALYSIS: [
+                "위험", "리스크", "주의", "문제점",
+                # 자연스러운 표현 추가
+                "조심", "걱정", "우려", "안전", "피해"
+            ]
         }
 
     def _load_agent_capabilities(self) -> Dict[str, Any]:

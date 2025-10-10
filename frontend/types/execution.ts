@@ -43,6 +43,7 @@ export interface ExecutionPlan {
   execution_strategy: "sequential" | "parallel" | "pipeline"
   estimated_total_time: number
   keywords?: string[]
+  isLoading?: boolean  // 로딩 상태 플래그
 }
 
 export interface ExecutionProgress {

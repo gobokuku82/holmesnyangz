@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Maximize2, Loader2 } from "lucide-react"
+import { Send, Bot, User, Maximize2 } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { ChatWSClient, createWSClient, type WSMessage } from "@/lib/ws"
@@ -109,34 +109,31 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         // 연결 확인 - 아무것도 하지 않음
         break
 
-      case 'planning_start':
-        // Planning 시작 알림
-        setProcessState({
-          step: "planning",
-          agentType: null,
-          message: message.message || "계획을 수립하고 있습니다..."
-        })
-        break
+      // ❌ planning_start는 제거 - 질문 입력 시 즉시 ExecutionPlanPage 표시
 
       case 'plan_ready':
-        // 실행 계획 수신
+        // 실행 계획 수신 - 기존 로딩 중인 ExecutionPlanPage 업데이트
         // Backend 전송 형식: { intent, confidence, execution_steps, execution_strategy, estimated_total_time, keywords }
         if (message.intent && message.execution_steps) {
-          const planMessage: Message = {
-            id: `execution-plan-${Date.now()}`,
-            type: "execution-plan",
-            content: "",
-            timestamp: new Date(),
-            executionPlan: {
-              intent: message.intent,
-              confidence: message.confidence || 0,
-              execution_steps: message.execution_steps,
-              execution_strategy: message.execution_strategy || "sequential",
-              estimated_total_time: message.estimated_total_time || 5,
-              keywords: message.keywords
-            }
-          }
-          setMessages((prev) => [...prev, planMessage])
+          // ✅ 기존 로딩 상태의 ExecutionPlanPage를 찾아서 업데이트
+          setMessages((prev) =>
+            prev.map(m =>
+              m.type === "execution-plan" && m.executionPlan?.isLoading
+                ? {
+                    ...m,
+                    executionPlan: {
+                      intent: message.intent,
+                      confidence: message.confidence || 0,
+                      execution_steps: message.execution_steps,
+                      execution_strategy: message.execution_strategy || "sequential",
+                      estimated_total_time: message.estimated_total_time || 5,
+                      keywords: message.keywords,
+                      isLoading: false  // 로딩 완료
+                    }
+                  }
+                : m
+            )
+          )
           setTodos(message.execution_steps)
 
           // ExecutionProgressPage는 execution_start에서 생성됨
@@ -271,7 +268,24 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
       timestamp: new Date(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    // ✅ 즉시 ExecutionPlanPage 추가 (로딩 상태)
+    const planMessage: Message = {
+      id: `execution-plan-${Date.now()}`,
+      type: "execution-plan",
+      content: "",
+      timestamp: new Date(),
+      executionPlan: {
+        intent: "분석 중...",
+        confidence: 0,
+        execution_steps: [],
+        execution_strategy: "sequential",
+        estimated_total_time: 0,
+        keywords: [],
+        isLoading: true  // 로딩 상태
+      }
+    }
+
+    setMessages((prev) => [...prev, userMessage, planMessage])
     setInputValue("")
 
     // Detect agent type for loading animation
@@ -376,16 +390,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
               )}
             </div>
           ))}
-
-          {/* 프로세스 진행 중일 때 로딩 표시 (ExecutionProgressPage 없을 때만) */}
-          {processState.step !== "idle" && !messages.some(m => m.type === "execution-progress") && (
-            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg animate-pulse">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm text-muted-foreground">
-                {processState.message || "처리 중..."}
-              </span>
-            </div>
-          )}
         </div>
       </ScrollArea>
 
