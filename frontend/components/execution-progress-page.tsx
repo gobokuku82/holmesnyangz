@@ -5,12 +5,10 @@ import { ProgressBar } from "@/components/ui/progress-bar"
 import { StepItem } from "@/components/step-item"
 import { Settings } from "lucide-react"
 import type { ExecutionStep, ExecutionPlan } from "@/types/execution"
-import type { ProcessState } from "@/types/process"
 
 interface ExecutionProgressPageProps {
   steps: ExecutionStep[]
   plan: ExecutionPlan        // ExecutionPlan 전체
-  processState: ProcessState // Process state 정보
 }
 
 /**
@@ -22,8 +20,7 @@ interface ExecutionProgressPageProps {
  */
 export function ExecutionProgressPage({
   steps,
-  plan,
-  processState
+  plan
 }: ExecutionProgressPageProps) {
   // 진행 상황 계산
   const totalSteps = steps.length

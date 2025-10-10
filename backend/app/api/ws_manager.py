@@ -42,7 +42,7 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections[session_id] = websocket
 
-        logger.info(f"✅ WebSocket connected: {session_id}")
+        logger.info(f"[WebSocket] Connected: {session_id}")
 
         # 재연결 시 큐잉된 메시지 전송
         await self._flush_queued_messages(session_id)
@@ -56,7 +56,7 @@ class ConnectionManager:
         """
         if session_id in self.active_connections:
             del self.active_connections[session_id]
-            logger.info(f"❌ WebSocket disconnected: {session_id}")
+            logger.info(f"[WebSocket] Disconnected: {session_id}")
 
     def _serialize_datetimes(self, obj: Any) -> Any:
         """

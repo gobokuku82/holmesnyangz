@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Maximize2 } from "lucide-react"
+import { Send, Bot, User } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
 import { ChatWSClient, createWSClient, type WSMessage } from "@/lib/ws"
@@ -18,11 +18,9 @@ import { STEP_MESSAGES } from "@/types/process"
 
 interface Message {
   id: string
-  type: "user" | "bot" | "agent-popup" | "execution-plan" | "execution-progress"
+  type: "user" | "bot" | "execution-plan" | "execution-progress"
   content: string
   timestamp: Date
-  agentType?: PageType
-  isProcessing?: boolean
   executionPlan?: ExecutionPlan
   executionSteps?: ExecutionStep[]
 }
@@ -31,8 +29,8 @@ interface ChatInterfaceProps {
   onSplitView: (agentType: PageType) => void
 }
 
-export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
-  const { sessionId, isLoading: sessionLoading, error: sessionError, resetSession } = useSession()
+export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps) {
+  const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -208,13 +206,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
         })
         break
 
-      case 'step_progress':
-        // Progress 업데이트 (TODO 리스트에 반영됨)
-        break
-
-      case 'step_complete':
-        // Step 완료
-        break
 
       case 'final_response':
         // 최종 응답 수신
@@ -332,10 +323,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
     handleSendMessage(question)
   }
 
-  const handleMaximize = (agentType: PageType) => {
-    onSplitView(agentType)
-  }
-
   // 세션 로딩 중
   if (sessionLoading) {
     return (
@@ -373,7 +360,6 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
                 <ExecutionProgressPage
                   steps={message.executionSteps}
                   plan={message.executionPlan}
-                  processState={processState}
                 />
               )}
               {(message.type === "user" || message.type === "bot") && (
