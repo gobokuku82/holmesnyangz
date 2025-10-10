@@ -53,11 +53,11 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
   const wsClientRef = useRef<ChatWSClient | null>(null)
 
   const exampleQuestions = [
-    "계약서를 분석해주세요",
-    "이 매물이 허위매물인지 확인해주세요",
-    "전세사기 위험도를 평가해주세요",
-    "강남구 아파트 추천해주세요",
-    "정부 지원 정책을 알려주세요",
+    "공인중개사가 할 수 없는 금지행위에는 어떤 것들이 있나요?",
+    "임대차계약이 만료되면 자동으로 갱신되나요?",
+    "민간임대주택에서의 수리 의무는 누가 지나요?",
+    "관리비의 부과 대상과 납부 의무자는 누구인가요?",
+    "부동산 등기에서 사용되는 전문 용어들은 무엇인가요?",
   ]
 
   // WebSocket 초기화
@@ -120,7 +120,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
       case 'plan_ready':
         // 실행 계획 수신
-        // Backend 전송 형식: { intent, confidence, execution_steps, estimated_total_time, keywords }
+        // Backend 전송 형식: { intent, confidence, execution_steps, execution_strategy, estimated_total_time, keywords }
         if (message.intent && message.execution_steps) {
           const planMessage: Message = {
             id: `execution-plan-${Date.now()}`,
@@ -131,7 +131,7 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
               intent: message.intent,
               confidence: message.confidence || 0,
               execution_steps: message.execution_steps,
-              execution_strategy: "sequential", // Backend에서 보내지 않으므로 기본값
+              execution_strategy: message.execution_strategy || "sequential",
               estimated_total_time: message.estimated_total_time || 5,
               keywords: message.keywords
             }
@@ -145,23 +145,33 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
       case 'execution_start':
         // 실행 시작 - ExecutionProgressPage 생성
-        // Backend 전송 형식: { message, execution_steps }
+        // Backend 전송 형식: { message, execution_steps, intent, confidence, execution_strategy, estimated_total_time, keywords }
         if (message.execution_steps) {
-          // ExecutionPlan 찾기
-          const planMsg = messages.find(m => m.type === "execution-plan")
-
           const progressMessage: Message = {
             id: `execution-progress-${Date.now()}`,
             type: "execution-progress",
             content: "",
             timestamp: new Date(),
-            executionPlan: planMsg?.executionPlan,
+            // ✅ Use complete ExecutionPlan data from Backend (no dependency on Plan message)
+            executionPlan: {
+              intent: message.intent,
+              confidence: message.confidence,
+              execution_steps: message.execution_steps,
+              execution_strategy: message.execution_strategy,
+              estimated_total_time: message.estimated_total_time,
+              keywords: message.keywords
+            },
             executionSteps: message.execution_steps.map((step: ExecutionStep) => ({
               ...step,
               status: step.status || "pending"
             }))
           }
-          setMessages((prev) => [...prev, progressMessage])
+
+          // ✅ Remove ExecutionPlanPage and add ExecutionProgressPage
+          setMessages((prev) => prev
+            .filter(m => m.type !== "execution-plan")
+            .concat(progressMessage)
+          )
 
           setProcessState({
             step: "executing",
@@ -211,9 +221,9 @@ export function ChatInterface({ onSplitView }: ChatInterfaceProps) {
 
       case 'final_response':
         // 최종 응답 수신
-        // Execution Progress 메시지 제거
+        // ✅ ExecutionPlan은 유지, Progress만 제거 (사용자가 Plan을 계속 볼 수 있음)
         setMessages((prev) => prev.filter(m =>
-          m.type !== "execution-plan" && m.type !== "execution-progress"
+          m.type !== "execution-progress"
         ))
 
         // 봇 응답 추가

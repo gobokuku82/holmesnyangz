@@ -316,6 +316,7 @@ class TeamBasedSupervisor:
                     "intent": intent_result.intent_type.value,
                     "confidence": intent_result.confidence,
                     "execution_steps": planning_state["execution_steps"],
+                    "execution_strategy": execution_plan.strategy.value,
                     "estimated_total_time": execution_plan.estimated_time,
                     "keywords": intent_result.keywords
                 })
@@ -488,9 +489,16 @@ class TeamBasedSupervisor:
         planning_state = state.get("planning_state")
         if progress_callback and planning_state:
             try:
+                analyzed_intent = planning_state.get("analyzed_intent", {})
                 await progress_callback("execution_start", {
                     "message": "작업 실행을 시작합니다...",
-                    "execution_steps": planning_state.get("execution_steps", [])
+                    "execution_steps": planning_state.get("execution_steps", []),
+                    # Complete ExecutionPlan data for Frontend
+                    "intent": analyzed_intent.get("intent_type", "unknown"),
+                    "confidence": analyzed_intent.get("confidence", 0.0),
+                    "execution_strategy": planning_state.get("execution_strategy", "sequential"),
+                    "estimated_total_time": planning_state.get("estimated_total_time", 0),
+                    "keywords": analyzed_intent.get("keywords", [])
                 })
                 logger.info("[TeamSupervisor] Sent execution_start via WebSocket")
             except Exception as e:

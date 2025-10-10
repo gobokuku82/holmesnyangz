@@ -6,6 +6,7 @@
 export type ProcessStep =
   | "idle"           // 대기 상태
   | "planning"       // 계획 수립 중
+  | "executing"      // 작업 실행 중
   | "searching"      // 정보 검색 중
   | "analyzing"      // 데이터 분석 중
   | "generating"     // 답변 생성 중
@@ -54,6 +55,7 @@ export interface ProcessFlowProps {
 export const STEP_MESSAGES: Record<ProcessStep, string> = {
   idle: "",
   planning: "계획을 수립하고 있습니다...",
+  executing: "작업을 실행하고 있습니다...",
   searching: "관련 정보를 검색하고 있습니다...",
   analyzing: "데이터를 분석하고 있습니다...",
   generating: "답변을 생성하고 있습니다...",

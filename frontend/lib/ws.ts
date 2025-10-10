@@ -10,6 +10,7 @@ export type WSMessageType =
   | 'connected'
   | 'planning_start'
   | 'plan_ready'
+  | 'execution_start'
   | 'todo_created'
   | 'todo_updated'
   | 'step_start'

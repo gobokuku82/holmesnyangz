@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Target, CheckCircle2 } from "lucide-react"
+import { Target } from "lucide-react"
 import type { ExecutionPlan } from "@/types/execution"
 
 interface ExecutionPlanPageProps {
@@ -15,10 +15,9 @@ interface ExecutionPlanPageProps {
  * 사용자에게 어떤 작업들이 수행될 예정인지 미리 보여줌
  * - 감지된 의도
  * - 예정 작업 리스트
- * - 예상 소요 시간
  */
 export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
-  const { intent, confidence, execution_steps, estimated_total_time, keywords } = plan
+  const { intent, confidence, execution_steps, keywords } = plan
 
   // 의도 타입에 따른 한글 이름 매핑
   const intentNameMap: Record<string, string> = {
@@ -89,7 +88,7 @@ export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
           </div>
 
           {/* 예정 작업 리스트 */}
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             <div className="text-sm font-medium mb-2">예정 작업:</div>
             {execution_steps.map((step, index) => (
               <div
@@ -114,18 +113,6 @@ export function ExecutionPlanPage({ plan }: ExecutionPlanPageProps) {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* 예상 소요 시간 */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground border-t pt-3">
-            <Clock className="w-4 h-4" />
-            <span>예상 소요 시간: 약 {estimated_total_time.toFixed(1)}초</span>
-          </div>
-
-          {/* 시작 안내 */}
-          <div className="mt-3 flex items-center gap-2 text-sm text-primary">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>곧 작업을 시작합니다...</span>
           </div>
         </Card>
       </div>
