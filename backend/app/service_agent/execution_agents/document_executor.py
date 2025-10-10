@@ -49,6 +49,9 @@ class DocumentExecutor:
         # 문서 템플릿
         self.templates = self._load_templates()
 
+        # Tools 초기화
+        self.tools = self._initialize_tools()
+
         # 서브그래프 구성
         self.app = None
         self._build_subgraph()
@@ -63,6 +66,19 @@ class DocumentExecutor:
 
         logger.info(f"DocumentTeam available agents: {available}")
         return available
+
+    def _initialize_tools(self) -> Dict:
+        """문서 생성 Tools 초기화"""
+        tools = {}
+
+        try:
+            from app.service_agent.tools.lease_contract_generator_tool import LeaseContractGeneratorTool
+            tools["lease_contract_generator"] = LeaseContractGeneratorTool()
+            logger.info("LeaseContractGeneratorTool loaded successfully")
+        except Exception as e:
+            logger.warning(f"Failed to load LeaseContractGeneratorTool: {e}")
+
+        return tools
 
     def _load_templates(self) -> Dict[str, DocumentTemplate]:
         """문서 템플릿 로드"""
@@ -181,12 +197,46 @@ class DocumentExecutor:
     async def generate_document_node(self, state: DocumentTeamState) -> DocumentTeamState:
         """
         문서 생성 노드
-        DocumentAgent 호출
+        DocumentAgent 또는 Tool 호출
         """
         logger.info("[DocumentTeam] Generating document")
 
         state["generation_status"] = "in_progress"
+        doc_type = state.get("document_type", "lease_contract")
 
+        # 주택임대차 계약서는 Tool 사용
+        if doc_type == "lease_contract" and "lease_contract_generator" in self.tools:
+            try:
+                tool = self.tools["lease_contract_generator"]
+                params = state.get("document_params", {})
+
+                result = await tool.execute(**params)
+
+                if result.get("status") == "success":
+                    # 문서 내용 저장
+                    state["generated_document"] = DocumentContent(
+                        title=result.get("title", "주택임대차 표준계약서"),
+                        sections=result.get("sections", []),
+                        metadata=result.get("metadata", {}),
+                        generated_at=datetime.now()
+                    )
+                    state["draft_content"] = result.get("content", "")
+                    state["generation_status"] = "completed"
+                elif result.get("error_type") == "template_not_loaded":
+                    # 템플릿 로드 실패 - 사용자에게 안내
+                    state["generation_status"] = "failed"
+                    state["error"] = result.get("message")
+                else:
+                    state["generation_status"] = "failed"
+                    state["error"] = result.get("error", "Document generation failed")
+
+                return state
+
+            except Exception as e:
+                logger.error(f"Tool-based document generation failed: {e}")
+                # Tool 실패시 기존 방식으로 fallback
+
+        # DocumentAgent 사용
         if not self.available_agents.get("document_agent"):
             # DocumentAgent가 없으면 모의 생성
             state["generated_document"] = self._mock_generate_document(state)
