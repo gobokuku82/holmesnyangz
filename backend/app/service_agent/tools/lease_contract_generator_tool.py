@@ -21,12 +21,20 @@ class LeaseContractGeneratorTool:
         """초기화"""
         self.name = "lease_contract_generator"
 
-        # 기본 템플릿 경로
+        # 기본 템플릿 경로 (플레이스홀더 버전 우선 사용)
         if template_path:
             self.template_path = Path(template_path)
         else:
             backend_dir = Path(__file__).parent.parent.parent.parent
-            self.template_path = backend_dir / "data" / "storage" / "documents" / "주택임대차 표준계약서.docx"
+            # 플레이스홀더 버전 템플릿 경로
+            placeholder_template = backend_dir / "data" / "storage" / "documents" / "주택임대차 표준계약서_with_placeholders.docx"
+            original_template = backend_dir / "data" / "storage" / "documents" / "주택임대차 표준계약서.docx"
+
+            # 플레이스홀더 버전이 있으면 우선 사용, 없으면 원본 사용
+            if placeholder_template.exists():
+                self.template_path = placeholder_template
+            else:
+                self.template_path = original_template
 
         # python-docx 가용성 확인
         self.docx_available = self._check_docx_availability()
@@ -142,90 +150,51 @@ class LeaseContractGeneratorTool:
         return fields
 
     def _fill_tables(self, doc, fields: Dict):
-        """표 셀 채우기"""
+        """표 셀 채우기 (플레이스홀더 기반)"""
         try:
             if len(doc.tables) == 0:
                 return
 
-            main_table = doc.tables[0]
+            # 플레이스홀더 매핑 정의
+            placeholder_map = {
+                "{{address_road}}": fields.get("address_road", ""),
+                "{{address_detail}}": fields.get("address_detail", ""),
+                "{{rental_area}}": fields.get("rental_area", ""),
+                "{{deposit}}": fields.get("deposit", ""),
+                "{{deposit_hangeul}}": fields.get("deposit_hangeul", ""),
+                "{{contract_payment}}": fields.get("contract_payment", ""),
+                "{{monthly_rent}}": fields.get("monthly_rent", ""),
+                "{{monthly_rent_day}}": fields.get("monthly_rent_day", ""),
+                "{{management_fee}}": fields.get("management_fee", ""),
+                "{{lessor_name}}": fields.get("lessor_name", ""),
+                "{{lessor_address}}": fields.get("lessor_address", ""),
+                "{{lessor_phone}}": fields.get("lessor_phone", ""),
+                "{{lessee_name}}": fields.get("lessee_name", ""),
+                "{{lessee_address}}": fields.get("lessee_address", ""),
+                "{{lessee_phone}}": fields.get("lessee_phone", ""),
+            }
 
-            # 주소 (2행)
-            self._set_cell(main_table, 2, 2, fields.get("address_road", ""))
+            # 모든 테이블 순회하며 플레이스홀더 치환
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        original_text = cell.text
+                        new_text = original_text
 
-            # 임차할 부분 (5행)
-            self._set_cell(main_table, 5, 2, fields.get("address_detail", ""))
-            self._set_cell(main_table, 5, 5, fields.get("rental_area", ""))
+                        # 플레이스홀더 치환
+                        for placeholder, value in placeholder_map.items():
+                            if placeholder in new_text and value:
+                                new_text = new_text.replace(placeholder, str(value))
 
-            # 보증금
-            deposit_text = f"금 {fields.get('deposit_hangeul', '')} 원정(₩{fields.get('deposit', '')})"
-            self._fill_row_by_label(main_table, "보 증 금", deposit_text)
+                        # 텍스트 변경된 경우만 업데이트
+                        if new_text != original_text:
+                            cell.text = new_text
 
-            # 계약금
-            if fields.get("contract_payment"):
-                contract_text = f"금 {fields['contract_payment']} 원정 계약시 지불"
-                self._fill_row_by_label(main_table, "계 약 금", contract_text)
-
-            # 월세
-            if fields.get("monthly_rent"):
-                rent_text = f"금 {fields['monthly_rent']} 원정 매월 {fields.get('monthly_rent_day', '[]')}일 지불"
-                self._fill_row_by_label(main_table, "차임", rent_text)
-
-            # 관리비
-            if fields.get("management_fee"):
-                self._fill_row_by_label(main_table, "관 리 비", f"금 {fields['management_fee']} 원정")
-
-            # 당사자 정보 (Table 4)
-            if len(doc.tables) > 4:
-                party_table = doc.tables[4]
-                self._fill_party_info(party_table, fields)
+            logger.info("Placeholders filled successfully")
 
         except Exception as e:
             logger.error(f"Failed to fill tables: {e}")
 
-    def _set_cell(self, table, row: int, col: int, text: str):
-        """셀 값 설정"""
-        try:
-            if row < len(table.rows) and col < len(table.rows[row].cells):
-                table.rows[row].cells[col].text = str(text)
-        except Exception as e:
-            logger.warning(f"Failed to set cell [{row}][{col}]: {e}")
-
-    def _fill_row_by_label(self, table, label: str, value: str):
-        """레이블로 행 찾아서 값 채우기"""
-        try:
-            for row_idx, row in enumerate(table.rows):
-                if len(row.cells) > 0 and label in row.cells[0].text:
-                    if len(row.cells) > 1:
-                        row.cells[1].text = value
-                    break
-        except Exception as e:
-            logger.warning(f"Failed to fill row by label '{label}': {e}")
-
-    def _fill_party_info(self, table, fields: Dict):
-        """당사자 정보 채우기"""
-        try:
-            for row_idx, row in enumerate(table.rows):
-                if len(row.cells) == 0:
-                    continue
-
-                cell_text = row.cells[0].text
-
-                # 임대인
-                if "임\n대\n인" in cell_text or "임대인" in cell_text:
-                    if len(row.cells) > 2 and "주        소" in (row.cells[1].text if len(row.cells) > 1 else ""):
-                        self._set_cell(table, row_idx, 2, fields.get("lessor_address", ""))
-                    if len(row.cells) > 9 and fields.get("lessor_name"):
-                        self._set_cell(table, row_idx, 9, fields["lessor_name"])
-
-                # 임차인
-                if "임\n차\n인" in cell_text or "임차인" in cell_text:
-                    if len(row.cells) > 2 and "주        소" in (row.cells[1].text if len(row.cells) > 1 else ""):
-                        self._set_cell(table, row_idx, 2, fields.get("lessee_address", ""))
-                    if len(row.cells) > 9 and fields.get("lessee_name"):
-                        self._set_cell(table, row_idx, 9, fields["lessee_name"])
-
-        except Exception as e:
-            logger.warning(f"Failed to fill party info: {e}")
 
     def _to_markdown(self, doc, fields: Dict) -> str:
         """Markdown 변환"""
