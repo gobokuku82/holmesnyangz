@@ -29,7 +29,8 @@
       "Bash(fi)",
       "Bash(npm run dev:*)",
       "Bash(git check-ignore:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

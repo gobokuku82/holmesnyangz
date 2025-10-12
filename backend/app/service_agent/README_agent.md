@@ -594,6 +594,158 @@ ORDER BY timestamp DESC LIMIT 10;
 
 ---
 
-## 📞 문의
+## 📊 3개 파일 사용 현황 분석
+1. agent_registry.py - ✅ 현재 사용 중
+사용 위치:
+team_supervisor.py (3곳)
+planning_agent.py (4곳)
+search_executor.py (2곳)
+document_executor.py (2곳)
+사용 방식:
+team_supervisor.py:
+# 1. 초기화 시 Agent 시스템 등록
+from app.service_agent.foundation.agent_adapter import initialize_agent_system
+initialize_agent_system(auto_register=True)  # → AgentRegistry에 팀 등록
 
-시스템 관련 문의는 프로젝트 관리자에게 연락하세요.
+# 2. Planning 시 사용 가능한 에이전트 조회
+available_agents=AgentRegistry.list_agents(enabled_only=True)
+
+# 3. Agent 의존성 정보 조회
+dependencies = AgentAdapter.get_agent_dependencies(agent_name)
+planning_agent.py:
+# 1. Agent 능력 정보 로드
+for agent_name in AgentRegistry.list_agents():
+    agent_caps = AgentRegistry.get_capabilities(agent_name)
+
+# 2. 사용 가능한 Agent 확인
+available_agents = AgentRegistry.list_agents(enabled_only=True)
+
+# 3. Agent 검증
+if not AgentRegistry.get_agent(step.agent_name):
+    errors.append(f"Agent '{step.agent_name}' not found in registry")
+search_executor.py:
+# 사용 가능한 Agent 확인
+available[agent_name] = agent_name in AgentRegistry.list_agents(enabled_only=True)
+핵심 역할:
+팀(search_team, analysis_team, document_team)을 중앙 레지스트리에 등록
+Planning 시 실행 가능한 팀 목록 제공
+Agent 메타데이터(capabilities) 조회
+2. agent_adapter.py - ✅ 현재 사용 중
+사용 위치:
+team_supervisor.py (2곳)
+planning_agent.py (1곳)
+search_executor.py (1곳)
+document_executor.py (1곳)
+사용 방식:
+team_supervisor.py:
+# 1. 초기화 - Agent 시스템 등록
+from app.service_agent.foundation.agent_adapter import initialize_agent_system
+initialize_agent_system(auto_register=True)
+
+# 2. Agent 의존성 정보 조회 (팀 매핑)
+from app.service_agent.foundation.agent_adapter import AgentAdapter
+dependencies = AgentAdapter.get_agent_dependencies(agent_name)
+return dependencies.get("team", "search")
+search_executor.py:
+# SearchAgent 동적 실행 (fallback)
+result = await AgentAdapter.execute_agent_dynamic(
+    "search_agent",
+    search_input,
+    self.llm_context
+)
+핵심 역할:
+initialize_agent_system(): AgentRegistry에 3개 팀 자동 등록
+get_agent_dependencies(): Agent → Team 매핑 정보 제공
+execute_agent_dynamic(): Agent 동적 실행 (현재는 거의 사용 안 함)
+3. query_decomposer.py - ⚠️ 부분적으로 사용 중
+사용 위치:
+planning_agent.py (핵심)
+reports/tests/ (테스트 코드 3개)
+사용 방식:
+planning_agent.py:
+# 1. 초기화
+from app.service_agent.cognitive_agents.query_decomposer import (
+    QueryDecomposer,
+    DecomposedQuery,
+    ExecutionMode as DecomposerExecutionMode
+)
+
+# PlanningAgent 생성자
+self.query_decomposer = QueryDecomposer(self.llm_service)
+
+# 2. 복합 질문 분해 (create_comprehensive_plan 메서드)
+async def create_comprehensive_plan(self, query, context):
+    # 의도 분석
+    intent = await self.analyze_intent(query, context)
+    
+    # ⭐ 복합 질문 분해
+    decomposed = await self.query_decomposer.decompose(
+        query=query,
+        context=context,
+        intent_result={
+            "intent": intent.intent_type.value,
+            "confidence": intent.confidence,
+            "keywords": intent.keywords,
+            "entities": intent.entities,
+            "is_compound": len(intent.suggested_agents) > 1
+        }
+    )
+    
+    # 분해된 작업을 기반으로 실행 계획 생성
+    if decomposed.is_compound:
+        steps = []
+        for task in decomposed.sub_tasks:
+            step = ExecutionStep(
+                agent_name=task.agent_team,
+                priority=task.priority,
+                dependencies=task.dependencies,
+                ...
+            )
+문제점:
+create_comprehensive_plan() 메서드는 정의되어 있지만 실제로 호출되지 않음
+현재는 create_execution_plan()만 사용됨
+QueryDecomposer는 초기화만 되고 실행되지 않음
+결론: Phase 1 Enhancement로 준비했지만 아직 활성화되지 않음
+📝 요약
+파일	사용 여부	사용 빈도	주요 역할
+agent_registry.py	✅ 활발히 사용	11곳	팀 등록, 조회, 메타데이터 관리
+agent_adapter.py	✅ 사용 중	5곳	팀 자동 등록, 의존성 조회, 동적 실행
+query_decomposer.py	⚠️ 준비됨, 미활성화	1곳 (초기화만)	복합 질문 분해 (Phase 1 Enhancement)
+🔍 상세 분석
+agent_registry.py - 핵심 인프라
+왜 필요한가?
+3개 팀(search_team, analysis_team, document_team)을 중앙에서 관리
+Planning Agent가 실행 가능한 팀 목록을 조회할 때 사용
+팀별 capabilities (입출력 타입, 도구) 정보 제공
+삭제 시 영향:
+Planning Agent가 팀 목록을 조회할 수 없음
+시스템 초기화 실패
+삭제 불가
+agent_adapter.py - 초기화 및 브릿지
+왜 필요한가?
+initialize_agent_system(): AgentRegistry에 팀 자동 등록
+get_agent_dependencies(): Agent 이름 → Team 매핑 (예: "search_agent" → "search")
+execute_agent_dynamic(): 동적 실행 (현재는 SearchAgent fallback에만 사용)
+삭제 시 영향:
+팀이 AgentRegistry에 등록되지 않음
+Agent → Team 매핑 정보 손실
+삭제 불가
+query_decomposer.py - 미래 준비
+왜 만들었는가?
+Phase 1 Enhancement: 복합 질문 처리 강화
+"강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘" 같은 복합 질문을 개별 작업으로 분해
+왜 사용하지 않는가?
+create_comprehensive_plan()이 호출되지 않음
+현재는 create_execution_plan()만 사용
+Planning Agent가 이미 복합 질문을 처리 가능
+삭제 가능한가?
+코드는 완성되어 있고 테스트도 있음
+향후 활성화 가능성이 있음
+보존 권장 (미래 확장용)
+💡 결론 및 권장사항
+agent_registry.py: ✅ 핵심 인프라, 삭제 불가
+agent_adapter.py: ✅ 초기화 필수, 삭제 불가
+query_decomposer.py: ⚠️ Phase 1 준비 완료, 미활성화 상태
+삭제하지 말고 보존
+향후 복합 질문 처리 강화 시 활성화 가능
+create_comprehensive_plan() 호출 로직만 추가하면 바로 사용 가능

@@ -189,44 +189,6 @@ class AgentAdapter:
             }
 
     @staticmethod
-    def get_agents_for_intent(intent_type: str) -> list[str]:
-        """
-        의도 타입에 따라 실행할 Agent 목록 반환
-        4개 Agent의 역할:
-        - search_agent: 법률, 부동산, 대출 정보 검색
-        - analysis_agent: 데이터 분석 및 인사이트 도출
-        - document_agent: 계약서 등 문서 생성
-        - review_agent: 문서 검토 및 위험 분석
-
-        Args:
-            intent_type: 의도 타입
-
-        Returns:
-            Agent 이름 목록
-        """
-        intent_agent_mapping = {
-            "법률상담": ["search_agent"],
-            "시세조회": ["search_agent", "analysis_agent"],
-            "대출상담": ["search_agent", "analysis_agent"],
-            "계약서작성": ["document_agent"],
-            "계약서검토": ["review_agent"],
-            "종합분석": ["search_agent", "analysis_agent"],
-            "문서생성": ["document_agent"],
-            "리스크분석": ["search_agent", "analysis_agent", "review_agent"],
-            "전체분석": ["search_agent", "analysis_agent", "document_agent", "review_agent"]
-        }
-
-        agents = intent_agent_mapping.get(intent_type, ["search_agent"])
-
-        # Registry에서 활성화된 Agent만 필터링
-        enabled_agents = [
-            agent for agent in agents
-            if AgentRegistry.get_agent(agent) and AgentRegistry.get_agent(agent).enabled
-        ]
-
-        return enabled_agents
-
-    @staticmethod
     def get_agent_dependencies(agent_name: str) -> Dict[str, Any]:
         """
         Agent의 의존성 정보 조회
@@ -305,9 +267,9 @@ if __name__ == "__main__":
         )
         print(f"Search result: {result.get('status')}")
 
-        # 의도에 따른 Agent 목록 조회
-        agents = AgentAdapter.get_agents_for_intent("법률상담")
-        print(f"Agents for 법률상담: {agents}")
+        # Agent 의존성 정보 조회
+        dependencies = AgentAdapter.get_agent_dependencies("search_agent")
+        print(f"Search agent dependencies: {dependencies}")
 
     # 테스트 실행
     asyncio.run(test_dynamic_execution())
