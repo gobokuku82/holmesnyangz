@@ -214,4 +214,3 @@ planning_start → plan_ready → todo_updated (여러 번) → final_response
 State 동기화
 setMessages와 setTodos가 분리되어 있음
 todo_updated 시 두 곳 모두 업데이트 필요
-어떤 문제가 발생했는지 알려주시면 구체적인 수정 방안을 제시해드리겠습니다.
