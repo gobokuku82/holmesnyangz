@@ -19,14 +19,15 @@ def setup_logging():
     # Root logger configuration
     log_format = Config.LOGGING.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     date_format = Config.LOGGING.get("date_format", "%Y-%m-%d %H:%M:%S")
-    log_level = Config.LOGGING.get("level", "INFO")
+    log_level_str = Config.LOGGING.get("level", "INFO")
+    log_level = getattr(logging, log_level_str.upper())
 
     # Create formatter
     formatter = logging.Formatter(log_format, datefmt=date_format)
 
     # Console handler (stdout)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(log_level)
     console_handler.setFormatter(formatter)
 
     # File handler (rotating)
@@ -36,19 +37,25 @@ def setup_logging():
         maxBytes=100 * 1024 * 1024,  # 100MB
         backupCount=7
     )
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(log_level)
     file_handler.setFormatter(formatter)
 
     # Configure root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(log_level)
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
 
-    # Set specific log levels for modules
+    # Suppress third-party library logs (reduce noise)
+    logging.getLogger("aiosqlite").setLevel(logging.WARNING)  # SQLite checkpointing
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # HTTP client (OpenAI API)
+    logging.getLogger("openai").setLevel(logging.WARNING)  # OpenAI SDK
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)  # Access logs
     logging.getLogger("uvicorn").setLevel(logging.INFO)
     logging.getLogger("fastapi").setLevel(logging.INFO)
-    logging.getLogger("app.service_agent").setLevel(logging.DEBUG)  # Detailed service_agent logs
+
+    # App-specific logs (keep detailed)
+    logging.getLogger("app.service_agent").setLevel(logging.INFO)
     logging.getLogger("app.api").setLevel(logging.INFO)
 
     logging.info("=" * 80)

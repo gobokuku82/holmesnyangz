@@ -56,6 +56,7 @@ class SearchExecutor:
         # 검색 도구 초기화
         self.legal_search_tool = None
         self.market_data_tool = None
+        self.real_estate_search_tool = None  # ✅ Phase 2 추가
         self.loan_data_tool = None
 
         # Decision Logger 초기화
@@ -85,6 +86,13 @@ class SearchExecutor:
             logger.info("LoanDataTool initialized successfully")
         except Exception as e:
             logger.warning(f"LoanDataTool initialization failed: {e}")
+
+        try:
+            from app.service_agent.tools.real_estate_search_tool import RealEstateSearchTool
+            self.real_estate_search_tool = RealEstateSearchTool()
+            logger.info("RealEstateSearchTool initialized successfully (PostgreSQL)")
+        except Exception as e:
+            logger.warning(f"RealEstateSearchTool initialization failed: {e}")
 
         # 서브그래프 구성
         self.app = None
@@ -264,6 +272,21 @@ class SearchExecutor:
                     "실거래가 정보",
                     "평균 가격 조회",
                     "시세 동향"
+                ],
+                "available": True
+            }
+
+        if self.real_estate_search_tool:
+            tools["real_estate_search"] = {
+                "name": "real_estate_search",
+                "description": "개별 부동산 매물 검색 (아파트, 오피스텔 등)",
+                "capabilities": [
+                    "지역별 매물 조회",
+                    "가격대별 필터링",
+                    "면적별 검색",
+                    "준공년도 검색",
+                    "주변 시설 정보",
+                    "실거래가 내역"
                 ],
                 "available": True
             }
@@ -583,6 +606,92 @@ class SearchExecutor:
                 logger.error(f"Loan search failed: {e}")
                 state["search_progress"]["loan_search"] = "failed"
                 execution_results["loan_data"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
+
+        # === 3-1. 개별 부동산 매물 검색 (Phase 2) ===
+        if "real_estate_search" in selected_tools and self.real_estate_search_tool:
+            try:
+                logger.info("[SearchTeam] Executing individual real estate property search")
+
+                # 쿼리에서 파라미터 추출 (간단한 패턴 매칭)
+                search_params = {}
+
+                # 지역 추출
+                regions = ["강남구", "강북구", "강동구", "강서구", "관악구", "광진구", "구로구",
+                          "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구",
+                          "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구",
+                          "은평구", "종로구", "중구", "중랑구"]
+                for region in regions:
+                    if region in query:
+                        search_params["region"] = region
+                        break
+
+                # 물건 종류 추출
+                if "아파트" in query:
+                    search_params["property_type"] = "APARTMENT"
+                elif "오피스텔" in query:
+                    search_params["property_type"] = "OFFICETEL"
+                elif "빌라" in query or "다세대" in query:
+                    search_params["property_type"] = "VILLA"
+
+                # 가격 범위 추출 (예: "5억 이하")
+                import re
+                price_match = re.search(r'(\d+)억\s*이하', query)
+                if price_match:
+                    max_price = int(price_match.group(1)) * 100000000
+                    search_params["max_price"] = max_price
+
+                price_match = re.search(r'(\d+)억\s*이상', query)
+                if price_match:
+                    min_price = int(price_match.group(1)) * 100000000
+                    search_params["min_price"] = min_price
+
+                # 면적 범위 추출 (예: "80평 이상")
+                area_match = re.search(r'(\d+)평\s*이상', query)
+                if area_match:
+                    min_area = float(area_match.group(1)) * 3.3058  # 평 to ㎡
+                    search_params["min_area"] = min_area
+
+                area_match = re.search(r'(\d+)평\s*이하', query)
+                if area_match:
+                    max_area = float(area_match.group(1)) * 3.3058
+                    search_params["max_area"] = max_area
+
+                # 주변 시설 정보 포함 여부
+                if any(term in query for term in ["지하철", "역", "학교", "마트", "편의시설"]):
+                    search_params["include_nearby"] = True
+
+                # 실거래가 내역 포함 여부
+                if any(term in query for term in ["실거래가", "거래내역", "매매가"]):
+                    search_params["include_transactions"] = True
+
+                # 검색 실행
+                result = await self.real_estate_search_tool.search(query, search_params)
+
+                if result.get("status") == "success":
+                    property_data = result.get("data", [])
+
+                    # 결과를 별도 키에 저장 (기존 real_estate_results와 구분)
+                    state["property_search_results"] = property_data
+                    state["search_progress"]["property_search"] = "completed"
+                    logger.info(f"[SearchTeam] Property search completed: {len(property_data)} results")
+                    execution_results["real_estate_search"] = {
+                        "status": "success",
+                        "result_count": len(property_data)
+                    }
+                else:
+                    state["search_progress"]["property_search"] = "failed"
+                    execution_results["real_estate_search"] = {
+                        "status": "failed",
+                        "error": result.get('status')
+                    }
+
+            except Exception as e:
+                logger.error(f"Property search failed: {e}")
+                state["search_progress"]["property_search"] = "failed"
+                execution_results["real_estate_search"] = {
                     "status": "error",
                     "error": str(e)
                 }
