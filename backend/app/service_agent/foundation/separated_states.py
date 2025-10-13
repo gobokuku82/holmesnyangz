@@ -64,6 +64,7 @@ class SharedState(TypedDict):
     """
     user_query: str
     session_id: str
+    user_id: Optional[int]  # 사용자 ID (로그인 시, 없으면 None)
     timestamp: str
     language: str
     status: Literal["pending", "processing", "completed", "error"]
@@ -91,6 +92,7 @@ class SearchTeamState(TypedDict):
     legal_results: List[Dict[str, Any]]
     real_estate_results: List[Dict[str, Any]]
     loan_results: List[Dict[str, Any]]
+    property_search_results: List[Dict[str, Any]]  # 개별 매물 검색 결과 (RealEstateSearchTool)
     aggregated_results: Dict[str, Any]
 
     # Metadata
@@ -406,6 +408,7 @@ class StateManager:
     def create_shared_state(
         query: str,
         session_id: str,
+        user_id: Optional[int] = None,
         language: str = "ko",
         timestamp: Optional[str] = None
     ) -> SharedState:
@@ -418,6 +421,7 @@ class StateManager:
         return SharedState(
             user_query=query,
             session_id=session_id,
+            user_id=user_id,
             timestamp=timestamp,
             language=language,
             status="pending",
@@ -432,6 +436,7 @@ class StateManager:
         return SharedState(
             user_query=state.get("user_query", ""),
             session_id=state.get("session_id", ""),
+            user_id=state.get("user_id"),
             timestamp=state.get("timestamp", datetime.now().isoformat()),
             language=state.get("language", "ko"),
             status=state.get("status", "pending"),
@@ -516,6 +521,7 @@ class StateManager:
                     "legal_results": [],
                     "real_estate_results": [],
                     "loan_results": [],
+                    "property_search_results": [],  # 개별 매물 검색 결과
                     "aggregated_results": {},
                     "total_results": 0,
                     "search_time": 0.0,

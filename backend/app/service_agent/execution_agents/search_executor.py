@@ -667,6 +667,10 @@ class SearchExecutor:
                 if any(term in query for term in ["실거래가", "거래내역", "매매가"]):
                     search_params["include_transactions"] = True
 
+                # 중개사 정보 포함 여부 (Q5: 조건부)
+                if any(term in query for term in ["중개사", "agent", "직거래", "공인중개사"]):
+                    search_params["include_agent"] = True
+
                 # 검색 실행
                 result = await self.real_estate_search_tool.search(query, search_params)
 
@@ -805,6 +809,10 @@ class SearchExecutor:
             total_results += len(state["loan_results"])
             sources.append("loan_service")
 
+        if state.get("property_search_results"):
+            total_results += len(state["property_search_results"])
+            sources.append("property_db")
+
         state["total_results"] = total_results
         state["sources_used"] = sources
 
@@ -814,7 +822,8 @@ class SearchExecutor:
             "by_type": {
                 "legal": len(state.get("legal_results", [])),
                 "real_estate": len(state.get("real_estate_results", [])),
-                "loan": len(state.get("loan_results", []))
+                "loan": len(state.get("loan_results", [])),
+                "property_search": len(state.get("property_search_results", []))
             },
             "sources": sources,
             "keywords_used": state.get("keywords", {})
@@ -875,6 +884,7 @@ class SearchExecutor:
             legal_results=[],
             real_estate_results=[],
             loan_results=[],
+            property_search_results=[],  # 개별 매물 검색 결과
             aggregated_results={},
             total_results=0,
             search_time=0.0,
@@ -883,7 +893,8 @@ class SearchExecutor:
             start_time=None,
             end_time=None,
             error=None,
-            current_search=None
+            current_search=None,
+            execution_strategy=None
         )
 
         # 서브그래프 실행

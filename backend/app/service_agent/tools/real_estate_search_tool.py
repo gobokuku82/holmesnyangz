@@ -27,17 +27,21 @@ class RealEstateSearchTool:
                 Region,
                 Transaction,
                 NearbyFacility,
+                RealEstateAgent,
                 PropertyType,
                 TransactionType
             )
+            from app.models.trust import TrustScore
 
             self.SessionLocal = SessionLocal
             self.RealEstate = RealEstate
             self.Region = Region
             self.Transaction = Transaction
             self.NearbyFacility = NearbyFacility
+            self.RealEstateAgent = RealEstateAgent
             self.PropertyType = PropertyType
             self.TransactionType = TransactionType
+            self.TrustScore = TrustScore
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
@@ -56,7 +60,8 @@ class RealEstateSearchTool:
                 "limit": 10,
                 "offset": 0,
                 "include_nearby": True,  # 주변 시설 정보 포함 여부
-                "include_transactions": True  # 최근 거래 내역 포함 여부
+                "include_transactions": True,  # 최근 거래 내역 포함 여부
+                "include_agent": False  # 중개사 정보 포함 여부
             }
 
         Returns:
@@ -86,6 +91,7 @@ class RealEstateSearchTool:
         offset = params.get('offset', 0)
         include_nearby = params.get('include_nearby', False)
         include_transactions = params.get('include_transactions', True)
+        include_agent = params.get('include_agent', False)
 
         logger.info(
             f"Real estate search - region: {region}, type: {property_type}, "
@@ -99,7 +105,7 @@ class RealEstateSearchTool:
             results = self._query_real_estates(
                 db, region, property_type, min_area, max_area,
                 min_price, max_price, completion_year,
-                limit, offset, include_nearby, include_transactions
+                limit, offset, include_nearby, include_transactions, include_agent
             )
 
             return {
@@ -149,7 +155,8 @@ class RealEstateSearchTool:
         limit: int,
         offset: int,
         include_nearby: bool,
-        include_transactions: bool
+        include_transactions: bool,
+        include_agent: bool
     ) -> List[Dict[str, Any]]:
         """
         PostgreSQL에서 부동산 매물 조회
@@ -166,10 +173,18 @@ class RealEstateSearchTool:
         if include_transactions:
             query = query.options(
                 joinedload(self.RealEstate.region),
-                joinedload(self.RealEstate.transactions)
+                joinedload(self.RealEstate.transactions),
+                joinedload(self.RealEstate.trust_scores)  # trust_score 항상 포함
             )
         else:
-            query = query.options(joinedload(self.RealEstate.region))
+            query = query.options(
+                joinedload(self.RealEstate.region),
+                joinedload(self.RealEstate.trust_scores)  # trust_score 항상 포함
+            )
+
+        # 중개사 정보 조건부 로딩
+        if include_agent:
+            query = query.options(joinedload(self.RealEstate.agent))
 
         # ⚠️ nearby_facility는 RealEstate에 relationship이 없으므로 주석 처리
         # 향후 모델에 relationship 추가 후 활성화
@@ -238,7 +253,9 @@ class RealEstateSearchTool:
                 "max_exclusive_area": float(estate.max_exclusive_area) if estate.max_exclusive_area else None,
                 "representative_area": float(estate.representative_area) if estate.representative_area else None,
                 "building_description": estate.building_description,
-                "tags": estate.tag_list
+                "tags": estate.tag_list,
+                # 신뢰도 점수 (Q3: 항상 포함, 없으면 None)
+                "trust_score": float(estate.trust_scores[0].score) if estate.trust_scores else None
             }
 
             # 최근 거래 내역 (최대 5개)
@@ -304,6 +321,14 @@ class RealEstateSearchTool:
                             "high": nearby.high_schools.split(',') if nearby.high_schools else []
                         }
                     }
+
+            # 중개사 정보 (Q5: 데이터 있으면 포함)
+            if include_agent and hasattr(estate, 'agent') and estate.agent:
+                estate_data["agent_info"] = {
+                    "agent_name": estate.agent.agent_name,
+                    "company_name": estate.agent.company_name,
+                    "is_direct_trade": estate.agent.is_direct_trade
+                }
 
             results.append(estate_data)
 

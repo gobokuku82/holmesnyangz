@@ -725,18 +725,22 @@ class TeamBasedSupervisor:
         """
         결과 집계 노드
         """
-        logger.info("[TeamSupervisor] Aggregating results")
+        logger.info("[TeamSupervisor] === Aggregating results ===")
 
         state["current_phase"] = "aggregation"
 
         # 팀 결과 집계
         aggregated = {}
-        for team_name, team_data in state.get("team_results", {}).items():
+        team_results = state.get("team_results", {})
+        logger.info(f"[TeamSupervisor] Team results to aggregate: {list(team_results.keys())}")
+
+        for team_name, team_data in team_results.items():
             if team_data:
                 aggregated[team_name] = {
                     "status": "success",
                     "data": team_data
                 }
+                logger.info(f"[TeamSupervisor] Aggregated {team_name}: {len(str(team_data))} bytes")
 
         state["aggregated_results"] = aggregated
 
@@ -745,14 +749,14 @@ class TeamBasedSupervisor:
         completed_teams = len(state.get("completed_teams", []))
         failed_teams = len(state.get("failed_teams", []))
 
-        logger.info(f"[TeamSupervisor] Aggregation complete: {completed_teams}/{total_teams} succeeded")
+        logger.info(f"[TeamSupervisor] === Aggregation complete: {completed_teams}/{total_teams} teams succeeded, {failed_teams} failed ===")
         return state
 
     async def generate_response_node(self, state: MainSupervisorState) -> MainSupervisorState:
         """
         응답 생성 노드
         """
-        logger.info("[TeamSupervisor] Generating response")
+        logger.info("[TeamSupervisor] === Generating response ===")
 
         state["current_phase"] = "response_generation"
 
@@ -762,17 +766,25 @@ class TeamBasedSupervisor:
         intent_type = analyzed_intent.get("intent_type", "")
         confidence = analyzed_intent.get("confidence", 0.0)
 
+        logger.info(f"[TeamSupervisor] Intent type: {intent_type}, confidence: {confidence:.2f}")
+
         # IRRELEVANT 또는 낮은 confidence UNCLEAR는 안내 메시지 반환
         if intent_type == "irrelevant" or (intent_type == "unclear" and confidence < 0.3):
             logger.info(f"[TeamSupervisor] Generating guidance response for {intent_type}")
             response = self._generate_out_of_scope_response(state)
         else:
             # 정상적인 응답 생성
+            aggregated_results = state.get("aggregated_results", {})
+            logger.info(f"[TeamSupervisor] Aggregated results available: {list(aggregated_results.keys())}")
+
             if self.planning_agent.llm_service:
+                logger.info("[TeamSupervisor] Using LLM for response generation")
                 response = await self._generate_llm_response(state)
             else:
+                logger.info("[TeamSupervisor] Using simple response generation (no LLM)")
                 response = self._generate_simple_response(state)
 
+        logger.info(f"[TeamSupervisor] Response type: {response.get('type', 'unknown')}")
         state["final_response"] = response
         state["status"] = "completed"
 
@@ -780,8 +792,9 @@ class TeamBasedSupervisor:
         if state.get("start_time"):
             state["end_time"] = datetime.now()
             state["total_execution_time"] = (state["end_time"] - state["start_time"]).total_seconds()
+            logger.info(f"[TeamSupervisor] Total execution time: {state['total_execution_time']:.2f}s")
 
-        logger.info("[TeamSupervisor] Response generation complete")
+        logger.info("[TeamSupervisor] === Response generation complete ===")
         return state
 
     def _safe_json_dumps(self, obj: Any) -> str:
