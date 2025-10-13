@@ -5,11 +5,12 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 import time
-
+from dotenv import load_dotenv
+import os 
 # --------------------------------------------------------------------------
 # 중요: 1단계에서 발급받은 본인의 REST API 키를 아래에 붙여넣어 주세요!
 # --------------------------------------------------------------------------
-KAKAO_API_KEY = "0936767ba1173e362664c1db9e419d5c"
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
 # --------------------------------------------------------------------------
 
 
@@ -18,7 +19,7 @@ def get_coordinates_kakao(address, use_keyword=False):
     카카오 로컬 API를 사용하여 주소로부터 위경도 좌표를 반환하는 함수
     use_keyword: True면 키워드 검색, False면 주소 검색
     """
-    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
     
     if use_keyword:
         url = f"https://dapi.kakao.com/v2/local/search/keyword.json?query={address}"
