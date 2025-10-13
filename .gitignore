@@ -37,8 +37,8 @@ htmlcov/
 .dmypy.json
 dmypy.json
 .ruff_cache/
-models/
-
+bge-reranker-v2-m3-ko/
+KURE_v1/
 # Environment
 .env
 .env.local
