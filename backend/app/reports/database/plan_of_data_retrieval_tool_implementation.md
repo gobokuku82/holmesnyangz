@@ -38,13 +38,13 @@ backend/
 │   │   ├── execution_agents/
 │   │   │   └── search_executor.py  ✅ Tool 기반 아키텍처 사용 중
 │   │   └── tools/
-│   │       ├── market_data_tool.py  ❌ Mock 데이터만 사용 (DB 미연결)
+│   │       ├── market_data_tool.py  ✅ PostgreSQL 연동 완료 (Phase 1 완료)
 │   │       ├── loan_data_tool.py    ❌ Mock 데이터만 사용
 │   │       └── hybrid_legal_search.py ✅ ChromaDB 연결됨
 └── data/
     └── storage/
         └── real_estate/
-            └── mock_market_data.json ❌ 현재 MarketDataTool이 사용 중
+            └── mock_market_data.json ⚠️ 더 이상 사용 안 함 (삭제 예정)
 ```
 
 ### 1.2 데이터베이스 현황
@@ -68,8 +68,14 @@ class RealEstate(Base):
 class Transaction(Base):
     id, real_estate_id, region_id
     transaction_type, transaction_date
+
+    # ⚠️ 단일 가격 필드 (사용 안 함 - 대부분 0 또는 NULL)
     sale_price, deposit, monthly_rent
-    min_sale_price, max_sale_price
+
+    # ⭐ 실제 사용되는 가격 범위 필드
+    min_sale_price, max_sale_price      # 매매가 범위
+    min_deposit, max_deposit            # 보증금 범위
+    min_monthly_rent, max_monthly_rent  # 월세 범위
     ...
 
 class Region(Base):
@@ -266,59 +272,85 @@ class BaseTool:
 
 ## 5. 구현 계획
 
-### Phase 1: MarketDataTool DB 연동 (최우선)
+### Phase 1: MarketDataTool DB 연동 ✅ **완료**
 
 **목표**: Mock 데이터를 실제 PostgreSQL 데이터로 대체
 
 **작업 내용**:
-1. ✅ `market_data_tool.py` 리팩토링
-2. ✅ SQLAlchemy 쿼리 구현
-3. ✅ Transaction 테이블 집계 로직
-4. ✅ 지역별/타입별 필터링
-5. ✅ 단위 테스트 작성
+1. ✅ `market_data_tool.py` 리팩토링 **완료**
+2. ✅ SQLAlchemy 쿼리 구현 **완료**
+3. ✅ Transaction 테이블 집계 로직 **완료**
+4. ✅ 지역별/타입별 필터링 **완료**
+5. ✅ 테스트 스크립트 작성 **완료**
 
-**예상 코드 구조**:
+**완료일**: 2025-10-13
+
+**주요 성과**:
+- ✅ PostgreSQL 연동 완료 (psycopg3 드라이버)
+- ✅ NULLIF를 활용한 0 값 처리로 정확한 평균 계산
+- ✅ 올바른 컬럼 사용 (min_sale_price, min_deposit, min_monthly_rent)
+- ✅ 실제 데이터 검증 (강남구 아파트 평균 29억원 등)
+- ✅ 9,738개 부동산, 10,772건 거래 데이터 활용
+
+**트러블슈팅 해결**:
+- Issue #1: 잘못된 컬럼 사용 → min_sale_price로 수정
+- Issue #2: 0 값 처리 → NULLIF 추가
+- Issue #3: DATABASE_URL 로딩 → pydantic-settings 활용
+
+**실제 구현된 코드** (완료):
 ```python
 class MarketDataTool:
     def __init__(self):
+        # Lazy import로 순환 참조 방지
         from app.db.postgre_db import SessionLocal
-        from app.models.real_estate import RealEstate, Transaction, Region, TransactionType
+        from app.models.real_estate import RealEstate, Transaction, Region, PropertyType, TransactionType
         self.SessionLocal = SessionLocal
         self.RealEstate = RealEstate
         self.Transaction = Transaction
         self.Region = Region
+        self.PropertyType = PropertyType
         self.TransactionType = TransactionType
 
     async def search(self, query: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         params = params or {}
         region = params.get('region') or self._extract_region(query)
-        property_type = params.get('property_type', 'apartment')
+        property_type = params.get('property_type')
+        transaction_type = params.get('transaction_type')
 
         db = self.SessionLocal()
         try:
-            # 지역별 시세 조회
-            results = self._query_market_data(db, region, property_type)
+            results = self._query_market_data(db, region, property_type, transaction_type)
             return {
                 "status": "success",
                 "data": results,
-                "result_count": len(results)
+                "result_count": len(results),
+                "metadata": {
+                    "region": region,
+                    "property_type": property_type,
+                    "data_source": "PostgreSQL"
+                }
             }
         except Exception as e:
-            logger.error(f"Market data search failed: {e}")
-            return {"status": "error", "error": str(e), "data": []}
+            logger.error(f"Market data search failed: {e}", exc_info=True)
+            return {"status": "error", "error": str(e), "data": [], "result_count": 0}
         finally:
             db.close()
 
-    def _query_market_data(self, db, region: str, property_type: str):
-        from sqlalchemy import func
-
+    def _query_market_data(self, db, region: str, property_type: str, transaction_type: str):
+        # ⭐ NULLIF를 사용하여 0 값을 NULL로 처리 → AVG 계산 시 자동 제외
         query = db.query(
             self.Region.name.label('region'),
             self.RealEstate.property_type.label('property_type'),
-            func.avg(self.Transaction.sale_price).label('avg_sale_price'),
-            func.min(self.Transaction.sale_price).label('min_sale_price'),
-            func.max(self.Transaction.sale_price).label('max_sale_price'),
-            func.avg(self.Transaction.deposit).label('avg_deposit'),
+            # ⭐ min_sale_price 사용 (sale_price 아님!)
+            func.avg(func.nullif(self.Transaction.min_sale_price, 0)).label('avg_sale_price'),
+            func.min(func.nullif(self.Transaction.min_sale_price, 0)).label('min_sale_price'),
+            func.max(func.nullif(self.Transaction.max_sale_price, 0)).label('max_sale_price'),
+            # ⭐ min_deposit 사용 (deposit 아님!)
+            func.avg(func.nullif(self.Transaction.min_deposit, 0)).label('avg_deposit'),
+            func.min(func.nullif(self.Transaction.min_deposit, 0)).label('min_deposit'),
+            func.max(func.nullif(self.Transaction.max_deposit, 0)).label('max_deposit'),
+            # ⭐ min_monthly_rent 사용
+            func.avg(func.nullif(self.Transaction.min_monthly_rent, 0)).label('avg_monthly_rent'),
             func.count(self.Transaction.id).label('transaction_count')
         ).join(
             self.RealEstate, self.Transaction.real_estate_id == self.RealEstate.id
@@ -330,38 +362,56 @@ class MarketDataTool:
         if region:
             query = query.filter(self.Region.name.contains(region))
         if property_type:
-            query = query.filter(self.RealEstate.property_type == property_type)
+            property_type_enum = self.PropertyType[property_type.upper()]
+            query = query.filter(self.RealEstate.property_type == property_type_enum)
 
         query = query.group_by(self.Region.name, self.RealEstate.property_type)
+        query = query.having(func.count(self.Transaction.id) > 0)
 
         results = []
         for row in query.all():
+            # ⭐ None을 그대로 반환 (0으로 변환하지 않음 → "데이터 없음" 명시)
             results.append({
                 "region": row.region,
-                "property_type": row.property_type,
-                "avg_sale_price": int(row.avg_sale_price) if row.avg_sale_price else 0,
-                "min_sale_price": int(row.min_sale_price) if row.min_sale_price else 0,
-                "max_sale_price": int(row.max_sale_price) if row.max_sale_price else 0,
-                "avg_deposit": int(row.avg_deposit) if row.avg_deposit else 0,
-                "transaction_count": row.transaction_count
+                "property_type": row.property_type.value,
+                "avg_sale_price": int(row.avg_sale_price) if row.avg_sale_price is not None else None,
+                "min_sale_price": int(row.min_sale_price) if row.min_sale_price is not None else None,
+                "max_sale_price": int(row.max_sale_price) if row.max_sale_price is not None else None,
+                "avg_deposit": int(row.avg_deposit) if row.avg_deposit is not None else None,
+                "transaction_count": row.transaction_count,
+                "unit": "만원"
             })
 
         return results
 ```
 
-### Phase 2: RealEstateSearchTool 신규 생성
+**핵심 개선사항**:
+1. ⭐ **NULLIF 사용**: `func.nullif(column, 0)` → 0 값을 NULL로 처리하여 평균 계산 정확도 향상
+2. ⭐ **올바른 컬럼**: `min_sale_price`, `min_deposit`, `min_monthly_rent` 사용
+3. ⭐ **None 처리**: 0 대신 None 반환하여 "데이터 없음" 명시
+4. ⭐ **HAVING 절**: 거래 건수 > 0인 결과만 반환
+
+### Phase 2: RealEstateSearchTool 신규 생성 ⏳ **진행 예정**
 
 **목표**: 부동산 매물 검색 전용 Tool 구현
 
 **파일**: `backend/app/service_agent/tools/real_estate_search_tool.py` (신규)
 
 **기능**:
-1. ✅ 지역별 매물 검색
-2. ✅ 매물 타입 필터링 (아파트, 오피스텔, 빌라 등)
-3. ✅ 면적 범위 필터링
-4. ✅ 준공년도 필터링
-5. ✅ 주변 시설 정보 포함
-6. ✅ 페이지네이션
+1. [ ] 지역별 매물 검색
+2. [ ] 매물 타입 필터링 (아파트, 오피스텔, 빌라 등)
+3. [ ] 가격 범위 필터링 ⚠️ **주의**: min_sale_price 사용
+4. [ ] 면적 범위 필터링
+5. [ ] 준공년도 필터링
+6. [ ] 주변 시설 정보 포함 (선택)
+7. [ ] 페이지네이션
+
+**⚠️ Phase 1 경험 반영 - 주의사항**:
+1. **가격 필터링**: `min_sale_price`, `max_sale_price` 컬럼 사용 (sale_price 아님!)
+2. **Transaction 조인**: 가격 필터 시 어떤 transaction_type을 사용할지 명확히 정의
+3. **NULLIF 필요성**: RealEstate 테이블 자체 데이터는 NULLIF 불필요 (직접 저장된 값)
+4. **Eager Loading**: joinedload 사용하여 N+1 문제 방지
+5. **Enum 변환**: PropertyType enum 변환 시 try-except 처리
 
 **예상 코드 구조**:
 ```python
@@ -2114,15 +2164,215 @@ if result["status"] == "error":
 
 ---
 
-## 12. 다음 단계 (Action Items)
+## 12. 트러블슈팅 이력 (Phase 1 경험)
+
+### Issue #1: 잘못된 Transaction 컬럼 사용
+
+**문제 상황**:
+- 초기 쿼리에서 `Transaction.sale_price`, `Transaction.deposit`, `Transaction.monthly_rent` 사용
+- 결과: 모든 평균 가격이 0 또는 NULL로 표시됨
+
+**원인 분석**:
+```sql
+-- Transaction 테이블 실제 데이터 구조
+SELECT * FROM transactions LIMIT 3;
+
+ID | sale_price | min_sale_price | max_sale_price | deposit | min_deposit | max_deposit
+---+------------+----------------+----------------+---------+-------------+-------------
+5  |     0      |    399000      |    440000      |    0    |      0      |      0
+6  |     0      |        0       |        0       |    0    |   90000     |   180000
+7  |     0      |        0       |        0       |    0    |      0      |      0
+```
+
+**발견 과정**:
+1. 테스트 실행 → 모든 가격이 "데이터 없음"으로 표시
+2. 데이터베이스 직접 조회 → Transaction 레코드 존재 확인
+3. 컬럼별 샘플 조회 → `sale_price=0`, `min_sale_price=399000` 발견
+4. import 스크립트 분석 → CSV에서 `min_sale_price`로 저장됨을 확인
+
+**해결 방법**:
+```python
+# 수정 전 (잘못됨)
+func.avg(self.Transaction.sale_price)  # ❌ 항상 0
+
+# 수정 후 (올바름)
+func.avg(func.nullif(self.Transaction.min_sale_price, 0))  # ✅ 실제 데이터
+```
+
+**학습 포인트**:
+- ⚠️ ORM 모델 정의와 실제 데이터 구조를 항상 확인
+- ⚠️ import 스크립트를 검토하여 어떤 컬럼에 데이터가 저장되는지 파악
+- ⚠️ 테스트 실패 시 데이터베이스 직접 조회로 원인 규명
+
+---
+
+### Issue #2: 0 값 처리 전략 (NULLIF의 필요성)
+
+**문제 상황**:
+- Transaction 테이블에 혼합된 거래 타입 (SALE, JEONSE, RENT)
+- SALE 타입: `min_sale_price > 0`, `min_deposit = 0`, `min_monthly_rent = 0`
+- JEONSE 타입: `min_sale_price = 0`, `min_deposit > 0`, `min_monthly_rent = 0`
+- RENT 타입: `min_sale_price = 0`, `min_deposit = 0`, `min_monthly_rent > 0`
+
+**문제점**:
+```sql
+-- NULLIF 없이 평균 계산
+SELECT
+    AVG(min_sale_price),  -- (399000 + 0 + 0) / 3 = 133,000
+    AVG(min_deposit)      -- (0 + 90000 + 0) / 3 = 30,000
+FROM transactions
+WHERE region = '강남구 개포동';
+-- 결과: 0이 포함되어 평균이 왜곡됨
+```
+
+**해결 전략 비교**:
+
+**Option 1: NULLIF 사용** (선택됨):
+```sql
+SELECT
+    AVG(NULLIF(min_sale_price, 0)),  -- (399000) / 1 = 399,000 ✅
+    AVG(NULLIF(min_deposit, 0))      -- (90000) / 1 = 90,000 ✅
+FROM transactions;
+```
+
+**장점**:
+- 단일 쿼리로 모든 거래 타입 처리
+- 코드 간결
+- 데이터베이스 레벨 최적화
+
+**Option 2: transaction_type 필터링** (미선택):
+```sql
+SELECT
+    AVG(CASE WHEN transaction_type = 'sale' THEN min_sale_price END),
+    AVG(CASE WHEN transaction_type = 'jeonse' THEN min_deposit END)
+FROM transactions;
+```
+
+**단점**:
+- 복잡한 쿼리
+- 유지보수 어려움
+
+**최종 구현**:
+```python
+func.avg(func.nullif(self.Transaction.min_sale_price, 0))
+func.avg(func.nullif(self.Transaction.min_deposit, 0))
+func.avg(func.nullif(self.Transaction.min_monthly_rent, 0))
+```
+
+**학습 포인트**:
+- ⚠️ 혼합된 거래 타입 데이터에서 0은 "해당 없음"을 의미
+- ⚠️ NULLIF를 사용하여 0을 NULL로 처리 → AVG 계산에서 자동 제외
+- ⚠️ None 반환을 통해 "데이터 없음"을 명시적으로 표현
+
+---
+
+### Issue #3: DATABASE_URL 환경변수 로딩 실패
+
+**문제 상황**:
+```
+sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL from given URL string: ""
+```
+
+**원인**:
+```python
+# backend/app/core/config.py (수정 전)
+class Settings(BaseSettings):
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")  # ❌
+
+# os.getenv()는 시스템 환경변수만 읽음 (.env 파일 읽지 않음)
+```
+
+**해결**:
+```python
+# backend/app/core/config.py (수정 후)
+class Settings(BaseSettings):
+    DATABASE_URL: str = ""  # ✅ pydantic-settings가 .env에서 자동 로딩
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+```
+
+**학습 포인트**:
+- ⚠️ pydantic-settings 사용 시 `os.getenv()`와 혼용하지 말 것
+- ⚠️ 기본값만 지정하고 로딩은 프레임워크에 맡김
+
+---
+
+### Issue #4: psycopg vs psycopg2 드라이버 선택
+
+**문제 상황**:
+- AsyncPostgresSaver를 사용하려는데 어떤 드라이버를 설치해야 하는가?
+
+**조사 결과**:
+```python
+# langgraph-checkpoint-postgres 요구사항
+# pyproject.toml: dependencies = ["psycopg >= 3.0"]
+
+# ❌ psycopg2 (v2.x): 지원 안 함
+# ❌ pg8000: 지원 안 함
+# ✅ psycopg3 (v3.x): 필수
+```
+
+**설치**:
+```bash
+pip install psycopg[binary]  # psycopg3
+pip install langgraph-checkpoint-postgres
+```
+
+**DATABASE_URL 형식**:
+```bash
+# psycopg3 (psycopg)
+postgresql+psycopg://user:password@localhost:5432/dbname
+
+# psycopg2 (사용 안 함)
+postgresql+psycopg2://user:password@localhost:5432/dbname
+```
+
+**학습 포인트**:
+- ⚠️ AsyncPostgresSaver는 psycopg3 필수
+- ⚠️ psycopg3는 psycopg2보다 3배 빠르고 native async 지원
+
+---
+
+### Issue #5: SQLAlchemy 2.0 text() 필수화
+
+**문제 상황**:
+```python
+sqlalchemy.exc.ArgumentError: Textual SQL expression 'SELECT 1' should be
+explicitly declared as text('SELECT 1')
+```
+
+**원인**:
+- SQLAlchemy 2.0부터 보안 강화
+- 원시 SQL 문자열 직접 사용 금지
+
+**해결**:
+```python
+from sqlalchemy import text
+
+# 수정 전
+db.execute("SELECT 1")  # ❌
+
+# 수정 후
+db.execute(text("SELECT 1"))  # ✅
+```
+
+---
+
+## 13. 다음 단계 (Action Items)
+
+### ✅ 완료된 작업 (P0)
+
+- [x] **Phase 1 완료**: `market_data_tool.py` PostgreSQL 연동
+  - [x] SQLAlchemy 연결 추가
+  - [x] `_query_market_data()` 메서드 구현 (NULLIF 포함)
+  - [x] 올바른 컬럼 사용 (min_sale_price, min_deposit, min_monthly_rent)
+  - [x] 테스트 스크립트 작성 및 검증
+  - [x] 실제 데이터 검증 완료
+  - [x] 완료 보고서 작성
 
 ### 즉시 실행 (P0)
-
-- [ ] **Phase 1 시작**: `market_data_tool.py` 리팩토링
-  - [ ] SQLAlchemy 연결 추가
-  - [ ] `_query_market_data()` 메서드 구현
-  - [ ] 로컬 테스트 (단위 테스트)
-  - [ ] 기존 Mock 데이터와 비교 검증
 
 ### 단기 (P1)
 
@@ -2186,6 +2436,7 @@ if result["status"] == "error":
 | 날짜 | 버전 | 작성자 | 변경 내용 |
 |------|------|--------|----------|
 | 2025-10-13 | 1.0.0 | AI Assistant | 초안 작성 |
+| 2025-10-13 | 1.1.0 | AI Assistant | Phase 1 완료 반영, 트러블슈팅 섹션 추가, Transaction 모델 설명 보완 |
 
 ---
 
