@@ -601,3 +601,918 @@
 2025-10-10 12:52:12 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Cursor object at 0x00000174EDDC62C0>) completed
 2025-10-10 12:52:12 - app.service_agent.supervisor.team_supervisor - DEBUG - [TeamSupervisor] Progress callback cleaned up for session: session-ad62a366-70a4-4718-bb63-163879865fd2
 2025-10-10 12:52:12 - app.api.chat_api - INFO - Query completed for session-ad62a366-70a4-4718-bb63-163879865fd2
+2025-10-13 14:58:47 - root - INFO - ================================================================================
+2025-10-13 14:58:47 - root - INFO - Logging configured successfully
+2025-10-13 14:58:47 - root - INFO - Log level: INFO
+2025-10-13 14:58:47 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 14:58:47 - root - INFO - ================================================================================
+2025-10-13 14:58:47 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 14:58:47 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 14:58:47 - app.main - INFO - ================================================================================
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 14:58:47 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 14:58:47 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 14:58:47 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 14:58:47 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 14:58:47 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 14:58:47 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 14:58:47 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 14:58:48 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 14:58:48 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 14:58:48 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 14:58:48 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 14:58:53 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 14:58:53 - chromadb.config - DEBUG - Starting component System
+2025-10-13 14:58:53 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 14:58:54 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 14:58:54 - app.service_agent.tools.hybrid_legal_search - ERROR - Embedding model initialization failed: Embedding model not found: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\models\KURE_v1
+2025-10-13 14:58:54 - app.service_agent.execution_agents.search_executor - WARNING - HybridLegalSearch initialization failed: Embedding model not found: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\models\KURE_v1
+2025-10-13 14:58:54 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 14:58:54 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 14:58:54 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 14:58:54 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 14:58:54 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 14:58:54 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 14:58:54 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 14:58:54 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 14:58:54 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 14:58:54 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 14:58:54 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 14:58:54 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 14:58:54 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 14:58:54 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 14:58:54 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 14:58:54 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 14:58:54 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 14:58:54 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 14:58:54 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 14:58:54 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2�� ����)
+2025-10-13 14:58:54 - app.main - INFO -    - Expected first response time: ~5�� (vs 7�� without pre-warming)
+2025-10-13 14:58:54 - app.main - INFO - ================================================================================
+2025-10-13 15:07:55 - root - INFO - ================================================================================
+2025-10-13 15:07:55 - root - INFO - Logging configured successfully
+2025-10-13 15:07:55 - root - INFO - Log level: INFO
+2025-10-13 15:07:55 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:07:55 - root - INFO - ================================================================================
+2025-10-13 15:07:55 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:07:56 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:07:56 - app.main - INFO - ================================================================================
+2025-10-13 15:07:56 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:07:56 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:07:56 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:07:56 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:07:56 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:07:56 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:07:56 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:07:56 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:07:56 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:07:57 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:07:57 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:07:57 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:07:57 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:07:57 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:08:06 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:08:06 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:08:06 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:08:06 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:08:06 - app.service_agent.tools.hybrid_legal_search - ERROR - Embedding model initialization failed: Embedding model not found: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\models\KURE_v1
+2025-10-13 15:08:06 - app.service_agent.execution_agents.search_executor - WARNING - HybridLegalSearch initialization failed: Embedding model not found: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\models\KURE_v1
+2025-10-13 15:08:06 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:08:06 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:08:06 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:08:06 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:08:06 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:08:06 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:08:06 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:08:06 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:08:06 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:08:06 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:08:06 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:08:06 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:08:06 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:08:06 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:08:06 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:08:06 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:08:06 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:08:06 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:08:06 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:08:06 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:08:06 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:08:06 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:08:06 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:08:06 - app.main - INFO - ================================================================================
+2025-10-13 15:09:47 - app.main - INFO - ================================================================================
+2025-10-13 15:09:47 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 15:09:47 - app.main - INFO - ================================================================================
+2025-10-13 15:09:50 - root - INFO - ================================================================================
+2025-10-13 15:09:50 - root - INFO - Logging configured successfully
+2025-10-13 15:09:50 - root - INFO - Log level: INFO
+2025-10-13 15:09:50 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:09:50 - root - INFO - ================================================================================
+2025-10-13 15:09:50 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:09:51 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:09:51 - app.main - INFO - ================================================================================
+2025-10-13 15:09:51 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:09:51 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:09:51 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:09:51 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:09:51 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:09:51 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:09:51 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:09:51 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:09:51 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:09:51 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:09:51 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:09:51 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:09:51 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:09:51 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:10:00 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:10:00 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:10:00 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:10:01 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:10:01 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 15:10:01 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:10:02 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:10:02 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:10:02 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:10:02 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:10:02 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:10:02 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:10:02 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:10:02 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:10:02 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:10:02 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:10:02 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:10:02 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:10:02 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:10:02 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:10:02 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:10:02 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:10:02 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:10:02 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:10:02 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:10:02 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:10:02 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:10:02 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:10:02 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:10:02 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:10:02 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:10:02 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:10:02 - app.main - INFO - ================================================================================
+2025-10-13 15:33:01 - app.main - INFO - ================================================================================
+2025-10-13 15:33:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 15:33:01 - app.main - INFO - ================================================================================
+2025-10-13 15:33:02 - root - INFO - ================================================================================
+2025-10-13 15:33:02 - root - INFO - Logging configured successfully
+2025-10-13 15:33:02 - root - INFO - Log level: INFO
+2025-10-13 15:33:02 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:33:02 - root - INFO - ================================================================================
+2025-10-13 15:33:02 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:33:03 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:33:03 - app.main - INFO - ================================================================================
+2025-10-13 15:33:03 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:33:03 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:33:03 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:33:03 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:33:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:33:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:33:03 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:33:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:33:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:33:03 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:33:03 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:33:03 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:33:03 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:33:03 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:33:12 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:33:12 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:33:12 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:33:13 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:33:13 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 15:33:13 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:33:14 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:33:14 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:33:14 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:33:14 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:33:14 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:33:14 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:33:14 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:33:14 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:33:14 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:33:14 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:33:14 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:33:14 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:33:14 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:33:14 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:33:14 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:33:14 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:33:14 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:33:14 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:33:14 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:33:14 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:33:14 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:33:14 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:33:14 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:33:14 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:33:14 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:33:14 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:33:14 - app.main - INFO - ================================================================================
+2025-10-13 15:39:45 - app.main - INFO - ================================================================================
+2025-10-13 15:39:45 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 15:39:45 - app.main - INFO - ================================================================================
+2025-10-13 15:39:47 - root - INFO - ================================================================================
+2025-10-13 15:39:47 - root - INFO - Logging configured successfully
+2025-10-13 15:39:47 - root - INFO - Log level: INFO
+2025-10-13 15:39:47 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:39:47 - root - INFO - ================================================================================
+2025-10-13 15:39:47 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:39:48 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:39:48 - app.main - INFO - ================================================================================
+2025-10-13 15:39:48 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:39:48 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:39:48 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:39:48 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:39:48 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:39:48 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:39:48 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:39:48 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:39:48 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:39:48 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:39:48 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:39:48 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:39:48 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:39:48 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:39:57 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:39:57 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:39:57 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:39:57 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:39:57 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 15:39:57 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:39:59 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:39:59 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:39:59 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:39:59 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:39:59 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:39:59 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:39:59 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:39:59 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:39:59 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:39:59 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:39:59 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:39:59 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:39:59 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:39:59 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:39:59 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:39:59 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:39:59 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:39:59 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:39:59 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:39:59 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:39:59 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:39:59 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:39:59 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:39:59 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:39:59 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:39:59 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:39:59 - app.main - INFO - ================================================================================
+2025-10-13 15:59:01 - app.main - INFO - ================================================================================
+2025-10-13 15:59:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 15:59:01 - app.main - INFO - ================================================================================
+2025-10-13 15:59:02 - root - INFO - ================================================================================
+2025-10-13 15:59:02 - root - INFO - Logging configured successfully
+2025-10-13 15:59:02 - root - INFO - Log level: INFO
+2025-10-13 15:59:02 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:59:02 - root - INFO - ================================================================================
+2025-10-13 15:59:02 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:59:03 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:59:03 - app.main - INFO - ================================================================================
+2025-10-13 15:59:03 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:59:03 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:59:03 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:59:03 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:59:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:59:03 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:59:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:59:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:59:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:59:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:04 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:59:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:59:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:59:13 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:59:13 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:59:13 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:59:14 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:59:14 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 15:59:14 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:59:15 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:59:15 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:59:15 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:59:15 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:59:15 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:59:15 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:59:15 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:59:15 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:59:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:59:15 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:59:15 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:59:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:59:15 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:15 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:59:15 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:59:15 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:59:15 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:59:15 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:59:15 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:59:15 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:59:15 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:59:15 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:59:15 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:59:15 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:59:15 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:59:15 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:59:15 - app.main - INFO - ================================================================================
+2025-10-13 15:59:17 - root - INFO - ================================================================================
+2025-10-13 15:59:17 - root - INFO - Logging configured successfully
+2025-10-13 15:59:17 - root - INFO - Log level: INFO
+2025-10-13 15:59:17 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 15:59:17 - root - INFO - ================================================================================
+2025-10-13 15:59:17 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 15:59:18 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 15:59:18 - app.main - INFO - ================================================================================
+2025-10-13 15:59:18 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 15:59:18 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 15:59:18 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 15:59:18 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:18 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:59:18 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:59:18 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 15:59:18 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 15:59:18 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 15:59:18 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 15:59:18 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:18 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 15:59:18 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 15:59:18 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:59:27 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 15:59:27 - chromadb.config - DEBUG - Starting component System
+2025-10-13 15:59:27 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 15:59:28 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 15:59:28 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 15:59:28 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:59:29 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 15:59:29 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:59:29 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 15:59:29 - app.service_agent.tools.market_data_tool - INFO - Market data loaded: 6 regions
+2025-10-13 15:59:29 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 15:59:29 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 15:59:29 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 15:59:29 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 15:59:29 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 15:59:29 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 15:59:29 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 15:59:29 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 15:59:29 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 15:59:29 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 15:59:29 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 15:59:29 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 15:59:29 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 15:59:29 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 15:59:29 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 15:59:29 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 15:59:29 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 15:59:29 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 15:59:29 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 15:59:29 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 15:59:29 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 15:59:29 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 15:59:29 - app.main - INFO - ================================================================================
+2025-10-13 16:04:01 - app.main - INFO - ================================================================================
+2025-10-13 16:04:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:04:01 - app.main - INFO - ================================================================================
+2025-10-13 16:04:02 - root - INFO - ================================================================================
+2025-10-13 16:04:02 - root - INFO - Logging configured successfully
+2025-10-13 16:04:02 - root - INFO - Log level: INFO
+2025-10-13 16:04:02 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:04:02 - root - INFO - ================================================================================
+2025-10-13 16:04:02 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:04:03 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:04:03 - app.main - INFO - ================================================================================
+2025-10-13 16:04:03 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:04:03 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:04:03 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:04:03 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:04:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:04:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:04:03 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:04:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:04:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:04:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:04:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:04:04 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:04:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:04:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:04:12 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:04:12 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:04:12 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:04:13 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:04:13 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:04:13 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:04:14 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:04:14 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:04:14 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:04:15 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:04:15 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:04:15 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:04:15 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:04:15 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:04:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:04:15 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:04:15 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:04:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:04:15 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:04:15 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:04:15 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:04:15 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:04:15 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:04:15 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:04:15 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:04:15 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:04:15 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:04:15 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:04:15 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:04:15 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:04:15 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:04:15 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:04:15 - app.main - INFO - ================================================================================
+2025-10-13 16:06:01 - app.main - INFO - ================================================================================
+2025-10-13 16:06:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:06:01 - app.main - INFO - ================================================================================
+2025-10-13 16:06:03 - root - INFO - ================================================================================
+2025-10-13 16:06:03 - root - INFO - Logging configured successfully
+2025-10-13 16:06:03 - root - INFO - Log level: INFO
+2025-10-13 16:06:03 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:06:03 - root - INFO - ================================================================================
+2025-10-13 16:06:03 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:06:04 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:06:04 - app.main - INFO - ================================================================================
+2025-10-13 16:06:04 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:06:04 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:06:04 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:06:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:06:04 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:06:04 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:06:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:06:04 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:06:04 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:06:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:06:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:06:04 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:06:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:06:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:06:13 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:06:13 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:06:13 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:06:14 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:06:14 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:06:14 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:06:15 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:06:15 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:06:15 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:06:15 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:06:15 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:06:15 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:06:15 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:06:15 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:06:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:06:15 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:06:15 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:06:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:06:15 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:06:15 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:06:15 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:06:15 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:06:15 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:06:15 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:06:15 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:06:15 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:06:15 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:06:15 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:06:15 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:06:15 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:06:15 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:06:15 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:06:15 - app.main - INFO - ================================================================================
+2025-10-13 16:07:01 - app.main - INFO - ================================================================================
+2025-10-13 16:07:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:07:01 - app.main - INFO - ================================================================================
+2025-10-13 16:07:02 - root - INFO - ================================================================================
+2025-10-13 16:07:02 - root - INFO - Logging configured successfully
+2025-10-13 16:07:02 - root - INFO - Log level: INFO
+2025-10-13 16:07:02 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:07:02 - root - INFO - ================================================================================
+2025-10-13 16:07:02 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:07:03 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:07:03 - app.main - INFO - ================================================================================
+2025-10-13 16:07:03 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:07:03 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:07:03 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:07:03 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:07:03 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:07:03 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:07:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:07:04 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:07:04 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:07:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:07:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:07:04 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:07:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:07:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:07:14 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:07:14 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:07:14 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:07:14 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:07:14 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:07:14 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:07:16 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:07:16 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:07:16 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:07:16 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:07:16 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:07:16 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:07:16 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:07:16 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:07:16 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:07:16 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:07:16 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:07:16 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:07:16 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:07:16 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:07:16 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:07:16 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:07:16 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:07:16 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:07:16 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:07:16 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:07:16 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:07:16 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:07:16 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:07:16 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:07:16 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:07:16 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:07:16 - app.main - INFO - ================================================================================
+2025-10-13 16:08:01 - app.main - INFO - ================================================================================
+2025-10-13 16:08:01 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:08:01 - app.main - INFO - ================================================================================
+2025-10-13 16:08:03 - root - INFO - ================================================================================
+2025-10-13 16:08:03 - root - INFO - Logging configured successfully
+2025-10-13 16:08:03 - root - INFO - Log level: INFO
+2025-10-13 16:08:03 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:08:03 - root - INFO - ================================================================================
+2025-10-13 16:08:03 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:08:04 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:08:04 - app.main - INFO - ================================================================================
+2025-10-13 16:08:04 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:08:04 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:08:04 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:08:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:08:04 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:08:04 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:08:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:08:04 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:08:04 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:08:04 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:08:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:08:04 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:08:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:08:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:08:12 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:08:13 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:08:13 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:08:13 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:08:13 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:08:13 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:08:14 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:08:14 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:08:14 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:08:15 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:08:15 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:08:15 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:08:15 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:08:15 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:08:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:08:15 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:08:15 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:08:15 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:08:15 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:08:15 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:08:15 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:08:15 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:08:15 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:08:15 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:08:15 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:08:15 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:08:15 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:08:15 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:08:15 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:08:15 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:08:15 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:08:15 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:08:15 - app.main - INFO - ================================================================================
+2025-10-13 16:28:37 - app.main - INFO - ================================================================================
+2025-10-13 16:28:37 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:28:37 - app.main - INFO - ================================================================================
+2025-10-13 16:28:39 - root - INFO - ================================================================================
+2025-10-13 16:28:39 - root - INFO - Logging configured successfully
+2025-10-13 16:28:39 - root - INFO - Log level: INFO
+2025-10-13 16:28:39 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:28:39 - root - INFO - ================================================================================
+2025-10-13 16:28:39 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:28:40 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:28:40 - app.main - INFO - ================================================================================
+2025-10-13 16:28:40 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:28:40 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:28:40 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:28:40 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:28:40 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:28:40 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:28:40 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:28:40 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:28:40 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:28:41 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:28:41 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:28:41 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:28:41 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:28:41 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:28:50 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:28:51 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:28:51 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:28:51 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:28:51 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:28:51 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:28:52 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:28:52 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:28:52 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:28:53 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:28:53 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:28:53 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:28:53 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:28:53 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:28:53 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:28:53 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:28:53 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:28:53 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:28:53 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:28:53 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:28:53 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:28:53 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:28:53 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:28:53 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:28:53 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:28:53 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:28:53 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:28:53 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:28:53 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:28:53 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:28:53 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:28:53 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:28:53 - app.main - INFO - ================================================================================
+2025-10-13 16:28:55 - root - INFO - ================================================================================
+2025-10-13 16:28:55 - root - INFO - Logging configured successfully
+2025-10-13 16:28:55 - root - INFO - Log level: INFO
+2025-10-13 16:28:55 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:28:55 - root - INFO - ================================================================================
+2025-10-13 16:28:55 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:28:55 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:28:55 - app.main - INFO - ================================================================================
+2025-10-13 16:28:55 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:28:55 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:28:55 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:28:55 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:28:55 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:28:55 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:28:56 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:28:56 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:28:56 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:28:56 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:28:56 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:28:56 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:28:56 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:28:56 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:29:05 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:29:05 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:29:05 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:29:06 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:29:06 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:29:06 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:29:07 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:29:07 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:29:07 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:29:08 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:29:08 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:29:08 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:29:08 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:29:08 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:29:08 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:29:08 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:29:08 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:29:08 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:29:08 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:29:08 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:29:08 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:29:08 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:29:08 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:29:08 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:29:08 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:29:08 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:29:08 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:29:08 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:29:08 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:29:08 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:29:08 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:29:08 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:29:08 - app.main - INFO - ================================================================================
+2025-10-13 16:33:54 - app.main - INFO - ================================================================================
+2025-10-13 16:33:54 - app.main - INFO - 🛑 Application Shutdown: Cleaning up resources...
+2025-10-13 16:33:54 - app.main - INFO - ================================================================================
+2025-10-13 16:33:56 - root - INFO - ================================================================================
+2025-10-13 16:33:56 - root - INFO - Logging configured successfully
+2025-10-13 16:33:56 - root - INFO - Log level: INFO
+2025-10-13 16:33:56 - root - INFO - Log file: C:\kdy\Projects\holmesnyangz\beta_v001\backend\logs\app.log
+2025-10-13 16:33:56 - root - INFO - ================================================================================
+2025-10-13 16:33:56 - app.api.ws_manager - INFO - ConnectionManager initialized
+2025-10-13 16:33:57 - app.api.error_handlers - INFO - Error handlers registered
+2025-10-13 16:33:57 - app.main - INFO - ================================================================================
+2025-10-13 16:33:57 - app.main - INFO - 🚀 Application Startup: Pre-warming TeamBasedSupervisor...
+2025-10-13 16:33:57 - app.api.chat_api - INFO - 🚀 Creating singleton TeamBasedSupervisor instance...
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - Registering teams to Registry...
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_registry - INFO - Agent 'search_team' registered successfully (team: search, enabled: True)
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - SearchTeam registered successfully
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_registry - INFO - Agent 'analysis_team' registered successfully (team: analysis, enabled: True)
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - AnalysisTeam registered successfully
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_registry - INFO - Agent 'document_team' registered successfully (team: document, enabled: True)
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - DocumentTeam registered successfully
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - Registration complete. Registered agents: ['search_team', 'analysis_team', 'document_team']
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - Teams: ['search', 'analysis', 'document']
+2025-10-13 16:33:57 - app.service_agent.foundation.agent_adapter - INFO - Agent system initialized
+2025-10-13 16:33:57 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:33:57 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:33:57 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:33:57 - app.service_agent.llm_manager.llm_service - DEBUG - Created new sync OpenAI client
+2025-10-13 16:33:57 - httpx - DEBUG - load_ssl_context verify=True cert=None trust_env=True http2=False
+2025-10-13 16:33:57 - httpx - DEBUG - load_verify_locations cafile='C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\venv\\Lib\\site-packages\\certifi\\cacert.pem'
+2025-10-13 16:33:57 - app.service_agent.llm_manager.llm_service - DEBUG - Created new async OpenAI client
+2025-10-13 16:33:57 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:33:57 - app.service_agent.execution_agents.search_executor - INFO - ✅ LLMService initialized successfully in SearchExecutor
+2025-10-13 16:33:57 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam available agents: {'search_agent': False}
+2025-10-13 16:33:57 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:34:02 - app.service_agent.tools.hybrid_legal_search - INFO - SQLite DB connected: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\sqlite_db\legal_metadata.db
+2025-10-13 16:34:02 - chromadb.config - DEBUG - Starting component System
+2025-10-13 16:34:02 - chromadb.config - DEBUG - Starting component Posthog
+2025-10-13 16:34:03 - app.service_agent.tools.hybrid_legal_search - INFO - ChromaDB loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\storage\legal_info\chroma_db (1700 documents)
+2025-10-13 16:34:03 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-10-13 16:34:03 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:34:03 - app.service_agent.tools.hybrid_legal_search - INFO - Embedding model loaded: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\ml_models\KURE_v1
+2025-10-13 16:34:03 - app.service_agent.tools.hybrid_legal_search - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:34:03 - app.service_agent.execution_agents.search_executor - INFO - HybridLegalSearch initialized successfully
+2025-10-13 16:34:04 - app.service_agent.tools.market_data_tool - INFO - MarketDataTool initialized with PostgreSQL connection
+2025-10-13 16:34:04 - app.service_agent.execution_agents.search_executor - INFO - MarketDataTool initialized successfully
+2025-10-13 16:34:04 - app.service_agent.tools.loan_data_tool - INFO - Loan data loaded: 3 loan types
+2025-10-13 16:34:04 - app.service_agent.execution_agents.search_executor - INFO - LoanDataTool initialized successfully
+2025-10-13 16:34:04 - app.service_agent.execution_agents.search_executor - INFO - SearchTeam subgraph built successfully
+2025-10-13 16:34:04 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam available agents: {'document_agent': False, 'review_agent': False}
+2025-10-13 16:34:04 - app.service_agent.tools.lease_contract_generator_tool - INFO - LeaseContractGeneratorTool initialized (docx: False)
+2025-10-13 16:34:04 - app.service_agent.execution_agents.document_executor - INFO - LeaseContractGeneratorTool loaded successfully
+2025-10-13 16:34:04 - app.service_agent.execution_agents.document_executor - INFO - DocumentTeam subgraph built successfully
+2025-10-13 16:34:04 - app.service_agent.llm_manager.prompt_manager - DEBUG - PromptManager initialized with directory: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\llm_manager\prompts
+2025-10-13 16:34:04 - app.service_agent.tools.contract_analysis_tool - INFO - ContractAnalysisTool initialized
+2025-10-13 16:34:04 - app.service_agent.tools.market_analysis_tool - INFO - MarketAnalysisTool initialized
+2025-10-13 16:34:04 - app.service_agent.tools.roi_calculator_tool - INFO - ROICalculatorTool initialized
+2025-10-13 16:34:04 - app.service_agent.tools.loan_simulator_tool - INFO - LoanSimulatorTool initialized
+2025-10-13 16:34:04 - app.service_agent.tools.policy_matcher_tool - INFO - PolicyMatcherTool initialized with 11 policies
+2025-10-13 16:34:04 - app.service_agent.foundation.decision_logger - INFO - DecisionLogger initialized: C:\kdy\Projects\holmesnyangz\beta_v001\backend\data\system\agent_logging\decisions.db
+2025-10-13 16:34:04 - app.service_agent.execution_agents.analysis_executor - INFO - AnalysisTeam subgraph built successfully
+2025-10-13 16:34:04 - app.service_agent.supervisor.team_supervisor - INFO - Team-based workflow graph built successfully
+2025-10-13 16:34:04 - app.service_agent.supervisor.team_supervisor - INFO - TeamBasedSupervisor initialized with 3 teams (checkpointing: True)
+2025-10-13 16:34:04 - app.api.chat_api - INFO - ✅ Singleton TeamBasedSupervisor created successfully
+2025-10-13 16:34:04 - app.main - INFO - ✅ TeamBasedSupervisor pre-warmed successfully
+2025-10-13 16:34:04 - app.main - INFO -    - First request will skip Supervisor initialization (~2.2초 단축)
+2025-10-13 16:34:04 - app.main - INFO -    - Expected first response time: ~5초 (vs 7초 without pre-warming)
+2025-10-13 16:34:04 - app.main - INFO - ================================================================================
