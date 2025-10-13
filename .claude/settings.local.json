@@ -30,7 +30,8 @@
       "Bash(npm run dev:*)",
       "Bash(git check-ignore:*)",
       "Bash(npm run build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(iconv:*)"
     ],
     "deny": [],
     "ask": []
