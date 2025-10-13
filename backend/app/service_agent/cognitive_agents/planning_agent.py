@@ -362,9 +362,9 @@ class PlanningAgent:
         available_agents = {
             "search_team": {
                 "name": "search_team",
-                "capabilities": "법률 검색, 부동산 시세 조회, 대출 상품 검색",
-                "tools": ["legal_search", "market_data", "loan_data"],
-                "use_cases": ["법률 상담", "시세 조회", "대출 정보"]
+                "capabilities": "법률 검색, 부동산 시세 조회, 개별 매물 검색, 대출 상품 검색",
+                "tools": ["legal_search", "market_data", "real_estate_search", "loan_data"],
+                "use_cases": ["법률 상담", "시세 조회", "매물 검색", "대출 정보"]
             },
             "analysis_team": {
                 "name": "analysis_team",
