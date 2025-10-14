@@ -329,6 +329,126 @@ class LLMService:
             f"(prompt: {usage.prompt_tokens}, completion: {usage.completion_tokens})"
         )
 
+    async def generate_final_response(
+        self,
+        query: str,
+        aggregated_results: Dict[str, Any],
+        intent_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        최종 사용자 응답 생성 (팀 결과 종합)
+
+        Args:
+            query: 사용자 질문
+            aggregated_results: 팀별 수집 결과 (search, analysis, document)
+            intent_info: 의도 분석 정보 (intent_type, confidence, keywords, entities)
+
+        Returns:
+            {
+                "type": "answer",
+                "answer": "생성된 답변",
+                "teams_used": ["search", "analysis"],
+                "data": {팀별 결과}
+            }
+        """
+        import json
+
+        # 입력 검증
+        if not query:
+            logger.warning("Empty query provided to generate_final_response")
+            return self._generate_error_response("질문이 비어있습니다.")
+
+        if not aggregated_results:
+            logger.warning("No aggregated results provided to generate_final_response")
+            return self._generate_error_response("수집된 정보가 없습니다.")
+
+        # Intent 정보 추출
+        intent_type = intent_info.get("intent_type", "알 수 없음")
+        intent_confidence = intent_info.get("confidence", 0.0)
+        keywords = intent_info.get("keywords", [])
+
+        # 프롬프트 변수 구성
+        try:
+            # aggregated_results를 JSON으로 변환 (최대 4000자)
+            aggregated_json = self._safe_json_dumps(aggregated_results)[:4000]
+
+            # 키워드를 문자열로 변환
+            keywords_str = ", ".join(keywords) if keywords else "없음"
+
+            # 신뢰도를 퍼센트로 변환
+            confidence_str = f"{intent_confidence:.0%}"
+
+            variables = {
+                "query": query,
+                "intent_type": intent_type,
+                "intent_confidence": confidence_str,
+                "keywords": keywords_str,
+                "aggregated_results": aggregated_json
+            }
+
+            # LLM 호출 (response_synthesis 프롬프트 사용)
+            answer = await self.complete_async(
+                prompt_name="response_synthesis",
+                variables=variables,
+                temperature=0.3,
+                max_tokens=1000
+            )
+
+            logger.info(f"Final response generated successfully for query: {query[:50]}...")
+
+            return {
+                "type": "answer",
+                "answer": answer,
+                "teams_used": list(aggregated_results.keys()),
+                "data": aggregated_results
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to generate final response: {e}", exc_info=True)
+            return self._generate_error_response(f"응답 생성 중 오류가 발생했습니다: {str(e)}")
+
+    def _safe_json_dumps(self, obj: Any) -> str:
+        """
+        객체를 안전하게 JSON 문자열로 변환 (datetime 처리 포함)
+
+        Args:
+            obj: 변환할 객체
+
+        Returns:
+            JSON 문자열
+        """
+        from datetime import datetime
+        import json
+
+        def json_serial(obj):
+            """datetime 등 기본 JSON 직렬화 불가능한 객체 처리"""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
+        try:
+            return json.dumps(obj, default=json_serial, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to serialize object to JSON: {e}")
+            return str(obj)
+
+    def _generate_error_response(self, error_message: str) -> Dict[str, Any]:
+        """
+        에러 응답 생성
+
+        Args:
+            error_message: 에러 메시지
+
+        Returns:
+            에러 응답 딕셔너리
+        """
+        return {
+            "type": "error",
+            "message": error_message,
+            "teams_used": [],
+            "data": {}
+        }
+
 
 # ============ 편의 함수 ============
 
