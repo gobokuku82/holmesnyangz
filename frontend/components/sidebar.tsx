@@ -55,8 +55,10 @@ export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProp
         <div className="p-4 border-b border-sidebar-border">
           <Button
             onClick={() => {
-              // localStorage 초기화
+              // localStorage 초기화 (메시지 + chat_session_id)
               localStorage.removeItem('chat-messages')
+              localStorage.removeItem('current_chat_session_id')
+              console.log('[Sidebar] Cleared chat messages and chat_session_id')
               // 채팅 페이지로 이동
               onPageChange("chat")
               // 페이지 새로고침으로 초기화

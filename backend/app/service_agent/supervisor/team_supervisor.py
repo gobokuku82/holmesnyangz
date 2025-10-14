@@ -848,12 +848,16 @@ class TeamBasedSupervisor:
                     if not response_summary:
                         response_summary = f"{response.get('type', 'response')} 생성 완료"
 
+                    # chat_session_id 추출 (GPT-style)
+                    chat_session_id = state.get("chat_session_id")
+
                     # 대화 저장
                     await memory_service.save_conversation(
                         user_id=user_id,
                         query=state.get("query", ""),
                         response_summary=response_summary,
                         relevance="RELEVANT",
+                        session_id=chat_session_id,
                         intent_detected=intent_type,
                         entities_mentioned=analyzed_intent.get("entities", {}),
                         conversation_metadata={
@@ -1043,6 +1047,7 @@ class TeamBasedSupervisor:
         self,
         query: str,
         session_id: str = "default",
+        chat_session_id: Optional[str] = None,
         user_id: Optional[int] = None,
         progress_callback: Optional[Callable[[str, dict], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
@@ -1051,7 +1056,8 @@ class TeamBasedSupervisor:
 
         Args:
             query: 사용자 쿼리
-            session_id: 세션 ID
+            session_id: 세션 ID (HTTP/WebSocket)
+            chat_session_id: 채팅 세션 ID (GPT-style, optional)
             user_id: 사용자 ID (Long-term Memory용, 없으면 None)
             progress_callback: 진행 상황 콜백 함수 (WebSocket 전송용)
                                async def callback(event_type: str, event_data: dict)
@@ -1062,6 +1068,8 @@ class TeamBasedSupervisor:
         logger.info(f"[TeamSupervisor] Processing query (streaming): {query[:100]}...")
         if user_id:
             logger.info(f"[TeamSupervisor] User ID: {user_id} (Long-term Memory enabled)")
+        if chat_session_id:
+            logger.info(f"[TeamSupervisor] Chat session ID: {chat_session_id} (GPT-style)")
 
         # Checkpointer 초기화 (최초 1회)
         await self._ensure_checkpointer()
@@ -1075,6 +1083,7 @@ class TeamBasedSupervisor:
         initial_state = MainSupervisorState(
             query=query,
             session_id=session_id,
+            chat_session_id=chat_session_id,  # GPT-style 채팅 세션 ID
             request_id=f"req_{datetime.now().timestamp()}",
             user_id=user_id,  # Long-term Memory용
             planning_state=None,

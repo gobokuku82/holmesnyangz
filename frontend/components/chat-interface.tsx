@@ -41,6 +41,7 @@ interface ChatInterfaceProps {
 
 const STORAGE_KEY = 'chat-messages'
 const MAX_STORED_MESSAGES = 50
+const CHAT_SESSION_KEY = 'current_chat_session_id'
 
 export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader }: ChatInterfaceProps) {
   const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
@@ -60,6 +61,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
   })
   const [todos, setTodos] = useState<ExecutionStepState[]>([])
   const [wsConnected, setWsConnected] = useState(false)
+  const [chatSessionId, setChatSessionId] = useState<string>("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const wsClientRef = useRef<ChatWSClient | null>(null)
 
@@ -70,6 +72,22 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     "관리비의 부과 대상과 납부 의무자는 누구인가요?",
     "부동산 등기에서 사용되는 전문 용어들은 무엇인가요?",
   ]
+
+  // chat_session_id 생성 또는 로드 (GPT-style)
+  useEffect(() => {
+    let currentChatSessionId = localStorage.getItem(CHAT_SESSION_KEY)
+
+    if (!currentChatSessionId) {
+      // 새로운 chat_session_id 생성
+      currentChatSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem(CHAT_SESSION_KEY, currentChatSessionId)
+      console.log('[ChatInterface] Created new chat_session_id:', currentChatSessionId)
+    } else {
+      console.log('[ChatInterface] Loaded existing chat_session_id:', currentChatSessionId)
+    }
+
+    setChatSessionId(currentChatSessionId)
+  }, [])
 
   // WebSocket 초기화
   useEffect(() => {
@@ -377,12 +395,15 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
       startTime: Date.now()
     })
 
-    // WebSocket으로 쿼리 전송
+    // WebSocket으로 쿼리 전송 (chat_session_id 포함)
     wsClientRef.current.send({
       type: "query",
       query: content,
+      chat_session_id: chatSessionId,
       enable_checkpointing: true
     })
+
+    console.log('[ChatInterface] Sent query with chat_session_id:', chatSessionId)
 
     // 나머지 처리는 handleWSMessage에서 실시간으로 처리됨
   }

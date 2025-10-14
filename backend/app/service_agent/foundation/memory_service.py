@@ -107,6 +107,7 @@ class LongTermMemoryService:
         query: str,
         response_summary: str,
         relevance: str,
+        session_id: Optional[str] = None,
         intent_detected: Optional[str] = None,
         entities_mentioned: Optional[Dict[str, Any]] = None,
         conversation_metadata: Optional[Dict[str, Any]] = None
@@ -119,6 +120,7 @@ class LongTermMemoryService:
             query: 사용자 쿼리
             response_summary: 응답 요약 (100-200자 정도)
             relevance: 관련성 ("RELEVANT" or "IRRELEVANT")
+            session_id: 채팅 세션 ID (GPT-style)
             intent_detected: 감지된 의도
             entities_mentioned: 언급된 엔티티 (JSONB)
             conversation_metadata: 추가 메타데이터 (teams_used, response_time 등)
@@ -132,6 +134,7 @@ class LongTermMemoryService:
                 query=query,
                 response_summary=response_summary,
                 relevance=relevance,
+                session_id=session_id,
                 intent_detected=intent_detected,
                 entities_mentioned=entities_mentioned,
                 conversation_metadata=conversation_metadata

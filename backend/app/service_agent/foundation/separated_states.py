@@ -291,6 +291,7 @@ class MainSupervisorState(TypedDict, total=False):
     # Core fields (required)
     query: str
     session_id: str
+    chat_session_id: Optional[str]  # GPT-style 채팅 세션 ID (conversation_memories.session_id와 매핑)
     request_id: str
 
     # Planning
