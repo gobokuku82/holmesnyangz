@@ -23,7 +23,7 @@ class Session(Base):
     session_id = Column(String(100), primary_key=True, index=True)
 
     # User & Metadata
-    user_id = Column(String(100), nullable=True)
+    user_id = Column(Integer, nullable=True, index=True)
     session_metadata = Column("metadata", Text, nullable=True)  # JSON string (mapped to 'metadata' in DB)
 
     # Timestamps
