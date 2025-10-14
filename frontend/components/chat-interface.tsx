@@ -25,11 +25,24 @@ interface Message {
   executionSteps?: ExecutionStep[]
 }
 
-interface ChatInterfaceProps {
-  onSplitView: (agentType: PageType) => void
+interface ConversationMemory {
+  id: string
+  query: string
+  response_summary: string
+  relevance: string
+  intent_detected: string
+  created_at: string
 }
 
-export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps) {
+interface ChatInterfaceProps {
+  onSplitView: (agentType: PageType) => void
+  onRegisterMemoryLoader?: (loader: (memory: ConversationMemory) => void) => void
+}
+
+const STORAGE_KEY = 'chat-messages'
+const MAX_STORED_MESSAGES = 50
+
+export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader }: ChatInterfaceProps) {
   const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -97,6 +110,75 @@ export function ChatInterface({ onSplitView: _onSplitView }: ChatInterfaceProps)
       }
     }
   }, [messages])
+
+  // localStorage에 메시지 저장 (자동)
+  useEffect(() => {
+    if (messages.length > 1) { // 초기 환영 메시지 제외
+      const recentMessages = messages.slice(-MAX_STORED_MESSAGES) // 최근 50개만 저장
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recentMessages))
+    }
+  }, [messages])
+
+  // localStorage에서 메시지 복원 (초기 로드)
+  useEffect(() => {
+    const savedMessages = localStorage.getItem(STORAGE_KEY)
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages)
+        setMessages(parsed.map((m: Message) => ({
+          ...m,
+          timestamp: new Date(m.timestamp) // Date 객체 복원
+        })))
+        console.log('[ChatInterface] Restored messages from localStorage:', parsed.length)
+      } catch (e) {
+        console.error('[ChatInterface] Failed to restore messages:', e)
+      }
+    }
+  }, []) // 빈 배열: 최초 1회만 실행
+
+  // Memory 로드 함수 등록
+  useEffect(() => {
+    if (onRegisterMemoryLoader) {
+      onRegisterMemoryLoader(loadMemoryConversation)
+    }
+  }, [onRegisterMemoryLoader])
+
+  // Memory에서 대화 로드
+  const loadMemoryConversation = (memory: ConversationMemory) => {
+    console.log('[ChatInterface] Loading memory conversation:', memory.id)
+
+    // 사용자 질문 메시지 추가
+    const userMessage: Message = {
+      id: `memory-user-${memory.id}`,
+      type: "user",
+      content: memory.query,
+      timestamp: new Date(memory.created_at)
+    }
+
+    // 봇 응답 메시지 추가 (요약본)
+    const botMessage: Message = {
+      id: `memory-bot-${memory.id}`,
+      type: "bot",
+      content: memory.response_summary,
+      timestamp: new Date(memory.created_at)
+    }
+
+    setMessages(prev => [...prev, userMessage, botMessage])
+  }
+
+  // 채팅 기록 삭제
+  const clearHistory = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    setMessages([
+      {
+        id: "1",
+        type: "bot",
+        content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
+        timestamp: new Date()
+      }
+    ])
+    console.log('[ChatInterface] Chat history cleared')
+  }
 
   // WebSocket 메시지 핸들러
   const handleWSMessage = (message: WSMessage) => {

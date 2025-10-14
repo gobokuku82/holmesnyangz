@@ -17,6 +17,7 @@ export default function HomePage() {
   const [isSplitView, setIsSplitView] = useState(false)
   const [splitContent, setSplitContent] = useState<PageType | null>(null)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [loadMemory, setLoadMemory] = useState<((memory: any) => void) | null>(null)
 
   const handlePageChange = (page: PageType) => {
     setCurrentPage(page)
@@ -38,7 +39,7 @@ export default function HomePage() {
   const renderMainContent = () => {
     switch (currentPage) {
       case "chat":
-        return <ChatInterface onSplitView={handleSplitView} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={(loader) => setLoadMemory(() => loader)} />
       case "map":
         return <MapInterface />
       case "analysis":
@@ -48,7 +49,7 @@ export default function HomePage() {
       case "consultation":
         return <ConsultationAgent />
       default:
-        return <ChatInterface onSplitView={handleSplitView} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={(loader) => setLoadMemory(() => loader)} />
     }
   }
 
@@ -89,7 +90,7 @@ export default function HomePage() {
         transition-transform duration-300 ease-in-out
       `}
       >
-        <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
+        <Sidebar currentPage={currentPage} onPageChange={handlePageChange} onLoadMemory={loadMemory} />
       </div>
 
       <div className="flex-1 flex">

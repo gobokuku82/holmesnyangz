@@ -3,14 +3,16 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight } from "lucide-react"
+import { MemoryHistory } from "@/components/memory-history"
 import type { PageType } from "@/app/page"
 
 interface SidebarProps {
   currentPage: PageType
   onPageChange: (page: PageType) => void
+  onLoadMemory: ((memory: any) => void) | null
 }
 
-export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const menuItems = [
@@ -109,6 +111,9 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
           </div>
         )}
       </nav>
+
+      {/* Memory History */}
+      <MemoryHistory isCollapsed={isCollapsed} onLoadMemory={onLoadMemory} />
 
       {/* Footer */}
       {!isCollapsed && (
