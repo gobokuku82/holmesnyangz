@@ -147,7 +147,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
   const loadMemoryConversation = (memory: ConversationMemory) => {
     console.log('[ChatInterface] Loading memory conversation:', memory.id)
 
-    // 사용자 질문 메시지 추가
+    // 사용자 질문 메시지
     const userMessage: Message = {
       id: `memory-user-${memory.id}`,
       type: "user",
@@ -155,7 +155,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
       timestamp: new Date(memory.created_at)
     }
 
-    // 봇 응답 메시지 추가 (요약본)
+    // 봇 응답 메시지 (요약본)
     const botMessage: Message = {
       id: `memory-bot-${memory.id}`,
       type: "bot",
@@ -163,7 +163,9 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
       timestamp: new Date(memory.created_at)
     }
 
-    setMessages(prev => [...prev, userMessage, botMessage])
+    // 기존 메시지를 교체 (누적하지 않음)
+    setMessages([userMessage, botMessage])
+    console.log('[ChatInterface] Replaced messages with memory conversation')
   }
 
   // 채팅 기록 삭제

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight } from "lucide-react"
+import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { MemoryHistory } from "@/components/memory-history"
 import type { PageType } from "@/app/page"
 
@@ -49,6 +49,27 @@ export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProp
         </div>
         {!isCollapsed && <p className="text-sm text-sidebar-foreground/70 mt-1">AI 부동산 가디언</p>}
       </div>
+
+      {/* 새 채팅 버튼 */}
+      {!isCollapsed && (
+        <div className="p-4 border-b border-sidebar-border">
+          <Button
+            onClick={() => {
+              // localStorage 초기화
+              localStorage.removeItem('chat-messages')
+              // 채팅 페이지로 이동
+              onPageChange("chat")
+              // 페이지 새로고침으로 초기화
+              window.location.reload()
+            }}
+            className="w-full gap-2"
+            variant="default"
+          >
+            <Plus className="h-4 w-4" />
+            새 채팅
+          </Button>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-4">
