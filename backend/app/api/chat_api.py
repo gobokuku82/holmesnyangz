@@ -1,6 +1,7 @@
 """
 Chat API Router
 FastAPI WebSocket endpoints for real-time chat with service_agent integration
+user_id = 1 (임시 하드코딩)
 """
 
 from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
@@ -264,7 +265,8 @@ async def websocket_chat(
                             session_id=session_id,
                             enable_checkpointing=enable_checkpointing,
                             progress_callback=progress_callback,
-                            conn_mgr=conn_mgr
+                            conn_mgr=conn_mgr,
+                            session_mgr=session_mgr
                         )
                     )
 
@@ -321,7 +323,8 @@ async def _process_query_async(
     session_id: str,
     enable_checkpointing: bool,
     progress_callback,
-    conn_mgr: ConnectionManager
+    conn_mgr: ConnectionManager,
+    session_mgr: SessionManager
 ):
     """
     비동기로 쿼리 처리 (백그라운드 태스크)
@@ -333,14 +336,23 @@ async def _process_query_async(
         enable_checkpointing: Checkpoint 활성화 여부
         progress_callback: 진행 상황 콜백
         conn_mgr: ConnectionManager
+        session_mgr: SessionManager (user_id 추출용)
     """
     try:
         logger.info(f"Processing query for {session_id}: {query[:100]}...")
+
+        # 세션에서 user_id 추출 (Long-term Memory용)
+        user_id = 1  # 🔧 임시: 테스트용 하드코딩
+        session_data = await session_mgr.get_session(session_id)
+        if session_data:
+            if user_id:
+                logger.info(f"User ID {user_id} extracted from session {session_id}")
 
         # Streaming 방식으로 쿼리 처리
         result = await supervisor.process_query_streaming(
             query=query,
             session_id=session_id,
+            user_id=user_id,
             progress_callback=progress_callback
         )
 

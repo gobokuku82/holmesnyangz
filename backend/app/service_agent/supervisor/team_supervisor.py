@@ -16,6 +16,10 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+# Long-term Memory imports
+from app.services.long_term_memory_service import LongTermMemoryService
+from app.db.postgre_db import get_db
+
 from app.service_agent.foundation.separated_states import (
     MainSupervisorState,
     SharedState,
@@ -170,6 +174,7 @@ class TeamBasedSupervisor:
         """
         계획 수립 노드
         PlanningAgent를 사용하여 의도 분석 및 실행 계획 생성
+        + Long-term Memory 로딩 (RELEVANT 쿼리만)
         """
         logger.info("[TeamSupervisor] Planning phase")
 
@@ -190,6 +195,36 @@ class TeamBasedSupervisor:
         # 의도 분석
         query = state.get("query", "")
         intent_result = await self.planning_agent.analyze_intent(query)
+
+        # ============================================================================
+        # Long-term Memory 로딩 (조기 단계 - RELEVANT 쿼리만)
+        # ============================================================================
+        user_id = state.get("user_id")
+        if user_id and intent_result.intent_type != IntentType.IRRELEVANT:
+            try:
+                logger.info(f"[TeamSupervisor] Loading Long-term Memory for user {user_id}")
+                async for db_session in get_db():
+                    memory_service = LongTermMemoryService(db_session)
+
+                    # 최근 대화 기록 로드 (RELEVANT만)
+                    loaded_memories = await memory_service.load_recent_memories(
+                        user_id=user_id,
+                        limit=5,
+                        relevance_filter="RELEVANT"
+                    )
+
+                    # 사용자 선호도 로드
+                    user_preferences = await memory_service.get_user_preferences(user_id)
+
+                    state["loaded_memories"] = loaded_memories
+                    state["user_preferences"] = user_preferences
+                    state["memory_load_time"] = datetime.now().isoformat()
+
+                    logger.info(f"[TeamSupervisor] Loaded {len(loaded_memories)} memories and preferences for user {user_id}")
+                    break  # get_db()는 generator이므로 첫 번째 세션만 사용
+            except Exception as e:
+                logger.error(f"[TeamSupervisor] Failed to load Long-term Memory: {e}")
+                # Memory 로딩 실패해도 계속 진행 (비필수 기능)
 
         # ⚡ IRRELEVANT/UNCLEAR 조기 종료 - 불필요한 처리 건너뛰기 (3초 → 0.6초 최적화)
         if intent_result.intent_type == IntentType.IRRELEVANT:
@@ -794,6 +829,45 @@ class TeamBasedSupervisor:
             state["total_execution_time"] = (state["end_time"] - state["start_time"]).total_seconds()
             logger.info(f"[TeamSupervisor] Total execution time: {state['total_execution_time']:.2f}s")
 
+        # ============================================================================
+        # Long-term Memory 저장 (RELEVANT 쿼리만)
+        # ============================================================================
+        user_id = state.get("user_id")
+        if user_id and intent_type not in ["irrelevant", "unclear"]:
+            try:
+                logger.info(f"[TeamSupervisor] Saving conversation to Long-term Memory for user {user_id}")
+
+                async for db_session in get_db():
+                    memory_service = LongTermMemoryService(db_session)
+
+                    # 응답 요약 생성 (최대 200자)
+                    response_summary = response.get("summary", "")
+                    if not response_summary and response.get("answer"):
+                        response_summary = response.get("answer", "")[:200]
+                    if not response_summary:
+                        response_summary = f"{response.get('type', 'response')} 생성 완료"
+
+                    # 대화 저장
+                    await memory_service.save_conversation(
+                        user_id=user_id,
+                        query=state.get("query", ""),
+                        response_summary=response_summary,
+                        relevance="RELEVANT",
+                        intent_detected=intent_type,
+                        entities_mentioned=analyzed_intent.get("entities", {}),
+                        conversation_metadata={
+                            "teams_used": state.get("active_teams", []),
+                            "response_time": state.get("total_execution_time"),
+                            "confidence": confidence
+                        }
+                    )
+
+                    logger.info(f"[TeamSupervisor] Conversation saved to Long-term Memory")
+                    break  # get_db()는 generator이므로 첫 번째 세션만 사용
+            except Exception as e:
+                logger.error(f"[TeamSupervisor] Failed to save Long-term Memory: {e}")
+                # Memory 저장 실패해도 사용자 응답에는 영향 없음 (비필수 기능)
+
         logger.info("[TeamSupervisor] === Response generation complete ===")
         return state
 
@@ -904,29 +978,32 @@ class TeamBasedSupervisor:
 
         if not self._checkpointer_initialized:
             try:
-                logger.info("Initializing AsyncSqliteSaver checkpointer...")
+                logger.info("Initializing AsyncPostgresSaver checkpointer with PostgreSQL...")
 
-                # Use AsyncSqliteSaver directly with async context manager
-                from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-                from pathlib import Path
+                # Use AsyncPostgresSaver for PostgreSQL
+                from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+                from app.core.config import settings
 
-                # Path(__file__) is backend/app/service_agent/supervisor/team_supervisor.py
-                # We need backend/data/system/checkpoints/default_checkpoint.db
-                db_path = Path(__file__).parent.parent.parent.parent / "data" / "system" / "checkpoints" / "default_checkpoint.db"
-                db_path.parent.mkdir(parents=True, exist_ok=True)
+                # PostgreSQL 연결 문자열 (중앙화된 설정 사용)
+                DB_URI = settings.postgres_url
+                logger.info(f"Using PostgreSQL URL from centralized config: {DB_URI.replace(settings.POSTGRES_PASSWORD, '***')}")
 
                 # Create and enter async context manager
-                self._checkpoint_cm = AsyncSqliteSaver.from_conn_string(str(db_path))
+                self._checkpoint_cm = AsyncPostgresSaver.from_conn_string(DB_URI)
                 self.checkpointer = await self._checkpoint_cm.__aenter__()
+
+                # 최초 테이블 생성 (checkpoints, checkpoint_blobs, checkpoint_writes)
+                await self.checkpointer.setup()
+
                 self._checkpointer_initialized = True
 
                 # Checkpointer와 함께 graph 재컴파일
                 logger.info("Recompiling graph with checkpointer...")
                 self._build_graph_with_checkpointer()
 
-                logger.info("Checkpointer initialized and graph recompiled successfully")
+                logger.info("✅ PostgreSQL checkpointer initialized and graph recompiled successfully")
             except Exception as e:
-                logger.error(f"Failed to initialize checkpointer: {e}")
+                logger.error(f"Failed to initialize PostgreSQL checkpointer: {e}")
                 self.enable_checkpointing = False
 
     def _build_graph_with_checkpointer(self):
@@ -965,6 +1042,7 @@ class TeamBasedSupervisor:
         self,
         query: str,
         session_id: str = "default",
+        user_id: Optional[int] = None,
         progress_callback: Optional[Callable[[str, dict], Awaitable[None]]] = None
     ) -> Dict[str, Any]:
         """
@@ -973,6 +1051,7 @@ class TeamBasedSupervisor:
         Args:
             query: 사용자 쿼리
             session_id: 세션 ID
+            user_id: 사용자 ID (Long-term Memory용, 없으면 None)
             progress_callback: 진행 상황 콜백 함수 (WebSocket 전송용)
                                async def callback(event_type: str, event_data: dict)
 
@@ -980,6 +1059,8 @@ class TeamBasedSupervisor:
             처리 결과
         """
         logger.info(f"[TeamSupervisor] Processing query (streaming): {query[:100]}...")
+        if user_id:
+            logger.info(f"[TeamSupervisor] User ID: {user_id} (Long-term Memory enabled)")
 
         # Checkpointer 초기화 (최초 1회)
         await self._ensure_checkpointer()
@@ -994,6 +1075,7 @@ class TeamBasedSupervisor:
             query=query,
             session_id=session_id,
             request_id=f"req_{datetime.now().timestamp()}",
+            user_id=user_id,  # Long-term Memory용
             planning_state=None,
             execution_plan=None,
             search_team_state=None,
@@ -1010,7 +1092,11 @@ class TeamBasedSupervisor:
             end_time=None,
             total_execution_time=None,
             error_log=[],
-            status="initialized"
+            status="initialized",
+            # Long-term Memory 필드 (초기화)
+            loaded_memories=None,
+            user_preferences=None,
+            memory_load_time=None
         )
 
         # 워크플로우 실행

@@ -323,6 +323,14 @@ class MainSupervisorState(TypedDict, total=False):
     status: str
 
     # ============================================================================
+    # Long-term Memory Fields
+    # ============================================================================
+    user_id: Optional[int]  # 사용자 ID (로그인 시)
+    loaded_memories: Optional[List[Dict[str, Any]]]  # 로드된 대화 기록
+    user_preferences: Optional[Dict[str, Any]]  # 사용자 선호도
+    memory_load_time: Optional[str]  # Memory 로드 시간 (ISO format)
+
+    # ============================================================================
     # Progress Flow - WebSocket Real-time Integration
     # ============================================================================
     #
