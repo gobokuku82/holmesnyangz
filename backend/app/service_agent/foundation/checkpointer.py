@@ -1,13 +1,13 @@
 """
 Checkpointer management module
-Provides checkpoint functionality for state persistence using AsyncSqliteSaver
+Provides checkpoint functionality for state persistence using AsyncPostgresSaver
 """
 
 import logging
 from pathlib import Path
 from typing import Optional
 
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from app.service_agent.foundation.config import Config
 
@@ -16,16 +16,15 @@ logger = logging.getLogger(__name__)
 
 class CheckpointerManager:
     """
-    Manages checkpoint creation and retrieval using AsyncSqliteSaver
+    Manages checkpoint creation and retrieval using AsyncPostgresSaver
     """
 
     def __init__(self):
         """Initialize the checkpointer manager"""
-        self.checkpoint_dir = Config.CHECKPOINT_DIR
-        self._ensure_checkpoint_dir_exists()
+        self.checkpoint_dir = Config.CHECKPOINT_DIR  # Kept for backward compatibility
         self._checkpointers = {}  # Cache for checkpointer instances
         self._context_managers = {}  # Cache for async context managers
-        logger.info(f"CheckpointerManager initialized with dir: {self.checkpoint_dir}")
+        logger.info(f"CheckpointerManager initialized with PostgreSQL")
 
     def _ensure_checkpoint_dir_exists(self):
         """Ensure the checkpoint directory exists"""
@@ -44,48 +43,46 @@ class CheckpointerManager:
         """
         return Config.get_checkpoint_path(agent_name, session_id)
 
-    async def create_checkpointer(self, db_path: Optional[str] = None) -> AsyncSqliteSaver:
+    async def create_checkpointer(self, db_path: Optional[str] = None) -> AsyncPostgresSaver:
         """
-        Create and setup an AsyncSqliteSaver checkpointer instance
+        Create and setup an AsyncPostgresSaver checkpointer instance
 
         Args:
-            db_path: Optional database path. If None, uses default from config
+            db_path: Not used for PostgreSQL (kept for backward compatibility)
 
         Returns:
-            AsyncSqliteSaver instance
+            AsyncPostgresSaver instance
 
         Raises:
             Exception: If checkpointer setup fails
         """
-        if db_path is None:
-            db_path = self.checkpoint_dir / "default_checkpoint.db"
-        else:
-            db_path = Path(db_path)
-
-        # Ensure parent directory exists
-        db_path.parent.mkdir(parents=True, exist_ok=True)
+        # Get PostgreSQL connection string from settings
+        from app.core.config import settings
+        conn_string = settings.DATABASE_URL
 
         # Check cache
-        db_path_str = str(db_path)
-        if db_path_str in self._checkpointers:
-            logger.debug(f"Returning cached checkpointer for: {db_path}")
-            return self._checkpointers[db_path_str]
+        if conn_string in self._checkpointers:
+            logger.debug(f"Returning cached checkpointer for PostgreSQL")
+            return self._checkpointers[conn_string]
 
-        logger.info(f"Creating AsyncSqliteSaver checkpointer at: {db_path}")
+        logger.info(f"Creating AsyncPostgresSaver checkpointer")
 
         try:
-            # AsyncSqliteSaver.from_conn_string returns an async context manager
+            # AsyncPostgresSaver.from_conn_string returns an async context manager
             # We need to enter the context and keep it alive
-            context_manager = AsyncSqliteSaver.from_conn_string(db_path_str)
+            context_manager = AsyncPostgresSaver.from_conn_string(conn_string)
 
             # Enter the async context manager
             actual_checkpointer = await context_manager.__aenter__()
 
-            # Cache both the checkpointer and context manager (to keep it alive)
-            self._checkpointers[db_path_str] = actual_checkpointer
-            self._context_managers[db_path_str] = context_manager
+            # Setup PostgreSQL tables (creates checkpoints, checkpoint_blobs, checkpoint_writes)
+            await actual_checkpointer.setup()
 
-            logger.info(f"AsyncSqliteSaver checkpointer created and setup successfully")
+            # Cache both the checkpointer and context manager (to keep it alive)
+            self._checkpointers[conn_string] = actual_checkpointer
+            self._context_managers[conn_string] = context_manager
+
+            logger.info(f"AsyncPostgresSaver checkpointer created and setup successfully")
             return actual_checkpointer
 
         except Exception as e:
@@ -97,29 +94,35 @@ class CheckpointerManager:
         Close a checkpointer and its context manager properly
 
         Args:
-            db_path: Database path. If None, closes default checkpointer
+            db_path: Not used for PostgreSQL (kept for backward compatibility)
         """
-        if db_path is None:
-            db_path = str(self.checkpoint_dir / "default_checkpoint.db")
-        else:
-            db_path = str(db_path)
+        from app.core.config import settings
+        conn_string = settings.DATABASE_URL
 
-        if db_path in self._context_managers:
+        if conn_string in self._context_managers:
             try:
-                context_manager = self._context_managers[db_path]
+                context_manager = self._context_managers[conn_string]
                 await context_manager.__aexit__(None, None, None)
-                logger.info(f"Checkpointer closed for: {db_path}")
+                logger.info(f"Checkpointer closed for PostgreSQL")
             except Exception as e:
                 logger.error(f"Error closing checkpointer: {e}")
             finally:
                 # Clean up cache
-                self._context_managers.pop(db_path, None)
-                self._checkpointers.pop(db_path, None)
+                self._context_managers.pop(conn_string, None)
+                self._checkpointers.pop(conn_string, None)
 
     async def close_all(self):
         """Close all open checkpointers"""
-        for db_path in list(self._context_managers.keys()):
-            await self.close_checkpointer(db_path)
+        for conn_string in list(self._context_managers.keys()):
+            try:
+                context_manager = self._context_managers[conn_string]
+                await context_manager.__aexit__(None, None, None)
+                logger.info(f"Checkpointer closed: {conn_string}")
+            except Exception as e:
+                logger.error(f"Error closing checkpointer: {e}")
+            finally:
+                self._context_managers.pop(conn_string, None)
+                self._checkpointers.pop(conn_string, None)
 
     def validate_checkpoint_setup(self) -> bool:
         """
@@ -128,26 +131,24 @@ class CheckpointerManager:
         Returns:
             True if everything is set up correctly
         """
+        from app.core.config import settings
+
         checks = []
 
-        # Check checkpoint directory exists
-        if not self.checkpoint_dir.exists():
-            checks.append(f"Checkpoint directory does not exist: {self.checkpoint_dir}")
+        # Check DATABASE_URL is configured
+        if not settings.DATABASE_URL:
+            checks.append("DATABASE_URL not configured in .env")
 
-        # Check checkpoint directory is writable
-        test_file = self.checkpoint_dir / ".write_test"
-        try:
-            test_file.touch()
-            test_file.unlink()
-        except Exception as e:
-            checks.append(f"Checkpoint directory is not writable: {e}")
+        # Check DATABASE_URL format (must be PostgreSQL)
+        if settings.DATABASE_URL and not settings.DATABASE_URL.startswith("postgresql"):
+            checks.append(f"DATABASE_URL must start with 'postgresql://' or 'postgresql+psycopg://': {settings.DATABASE_URL}")
 
         if checks:
             for check in checks:
                 logger.error(check)
             return False
 
-        logger.info("Checkpoint setup validation passed")
+        logger.info("Checkpoint setup validation passed (PostgreSQL)")
         return True
 
 
@@ -168,15 +169,15 @@ def get_checkpointer_manager() -> CheckpointerManager:
     return _checkpointer_manager
 
 
-async def create_checkpointer(db_path: Optional[str] = None) -> AsyncSqliteSaver:
+async def create_checkpointer(db_path: Optional[str] = None) -> AsyncPostgresSaver:
     """
     Convenience function to create a checkpointer
 
     Args:
-        db_path: Optional database path
+        db_path: Not used for PostgreSQL (kept for backward compatibility)
 
     Returns:
-        AsyncSqliteSaver instance
+        AsyncPostgresSaver instance
     """
     manager = get_checkpointer_manager()
     return await manager.create_checkpointer(db_path)
