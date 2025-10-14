@@ -33,7 +33,10 @@
       "Bash(find:*)",
       "Bash(iconv:*)",
       "Bash(../venv/Scripts/python:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(set PGPASSWORD=root1234)",
+      "Bash(venvScriptspython create_memory_tables.py)",
+      "Bash(if not exist \"llm_engineering\" mkdir llm_engineering)"
     ],
     "deny": [],
     "ask": []
