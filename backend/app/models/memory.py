@@ -55,13 +55,25 @@ class ConversationMemory(Base):
     )
     conversation_metadata = Column(JSONB, comment="추가 메타데이터 (teams_used, response_time 등)")
 
+    # GPT-style Session ID (연결)
+    session_id = Column(
+        String(100),
+        ForeignKey("chat_sessions.session_id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+        comment="채팅 세션 ID (GPT-style)"
+    )
+
     # Relationships
     user = relationship("User", back_populates="conversation_memories")
+    chat_session = relationship("ChatSession", back_populates="conversation_memories")
 
     # Indexes for performance
     __table_args__ = (
         Index('idx_conv_mem_user_created', 'user_id', 'created_at'),
         Index('idx_conv_mem_relevance', 'relevance'),
+        Index('idx_conv_mem_session_id', 'session_id'),
+        Index('idx_conv_mem_session_created', 'session_id', 'created_at'),
     )
 
 

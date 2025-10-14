@@ -9,8 +9,8 @@ engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 Session = SessionLocal  # 하위 호환성을 위해 유지
 
-# Async Engine (SessionManager용)
-async_database_url = settings.DATABASE_URL.replace('postgresql+psycopg://', 'postgresql+asyncpg://')
+# Async Engine (SessionManager용) - psycopg3 async driver
+async_database_url = settings.DATABASE_URL.replace('postgresql+psycopg://', 'postgresql+psycopg_async://')
 async_engine = create_async_engine(async_database_url, pool_pre_ping=True, echo=False)
 AsyncSessionLocal = async_sessionmaker(
     async_engine,

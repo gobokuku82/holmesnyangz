@@ -36,7 +36,9 @@
       "Bash(psql:*)",
       "Bash(set PGPASSWORD=root1234)",
       "Bash(venvScriptspython create_memory_tables.py)",
-      "Bash(if not exist \"llm_engineering\" mkdir llm_engineering)"
+      "Bash(if not exist \"llm_engineering\" mkdir llm_engineering)",
+      "Bash(where psql)",
+      "Bash(PGPASSWORD=root1234 psql:*)"
     ],
     "deny": [],
     "ask": []
