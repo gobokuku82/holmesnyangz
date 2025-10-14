@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     SESSION_TTL_HOURS: int = 24
     MEMORY_RETENTION_DAYS: int = 90
     MEMORY_LIMIT_PER_USER: int = 100
+    MEMORY_LOAD_LIMIT: int = 5  # Number of recent memories to load per user
 
     class Config:
         env_file = ".env"

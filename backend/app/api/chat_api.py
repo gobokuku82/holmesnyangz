@@ -420,3 +420,55 @@ async def cleanup_expired_sessions(
         "cleaned_sessions": cleaned,
         "timestamp": datetime.now().isoformat()
     }
+
+
+# ============================================================================
+# Memory History Endpoints
+# ============================================================================
+
+@router.get("/memory/history")
+async def get_memory_history(
+    limit: int = 10
+):
+    """
+    사용자의 대화 기록 조회 (Long-term Memory)
+
+    Args:
+        limit: 조회할 대화 개수 (기본 10개)
+
+    Returns:
+        List[Dict]: 대화 기록 리스트
+    """
+    try:
+        # TODO: 실제 로그인 구현 후 session에서 user_id 추출
+        user_id = 1  # 🔧 임시: 테스트용 하드코딩
+
+        from app.db.postgre_db import get_async_db
+        from app.service_agent.foundation.memory_service import LongTermMemoryService
+
+        async for db_session in get_async_db():
+            memory_service = LongTermMemoryService(db_session)
+
+            # 최근 대화 기록 로드 (RELEVANT만)
+            memories = await memory_service.load_recent_memories(
+                user_id=user_id,
+                limit=limit,
+                relevance_filter="RELEVANT"
+            )
+
+            return {
+                "user_id": user_id,
+                "count": len(memories),
+                "memories": memories,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        # generator가 비어있는 경우 (발생하지 않아야 함)
+        raise HTTPException(status_code=500, detail="Failed to get database session")
+
+    except Exception as e:
+        logger.error(f"Failed to fetch memory history: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch memory history: {str(e)}"
+        )

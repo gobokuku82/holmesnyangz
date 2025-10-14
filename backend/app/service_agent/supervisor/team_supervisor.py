@@ -17,8 +17,9 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 # Long-term Memory imports
-from app.services.long_term_memory_service import LongTermMemoryService
-from app.db.postgre_db import get_db
+from app.service_agent.foundation.memory_service import LongTermMemoryService
+from app.db.postgre_db import get_async_db
+from app.core.config import settings
 
 from app.service_agent.foundation.separated_states import (
     MainSupervisorState,
@@ -203,13 +204,13 @@ class TeamBasedSupervisor:
         if user_id and intent_result.intent_type != IntentType.IRRELEVANT:
             try:
                 logger.info(f"[TeamSupervisor] Loading Long-term Memory for user {user_id}")
-                async for db_session in get_db():
+                async for db_session in get_async_db():
                     memory_service = LongTermMemoryService(db_session)
 
                     # 최근 대화 기록 로드 (RELEVANT만)
                     loaded_memories = await memory_service.load_recent_memories(
                         user_id=user_id,
-                        limit=5,
+                        limit=settings.MEMORY_LOAD_LIMIT,
                         relevance_filter="RELEVANT"
                     )
 
@@ -837,7 +838,7 @@ class TeamBasedSupervisor:
             try:
                 logger.info(f"[TeamSupervisor] Saving conversation to Long-term Memory for user {user_id}")
 
-                async for db_session in get_db():
+                async for db_session in get_async_db():
                     memory_service = LongTermMemoryService(db_session)
 
                     # 응답 요약 생성 (최대 200자)

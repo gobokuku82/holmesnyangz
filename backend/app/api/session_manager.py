@@ -14,6 +14,7 @@ from sqlalchemy import select, update, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.postgre_db import AsyncSessionLocal
 from app.models.session import Session
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +259,7 @@ def get_session_manager() -> SessionManager:
     global _session_manager
 
     if _session_manager is None:
-        _session_manager = SessionManager(session_ttl_hours=24)
+        _session_manager = SessionManager(session_ttl_hours=settings.SESSION_TTL_HOURS)
 
     return _session_manager
 
