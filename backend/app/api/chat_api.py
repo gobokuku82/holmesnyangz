@@ -79,7 +79,7 @@ async def start_session(
         SessionStartResponse: 생성된 세션 정보
     """
     try:
-        session_id, expires_at = session_mgr.create_session(
+        session_id, expires_at = await session_mgr.create_session(
             user_id=request.user_id,
             metadata=request.metadata
         )
@@ -117,7 +117,7 @@ async def get_session_info(
     Returns:
         SessionInfo: 세션 정보
     """
-    session = session_mgr.get_session(session_id)
+    session = await session_mgr.get_session(session_id)
 
     if not session:
         raise HTTPException(
@@ -149,7 +149,7 @@ async def delete_session(
     Returns:
         DeleteSessionResponse: 삭제 결과
     """
-    success = session_mgr.delete_session(session_id)
+    success = await session_mgr.delete_session(session_id)
 
     if not success:
         raise HTTPException(
@@ -206,7 +206,7 @@ async def websocket_chat(
         session_id: 세션 ID
     """
     # 1. 세션 검증
-    if not session_mgr.validate_session(session_id):
+    if not await session_mgr.validate_session(session_id):
         await websocket.close(code=4004, reason="Session not found or expired")
         logger.warning(f"WebSocket rejected: invalid session {session_id}")
         return
@@ -376,7 +376,7 @@ async def get_session_stats(
     session_mgr: SessionManager = Depends(get_session_manager)
 ):
     """세션 통계 조회"""
-    active_count = session_mgr.get_active_session_count()
+    active_count = await session_mgr.get_active_session_count()
 
     return {
         "active_sessions": active_count,
@@ -400,7 +400,7 @@ async def cleanup_expired_sessions(
     session_mgr: SessionManager = Depends(get_session_manager)
 ):
     """만료된 세션 정리"""
-    cleaned = session_mgr.cleanup_expired_sessions()
+    cleaned = await session_mgr.cleanup_expired_sessions()
 
     logger.info(f"Cleaned up {cleaned} expired sessions")
 

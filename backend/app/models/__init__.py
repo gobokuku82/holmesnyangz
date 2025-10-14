@@ -3,6 +3,7 @@ from app.models.real_estate import RealEstate, Region, Transaction, NearbyFacili
 from app.models.trust import TrustScore
 from app.models.users import User, UserProfile, LocalAuth, SocialAuth, UserFavorite
 from app.models.chat import ChatSession, ChatMessage
+from app.models.session import Session
 
 __all__ = [
     "RealEstate",
@@ -18,4 +19,5 @@ __all__ = [
     "UserFavorite",
     "ChatSession",
     "ChatMessage",
+    "Session",
 ]

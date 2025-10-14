@@ -31,7 +31,9 @@
       "Bash(git check-ignore:*)",
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "Bash(iconv:*)"
+      "Bash(iconv:*)",
+      "Bash(../venv/Scripts/python:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []
