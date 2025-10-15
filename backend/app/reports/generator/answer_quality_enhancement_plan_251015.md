@@ -202,51 +202,81 @@
 
 #### Task 1.1: JSON 응답 활용 활성화
 
-**Backend 수정**: `team_supervisor.py:generate_response_node()`
+**❗ 중요 발견: Backend 수정 2곳 필요**
+
+**Backend 수정 1**: `llm_service.py:generate_final_response()` - **JSON 파싱 추가 필요**
 
 ```python
-# 현재 (line 822-824)
-response = {
+# 현재 (line 389-404) - 문제: 텍스트로만 받음
+answer = await self.complete_async(
+    prompt_name="response_synthesis",
+    variables=variables,
+    temperature=0.3,
+    max_tokens=1000
+)
+
+return {
     "type": "answer",
-    "answer": answer,  # 단순 텍스트
+    "answer": answer,  # 전체 JSON 문자열이 들어감
     "teams_used": list(aggregated_results.keys()),
     "data": aggregated_results
 }
 
-# 개선안
-response = {
+# 개선안 - JSON으로 파싱
+response_json = await self.complete_json_async(  # ← JSON 파싱 메서드 사용
+    prompt_name="response_synthesis",
+    variables=variables,
+    temperature=0.3,
+    max_tokens=1000
+)
+
+return {
     "type": "answer",
-    "answer": answer,  # Markdown 포맷 텍스트
+    "answer": response_json.get("answer", ""),
     "structured_data": {  # 새로운 필드
         "sections": [
             {
                 "title": "핵심 답변",
-                "content": parsed_json.get("answer", ""),
+                "content": response_json.get("answer", ""),
                 "icon": "target",
                 "priority": "high"
             },
             {
                 "title": "법적 근거",
-                "content": parsed_json.get("details", {}).get("legal_basis", ""),
+                "content": response_json.get("details", {}).get("legal_basis", ""),
                 "icon": "scale",
                 "expandable": True
             },
             {
                 "title": "추천사항",
-                "content": parsed_json.get("recommendations", []),
+                "content": response_json.get("recommendations", []),
                 "icon": "lightbulb",
                 "type": "checklist"
             }
         ],
         "metadata": {
-            "confidence": parsed_json.get("confidence", 0.8),
-            "sources": parsed_json.get("sources", []),
-            "intent_type": intent_type
+            "confidence": response_json.get("confidence", 0.8),
+            "sources": response_json.get("sources", []),
+            "intent_type": intent_info.get("intent_type")
         }
     },
     "teams_used": list(aggregated_results.keys()),
     "data": aggregated_results
 }
+```
+
+**Backend 수정 2**: `team_supervisor.py:_generate_llm_response()` - response 전달만 수정
+
+```python
+# 현재 (line 901-908)
+response = await self.planning_agent.llm_service.generate_final_response(
+    query=query,
+    aggregated_results=aggregated,
+    intent_info=intent_info
+)
+return response  # 이미 structured_data 포함된 response
+
+# 변경 필요 없음 - 이미 올바르게 전달중
 ```
 
 **Frontend 수정**: `chat-interface.tsx`
@@ -713,19 +743,26 @@ const AnswerComponent = getAnswerComponent(
 
 ## 10. 결론
 
-현재 시스템은 **Backend에서 고품질 구조화 데이터를 생성**하지만, **Frontend가 이를 충분히 활용하지 못하는** 상태입니다.
+현재 시스템은 **Backend에서 고품질 구조화 데이터를 생성할 준비가 되어 있으나**, **실제로는 텍스트만 생성**하고 있으며, **Frontend가 이를 단순 표시**하는 상태입니다.
 
-**핵심 전략**:
-1. 기존 LLM 응답의 JSON 구조를 활용
-2. 답변 타입별 전용 UI 컴포넌트 개발
-3. 점진적 개선으로 리스크 최소화
+**핵심 발견사항**:
+1. ✅ 프롬프트(`response_synthesis.txt`)는 완벽한 JSON 구조 정의
+2. ❌ `llm_service.py`가 JSON 파싱 없이 텍스트만 반환
+3. ❌ Frontend가 `answer` 필드만 추출하여 표시
+
+**수정 우선순위**:
+1. **P0**: `llm_service.py:generate_final_response()` JSON 파싱 추가 (1일)
+2. **P0**: Frontend `AnswerDisplay` 컴포넌트 개발 (3일)
+3. **P1**: 답변 타입별 전용 컴포넌트 개발 (2주)
 
 **예상 결과**:
 - 사용자 만족도 **25% 향상**
 - 답변 가독성 **31% 개선**
 - 답변 공유율 **300% 증가**
 
-**Next Step**: Task 1.1-1.2 프로토타입 구현 후 피드백 미팅
+**Immediate Action**:
+1. `llm_service.py` line 390을 `complete_json_async()`로 변경
+2. `AnswerDisplay.tsx` 컴포넌트 프로토타입 개발
 
 ---
 
