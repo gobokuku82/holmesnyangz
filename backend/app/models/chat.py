@@ -92,12 +92,6 @@ class ChatSession(Base):
 
     # Relationships
     user = relationship("User", back_populates="chat_sessions")
-    conversation_memories = relationship(
-        "ConversationMemory",
-        back_populates="chat_session",
-        cascade="all, delete-orphan",
-        foreign_keys="ConversationMemory.session_id"
-    )
     messages = relationship(
         "ChatMessage",
         back_populates="session",

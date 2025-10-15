@@ -48,10 +48,7 @@ class User(Base):
     favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
 
-    # Long-term Memory Relationships
-    conversation_memories = relationship("ConversationMemory", back_populates="user", cascade="all, delete-orphan")
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    entity_memories = relationship("EntityMemory", back_populates="user", cascade="all, delete-orphan")
+    # Long-term Memory Relationships removed (tables deleted in migration)
 
 
 class LocalAuth(Base):
