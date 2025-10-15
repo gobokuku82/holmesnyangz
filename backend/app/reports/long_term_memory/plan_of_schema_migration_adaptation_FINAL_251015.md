@@ -18,8 +18,14 @@
 
 ### Phase 0-B 완료 사항 (추가 CRITICAL FIX) ✅
 1. ✅ `app/models/users.py` - 3개 relationship 제거 완료 (lines 51-54)
-2. ✅ `app/models/unified_schema.py` - old/ 폴더로 이동 완료
-3. ✅ 앱 시작 재검증 완료 - 모든 모델 import 성공
+2. ✅ 앱 시작 재검증 완료 - 모든 모델 import 성공
+
+### Phase 0-C 완료 사항 (파일 이동) ✅
+1. ✅ `app/models/unified_schema.py` → `app/models/old/unified_schema.py` 이동
+2. ✅ `app/models/memory.py` → `app/models/old/memory.py` 이동
+3. ✅ `app/models/session.py` → `app/models/old/session.py` 이동
+4. ✅ `app/api/session_manager.py` → `app/api/old/session_manager.py` 이동
+5. ✅ `app/service_agent/foundation/memory_service.py` → `app/service_agent/foundation/old/memory_service.py` 이동
 
 ### ~~새로 발견된 CRITICAL 이슈~~ ✅ (모두 해결됨)
 
@@ -681,8 +687,14 @@ const response = await fetch(`http://localhost:8000/api/v1/chat/sessions/${sessi
 
 ### ✅ Phase 0-B (완료)
 - [x] `app/models/users.py` - 3개 relationship 제거 (lines 51-54)
-- [x] `app/models/unified_schema.py` - old/ 폴더로 이동
 - [x] 앱 시작 재검증
+
+### ✅ Phase 0-C (완료 - 파일 이동)
+- [x] `app/models/unified_schema.py` → old/ 이동
+- [x] `app/models/memory.py` → old/ 이동
+- [x] `app/models/session.py` → old/ 이동
+- [x] `app/api/session_manager.py` → old/ 이동
+- [x] `app/service_agent/foundation/memory_service.py` → old/ 이동
 
 ### ⏳ Phase 1 (InMemorySessionManager)
 - [ ] `app/api/memory_session_manager.py` 파일 생성
@@ -712,11 +724,13 @@ const response = await fetch(`http://localhost:8000/api/v1/chat/sessions/${sessi
 - [ ] Frontend 테스트
 
 ### ⏳ Phase 6 (Cleanup)
-- [ ] `app/api/session_manager.py` → `old/` 폴더로 이동
-- [ ] `app/service_agent/foundation/memory_service.py` → `old/` 폴더로 이동
-- [ ] `app/models/session.py` → `old/` 폴더로 이동
-- [ ] `app/models/memory.py` → `old/` 폴더로 이동
+- [x] `app/api/session_manager.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
+- [x] `app/service_agent/foundation/memory_service.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
+- [x] `app/models/session.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
+- [x] `app/models/memory.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
+- [x] `app/models/unified_schema.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
 - [ ] Import cleanup 확인
+- [ ] 테스트 파일 정리 (test_auto_table_creation.py, test_session_migration.py)
 - [ ] 최종 통합 테스트
 
 ---
@@ -818,13 +832,17 @@ curl http://localhost:8000/api/v1/chat/sessions/{session_id}/messages?limit=20
 
 ## 🎉 Phase 0 완료 요약
 
-### 완료된 작업 (Phase 0-A + 0-B)
+### 완료된 작업 (Phase 0-A + 0-B + 0-C)
 1. ✅ `app/models/__init__.py` - Session import 제거
 2. ✅ `app/models/chat.py` - conversation_memories relationship 제거
 3. ✅ `backend/create_memory_tables.py` - 파일 삭제
 4. ✅ `app/models/users.py` - 3개 relationship 제거
-5. ✅ `app/models/unified_schema.py` - old/ 폴더로 이동
-6. ✅ 앱 시작 검증 2회 완료
+5. ✅ `app/models/unified_schema.py` → old/ 이동
+6. ✅ `app/models/memory.py` → old/ 이동
+7. ✅ `app/models/session.py` → old/ 이동
+8. ✅ `app/api/session_manager.py` → old/ 이동
+9. ✅ `app/service_agent/foundation/memory_service.py` → old/ 이동
+10. ✅ 앱 시작 검증 2회 완료
 
 ### 다음 작업
 **Phase 1 시작** - InMemorySessionManager 구현
