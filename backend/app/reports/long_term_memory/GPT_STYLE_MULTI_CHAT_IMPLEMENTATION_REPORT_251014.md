@@ -1642,7 +1642,339 @@ splitSession(sessionId, [message1, message10, message20])
 
 ---
 
-**Report Date**: 2025-10-14
-**Status**: ✅ Implementation Complete (10/11 tasks)
-**Next Steps**: Testing & Bug Fixes
+## 🔄 업데이트 로그
+
+### 2025-10-14 (2차 작업) - chat_session_id 전송 로직 구현
+
+#### 작업 내용
+
+기존 구현에서 누락된 **chat_session_id 전송 로직**을 완성하여, 프론트엔드에서 백엔드까지 chat_session_id가 완전히 전달되도록 구현하였습니다.
+
+#### 구현 완료 항목
+
+**Frontend (3개 파일 수정)**:
+
+1. **`frontend/components/chat-interface.tsx`** (+50줄)
+   - Line 44: `CHAT_SESSION_KEY` 상수 추가
+   - Line 64: `chatSessionId` state 추가
+   - Line 76-90: chat_session_id 생성/로드 useEffect 추가
+     ```typescript
+     useEffect(() => {
+       let currentChatSessionId = localStorage.getItem(CHAT_SESSION_KEY)
+       if (!currentChatSessionId) {
+         currentChatSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+         localStorage.setItem(CHAT_SESSION_KEY, currentChatSessionId)
+       }
+       setChatSessionId(currentChatSessionId)
+     }, [])
+     ```
+   - Line 402: WebSocket 메시지에 chat_session_id 포함
+     ```typescript
+     wsClientRef.current.send({
+       type: "query",
+       query: content,
+       chat_session_id: chatSessionId,  // ← 추가
+       enable_checkpointing: true
+     })
+     ```
+
+2. **`frontend/components/sidebar.tsx`** (+3줄)
+   - Line 60: "새 채팅" 버튼이 chat_session_id도 삭제하도록 수정
+     ```typescript
+     localStorage.removeItem('current_chat_session_id')
+     ```
+
+**Backend (4개 파일 수정)**:
+
+3. **`backend/app/api/chat_api.py`** (+30줄)
+   - Line 242: WebSocket에서 chat_session_id 추출
+   - Line 253-254: chat_session_id 로깅 추가
+   - Line 330: `_process_query_async` 함수에 chat_session_id 파라미터 추가
+   - Line 365: supervisor.process_query_streaming()에 chat_session_id 전달
+
+4. **`backend/app/service_agent/supervisor/team_supervisor.py`** (+20줄)
+   - Line 1050: process_query_streaming() 메서드에 chat_session_id 파라미터 추가
+   - Line 1071-1072: chat_session_id 로깅
+   - Line 1086: MainSupervisorState 초기화 시 chat_session_id 전달
+
+5. **`backend/app/service_agent/foundation/separated_states.py`** (+1줄)
+   - Line 294: MainSupervisorState에 chat_session_id 필드 추가
+     ```python
+     chat_session_id: Optional[str]  # GPT-style 채팅 세션 ID
+     ```
+
+#### 데이터 흐름 완성
+
+```
+Frontend localStorage 생성
+    ↓
+"session-1760446573-abc123def"
+    ↓
+WebSocket Message: { type: "query", query: "...", chat_session_id: "session-..." }
+    ↓
+Backend chat_api.py: data.get("chat_session_id")
+    ↓
+_process_query_async(chat_session_id=...)
+    ↓
+supervisor.process_query_streaming(chat_session_id=...)
+    ↓
+MainSupervisorState(chat_session_id=...)
+    ↓
+generate_response_node(): session_id = state.get("chat_session_id")
+    ↓
+memory_service.save_conversation(session_id=chat_session_id)
+    ↓
+PostgreSQL: conversation_memories.session_id = "session-..."
+```
+
+#### 발견된 문제점
+
+##### 문제 1: 프론트엔드 표시 이슈 ⚠️
+
+**현상**:
+- 백엔드 API는 5개의 대화를 정상 반환
+- 프론트엔드는 1개만 표시
+
+**원인 (추정)**:
+1. 프론트엔드 빌드 캐시 문제
+2. ScrollArea 높이 제한 (h-[200px])
+3. UI 렌더링 오류
+
+**확인된 데이터**:
+```bash
+# PostgreSQL 데이터 확인
+SELECT id, session_id, query FROM conversation_memories ORDER BY created_at DESC LIMIT 5;
+
+결과: 5개 대화 존재
+- 3개: session_id = NULL (chat_session_id 구현 전 데이터)
+- 2개: session_id = 'session-migrated-1-1760432340' (마이그레이션 데이터)
+
+# Backend API 응답 확인
+curl "http://localhost:8000/api/v1/chat/memory/history?limit=5"
+
+결과: 5개 대화 정상 반환 ✅
+```
+
+**해결 방법 (다음 작업 시)**:
+```bash
+# 1. 프론트엔드 재시작
+npm run dev
+
+# 2. 브라우저 캐시 클리어
+Ctrl+Shift+R (Hard Refresh)
+
+# 3. 새로운 대화 생성 테스트
+# → chat_session_id가 제대로 저장되는지 확인
+```
+
+##### 문제 2: session_id NULL 데이터 ⚠️
+
+**현상**:
+- 최근 3개 대화의 session_id가 NULL
+- 이전 구현에서 chat_session_id를 전송하지 않았기 때문
+
+**영향**:
+- 해당 대화들은 특정 chat_session에 속하지 않음
+- "최근 대화" 목록에는 표시되지만, "내 채팅" 세션에는 연결되지 않음
+- 데이터 손실은 없음 (query, response는 정상 저장)
+
+**해결 방법**:
+```sql
+-- 기존 NULL session_id를 기본 세션으로 마이그레이션
+UPDATE conversation_memories
+SET session_id = 'session-migrated-1-1760432340'
+WHERE session_id IS NULL AND user_id = 1;
+```
+
+또는:
+- 새로운 대화를 생성하여 chat_session_id 저장 테스트
+- 이전 데이터는 "마이그레이션" 세션으로 유지
+
+#### 테스트 필요 사항
+
+**다음 작업 시 반드시 확인할 것**:
+
+1. **Frontend 재시작 후 메모리 히스토리 확인**
+   ```bash
+   cd frontend
+   npm run dev
+   # 브라우저에서 사이드바 "최근 대화" 섹션 확인
+   # → 5개 대화가 모두 표시되는지 확인
+   ```
+
+2. **새로운 대화 생성 및 session_id 저장 확인**
+   ```bash
+   # 1. "새 채팅" 버튼 클릭
+   # 2. 새로운 질문 입력 및 전송
+   # 3. 브라우저 콘솔 확인:
+   #    - "[ChatInterface] Sent query with chat_session_id: session-..."
+   #    - "[TeamSupervisor] Chat session ID: session-..."
+
+   # 4. PostgreSQL 확인:
+   PGPASSWORD=root1234 psql -h localhost -U postgres -d real_estate \
+     -c "SELECT id, session_id, query FROM conversation_memories ORDER BY created_at DESC LIMIT 1;"
+
+   # 예상 결과: session_id 컬럼에 "session-..." 형식의 값이 있어야 함
+   ```
+
+3. **세션 전환 테스트**
+   ```bash
+   # 1. 사이드바 "내 채팅" 목록에서 세션 클릭
+   # 2. 해당 세션의 대화 내역이 로드되는지 확인
+   # 3. 새로운 메시지를 보냈을 때 같은 session_id로 저장되는지 확인
+   ```
+
+4. **"새 채팅" 버튼 테스트**
+   ```bash
+   # 1. "새 채팅" 버튼 클릭
+   # 2. localStorage 확인:
+   #    - 'current_chat_session_id'가 삭제되었는지
+   #    - 'chat-messages'가 삭제되었는지
+   # 3. 페이지 리로드 후 새로운 chat_session_id가 생성되는지 확인
+   ```
+
+#### 수정된 파일 목록
+
+```
+frontend/
+  components/
+    chat-interface.tsx      (+50줄, 수정)
+    sidebar.tsx             (+3줄, 수정)
+
+backend/
+  app/
+    api/
+      chat_api.py           (+30줄, 수정)
+    service_agent/
+      supervisor/
+        team_supervisor.py  (+20줄, 수정)
+      foundation/
+        separated_states.py (+1줄, 수정)
+```
+
+#### 체크리스트
+
+**구현 완료**:
+- [x] Frontend: chat_session_id 생성 로직
+- [x] Frontend: chat_session_id WebSocket 전송
+- [x] Frontend: "새 채팅" 버튼에서 chat_session_id 초기화
+- [x] Backend: WebSocket에서 chat_session_id 추출
+- [x] Backend: supervisor에 chat_session_id 전달
+- [x] Backend: MainSupervisorState에 chat_session_id 필드 추가
+- [x] Backend: save_conversation()에 session_id 전달 (이미 구현됨)
+
+**테스트 대기 중**:
+- [ ] 프론트엔드 재시작 후 메모리 히스토리 5개 표시 확인
+- [ ] 새로운 대화 생성 시 chat_session_id 저장 확인
+- [ ] 세션 전환 시 메시지 로드 확인
+- [ ] "새 채팅" 버튼 동작 확인
+- [ ] 브라우저 새로고침 후 복원 확인
+
+**미해결 문제**:
+- [ ] 프론트엔드 메모리 히스토리 1개만 표시 (캐시 문제로 추정)
+- [ ] session_id NULL 데이터 마이그레이션 필요
+
+#### 다음 작업 시 우선순위
+
+1. **즉시 (1분)**:
+   - 프론트엔드 재시작 (`npm run dev`)
+   - 브라우저 Hard Refresh (Ctrl+Shift+R)
+
+2. **테스트 (5분)**:
+   - 새로운 대화 생성
+   - PostgreSQL에서 session_id 확인
+   - 콘솔 로그 확인
+
+3. **버그 수정 (필요 시, 10-30분)**:
+   - 메모리 히스토리 표시 이슈 디버깅
+   - NULL session_id 데이터 마이그레이션
+
+#### 코드 예시
+
+**localStorage 기반 chat_session_id 생성**:
+```typescript
+// frontend/components/chat-interface.tsx:76-90
+useEffect(() => {
+  let currentChatSessionId = localStorage.getItem(CHAT_SESSION_KEY)
+
+  if (!currentChatSessionId) {
+    // 새로운 chat_session_id 생성
+    currentChatSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    localStorage.setItem(CHAT_SESSION_KEY, currentChatSessionId)
+    console.log('[ChatInterface] Created new chat_session_id:', currentChatSessionId)
+  } else {
+    console.log('[ChatInterface] Loaded existing chat_session_id:', currentChatSessionId)
+  }
+
+  setChatSessionId(currentChatSessionId)
+}, [])
+```
+
+**WebSocket 메시지에 chat_session_id 포함**:
+```typescript
+// frontend/components/chat-interface.tsx:399-406
+wsClientRef.current.send({
+  type: "query",
+  query: content,
+  chat_session_id: chatSessionId,  // ← GPT-style session ID 전달
+  enable_checkpointing: true
+})
+
+console.log('[ChatInterface] Sent query with chat_session_id:', chatSessionId)
+```
+
+**Backend에서 chat_session_id 추출 및 전달**:
+```python
+# backend/app/api/chat_api.py:242-254
+if message_type == "query":
+    query = data.get("query")
+    enable_checkpointing = data.get("enable_checkpointing", True)
+    chat_session_id = data.get("chat_session_id")  # ← GPT-style chat session ID
+
+    # chat_session_id 로깅
+    if chat_session_id:
+        logger.info(f"[WebSocket] Received chat_session_id: {chat_session_id}")
+```
+
+```python
+# backend/app/service_agent/supervisor/team_supervisor.py:1050-1086
+async def process_query_streaming(
+    self,
+    query: str,
+    session_id: str = "default",
+    chat_session_id: Optional[str] = None,  # ← 추가
+    user_id: Optional[int] = None,
+    progress_callback: Optional[Callable[[str, dict], Awaitable[None]]] = None
+) -> Dict[str, Any]:
+    if chat_session_id:
+        logger.info(f"[TeamSupervisor] Chat session ID: {chat_session_id} (GPT-style)")
+
+    initial_state = MainSupervisorState(
+        query=query,
+        session_id=session_id,
+        chat_session_id=chat_session_id,  # ← State에 저장
+        ...
+    )
+```
+
+#### 정리
+
+이번 작업으로 chat_session_id의 **전체 데이터 흐름**이 완성되었습니다:
+
+```
+Frontend (생성) → WebSocket (전송) → Backend API (수신)
+→ Supervisor (처리) → State (저장) → Memory Service (DB 저장)
+→ PostgreSQL (영구 저장)
+```
+
+다음 세션에서는:
+1. 프론트엔드 재시작 및 테스트
+2. 실제 동작 확인 (새 대화 → DB 저장 → session_id 확인)
+3. 남은 버그 수정
+
+---
+
+**Report Date**: 2025-10-14 (초기 작성), 2025-10-14 (chat_session_id 구현)
+**Status**: ✅ Implementation Complete (11/11 tasks) → ⚠️ Testing Required
+**Next Steps**: Frontend Restart → Test chat_session_id → Fix Remaining Issues
 **Author**: Claude Code

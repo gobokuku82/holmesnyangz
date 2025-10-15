@@ -1,0 +1,245 @@
+// HolmesNyangz Database Schema for dbdiagram.io
+// ================================================
+// Date: 2025-10-14
+// Author: Claude Code
+//
+// Usage:
+// 1. Copy all content below
+// 2. Go to https://dbdiagram.io/d
+// 3. Paste into the editor
+// 4. View the generated diagram
+//
+// Total Tables: 9
+// - Core Tables: 5 (sessions, chat_sessions, chat_messages, conversation_memories, entity_memories)
+// - Checkpoint Tables: 4 (checkpoints, checkpoint_blobs, checkpoint_writes, checkpoint_migrations)
+// ================================================
+
+// ============================================================================
+// Core Tables (5 tables)
+// ============================================================================
+
+Table sessions {
+  session_id varchar(255) [pk, note: 'HTTP/WebSocket session ID']
+  user_id integer [note: 'User ID (nullable)']
+  created_at timestamp [not null, default: `now()`, note: 'Session created time']
+  expires_at timestamp [not null, note: 'Session expiration time']
+  last_activity timestamp [not null, default: `now()`, note: 'Last activity timestamp']
+  metadata jsonb [note: 'Additional session metadata']
+
+  indexes {
+    expires_at
+    user_id
+  }
+
+  Note: 'HTTP/WebSocket session management. Tracks user sessions, expiration, and activity.'
+}
+
+Table chat_sessions {
+  session_id varchar(100) [pk, note: 'GPT-style chat session ID']
+  user_id integer [not null, note: 'User ID']
+  title varchar(200) [not null, default: '새 대화', note: 'Session title (auto-generated from first message)']
+  last_message text [note: 'Last message preview']
+  message_count integer [default: 0, note: 'Total message count (auto-incremented by trigger)']
+  created_at timestamp [not null, default: `now()`, note: 'Session created time']
+  updated_at timestamp [not null, default: `now()`, note: 'Last updated time (auto-updated by trigger)']
+  is_active boolean [default: true, note: 'Active status (soft delete)']
+  metadata jsonb [note: 'Session metadata']
+
+  indexes {
+    user_id
+    updated_at
+    (user_id, updated_at)
+    is_active
+  }
+
+  Note: 'GPT-style chat sessions. Each session is an independent conversation thread.'
+}
+
+Table chat_messages {
+  id serial [pk, note: 'Message ID (auto-increment)']
+  session_id varchar(100) [not null, ref: > chat_sessions.session_id, note: 'Chat session reference']
+  role varchar(20) [not null, note: 'Message role: user, assistant, system']
+  content text [not null, note: 'Message content']
+  created_at timestamp [not null, default: `now()`, note: 'Message created time']
+  metadata jsonb [note: 'Message metadata']
+
+  indexes {
+    session_id
+    (session_id, created_at)
+  }
+
+  Note: 'Chat message storage. Alternative to storing in conversation_memories.'
+}
+
+Table conversation_memories {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Memory ID (UUID)']
+  user_id integer [not null, note: 'User ID']
+  query text [not null, note: 'User query']
+  response_summary text [not null, note: 'AI response summary']
+  relevance varchar(20) [not null, note: 'Relevance: RELEVANT, IRRELEVANT, UNCLEAR']
+  session_id varchar(100) [ref: > chat_sessions.session_id, note: 'Chat session reference (nullable)']
+  intent_detected varchar(100) [note: 'Detected intent']
+  entities_mentioned jsonb [note: 'Mentioned entities']
+  created_at timestamp [not null, default: `now()`, note: 'Memory created time']
+  conversation_metadata jsonb [note: 'Conversation metadata']
+
+  indexes {
+    user_id
+    created_at
+    relevance
+    session_id
+    (session_id, created_at)
+  }
+
+  Note: 'Long-term memory. Stores user queries and AI responses for context retrieval and personalization.'
+}
+
+Table entity_memories {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Entity memory ID (UUID)']
+  user_id integer [not null, note: 'User ID']
+  entity_type varchar(50) [not null, note: 'Entity type (e.g., person, address, property)']
+  entity_name varchar(200) [not null, note: 'Entity name']
+  entity_value text [note: 'Entity value']
+  context text [note: 'Context where entity was mentioned']
+  first_mentioned timestamp [not null, default: `now()`, note: 'First mention time']
+  last_mentioned timestamp [not null, default: `now()`, note: 'Last mention time']
+  mention_count integer [default: 1, note: 'Number of times mentioned']
+  importance_score float [default: 0.5, note: 'Importance score (0.0 ~ 1.0)']
+  metadata jsonb [note: 'Entity metadata']
+
+  indexes {
+    user_id
+    entity_type
+    entity_name
+    last_mentioned
+  }
+
+  Note: 'Entity tracking. Tracks entities mentioned by users (names, addresses, properties, etc.).'
+}
+
+// ============================================================================
+// LangGraph Checkpoint Tables (4 tables)
+// ============================================================================
+
+Table checkpoints {
+  thread_id text [not null, note: 'LangGraph thread ID']
+  checkpoint_ns text [not null, default: '', note: 'Checkpoint namespace']
+  checkpoint_id text [not null, note: 'Checkpoint ID']
+  parent_checkpoint_id text [note: 'Parent checkpoint ID']
+  type text [note: 'Checkpoint type']
+  checkpoint jsonb [not null, note: 'Checkpoint data (JSONB)']
+  metadata jsonb [not null, default: `{}`, note: 'Checkpoint metadata']
+
+  indexes {
+    thread_id
+    (thread_id, checkpoint_ns, checkpoint_id) [pk]
+  }
+
+  Note: 'LangGraph checkpoints. Stores LangGraph execution state for pause/resume functionality.'
+}
+
+Table checkpoint_blobs {
+  thread_id text [not null, note: 'LangGraph thread ID']
+  checkpoint_ns text [not null, default: '', note: 'Checkpoint namespace']
+  channel text [not null, note: 'Channel name']
+  version text [not null, note: 'Version']
+  type text [not null, note: 'Blob type']
+  blob bytea [note: 'Binary blob data']
+
+  indexes {
+    (thread_id, checkpoint_ns, channel, version) [pk]
+  }
+
+  Note: 'LangGraph checkpoint blobs. Stores binary data associated with checkpoints.'
+}
+
+Table checkpoint_writes {
+  thread_id text [not null, note: 'LangGraph thread ID']
+  checkpoint_ns text [not null, default: '', note: 'Checkpoint namespace']
+  checkpoint_id text [not null, note: 'Checkpoint ID']
+  task_id text [not null, note: 'Task ID']
+  idx integer [not null, note: 'Index']
+  channel text [not null, note: 'Channel name']
+  type text [note: 'Write type']
+  blob bytea [not null, note: 'Write blob data']
+
+  indexes {
+    thread_id
+    (thread_id, checkpoint_ns, checkpoint_id, task_id, idx) [pk]
+  }
+
+  Note: 'LangGraph checkpoint writes. Tracks writes to checkpoint state for incremental updates.'
+}
+
+Table checkpoint_migrations {
+  v integer [pk, note: 'Migration version']
+
+  Note: 'LangGraph checkpoint migrations. Tracks checkpoint schema migrations for version management.'
+}
+
+// ============================================================================
+// Relationships Summary
+// ============================================================================
+
+// chat_messages -> chat_sessions (Many-to-One)
+// - CASCADE on delete: When a chat_session is deleted, all its messages are deleted
+
+// conversation_memories -> chat_sessions (Many-to-One)
+// - CASCADE on delete: When a chat_session is deleted, all its memories are deleted
+// - Nullable: Old memories may not have session_id (backward compatibility)
+
+// ============================================================================
+// Triggers (Not shown in diagram, but exist in PostgreSQL)
+// ============================================================================
+
+// 1. trigger_update_chat_session_timestamp
+//    - BEFORE UPDATE on chat_sessions
+//    - Auto-updates updated_at to NOW()
+
+// 2. trigger_update_session_message_count
+//    - AFTER INSERT on conversation_memories
+//    - Auto-increments message_count in chat_sessions
+//    - Auto-updates last_message
+//    - Auto-generates title from first message if title is "새 대화"
+
+// ============================================================================
+// Index Notes (DESC ordering not shown in diagram)
+// ============================================================================
+
+// PostgreSQL indexes with DESC ordering:
+// - chat_sessions: updated_at DESC, (user_id, updated_at DESC)
+// - chat_messages: (session_id, created_at DESC)
+// - conversation_memories: created_at DESC, (session_id, created_at DESC)
+// - entity_memories: last_mentioned DESC
+
+// Note: dbdiagram.io doesn't support DESC in index syntax,
+// but these are implemented in the actual PostgreSQL database
+
+// ============================================================================
+// Color Legend (can be customized in dbdiagram.io)
+// ============================================================================
+
+// - Core tables: Blue (#3498db)
+// - Checkpoint tables: Green (#2ecc71)
+// - Relationship lines: Gray (#95a5a6)
+
+// ============================================================================
+// Optional: Table Groups
+// ============================================================================
+
+// Uncomment to enable table grouping in dbdiagram.io:
+
+// TableGroup core_tables {
+//   sessions
+//   chat_sessions
+//   chat_messages
+//   conversation_memories
+//   entity_memories
+// }
+//
+// TableGroup checkpoint_tables {
+//   checkpoints
+//   checkpoint_blobs
+//   checkpoint_writes
+//   checkpoint_migrations
+// }
