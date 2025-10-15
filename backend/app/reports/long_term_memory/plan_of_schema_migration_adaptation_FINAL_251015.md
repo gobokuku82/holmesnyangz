@@ -730,7 +730,9 @@ const response = await fetch(`http://localhost:8000/api/v1/chat/sessions/${sessi
 - [x] `app/models/memory.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
 - [x] `app/models/unified_schema.py` → `old/` 폴더로 이동 (Phase 0-C 완료)
 - [ ] Import cleanup 확인
-- [ ] 테스트 파일 정리 (test_auto_table_creation.py, test_session_migration.py)
+- [ ] 테스트 파일 정리:
+  - [ ] `test_auto_table_creation.py` - 삭제된 테이블 테스트 제거
+  - [ ] `test_session_migration.py` - Line 14 SessionManager import 수정
 - [ ] 최종 통합 테스트
 
 ---
