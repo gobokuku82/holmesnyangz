@@ -1113,12 +1113,16 @@ class TeamBasedSupervisor:
         try:
             # Checkpointing이 활성화되어 있으면 config에 thread_id 전달
             if self.checkpointer:
+                # ✅ chat_session_id를 thread_id로 사용 (GPT-style 대화 스레드)
+                # chat_session_id가 없으면 session_id (HTTP) 사용 (하위 호환성)
+                thread_id = chat_session_id if chat_session_id else session_id
+
                 config = {
                     "configurable": {
-                        "thread_id": session_id
+                        "thread_id": thread_id
                     }
                 }
-                logger.info(f"Running with checkpointer (thread_id: {session_id})")
+                logger.info(f"Running with checkpointer (thread_id: {thread_id}, type: {'chat' if chat_session_id else 'http'})")
                 final_state = await self.app.ainvoke(initial_state, config=config)
             else:
                 logger.info("Running without checkpointer")
