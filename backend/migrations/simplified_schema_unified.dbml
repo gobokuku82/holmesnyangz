@@ -29,7 +29,7 @@ Table chat_sessions {
   }
 
   Note: '''
-  GPT-style chat sessions
+ Chat History & State Endpoints
   - Each session = independent conversation
   - session_id is used consistently across all tables
   - user_id currently defaults to 1 (authentication not implemented)

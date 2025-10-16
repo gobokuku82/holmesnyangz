@@ -21,7 +21,7 @@ import uuid
 
 class ChatSession(Base):
     """
-    채팅 세션 (GPT 스타일)
+    채팅 세션 (Chat History & State Endpoints)
 
     PostgreSQL 스키마와 정확히 일치
     """

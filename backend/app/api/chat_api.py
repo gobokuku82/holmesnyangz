@@ -174,7 +174,7 @@ async def start_session(
 
 
 # ============================================================================
-# GPT-Style Chat Sessions Endpoints (for Frontend)
+# Chat History & State Endpoints (for Frontend)
 # ============================================================================
 
 from typing import List, Optional
@@ -223,8 +223,7 @@ async def get_chat_sessions(
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    사용자의 채팅 세션 목록 조회 (GPT 스타일)
-
+    사용자의 채팅 세션 목록 조회 (Chat History & State Endpoints)
     Args:
         limit: 조회할 세션 수 (최대 50)
         offset: 페이지네이션 오프셋
@@ -288,7 +287,7 @@ async def create_chat_session(
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    새 채팅 세션 생성 (GPT 스타일)
+    새 채팅 세션 생성 (Chat History & State Endpoints)
 
     Args:
         request: 세션 생성 요청

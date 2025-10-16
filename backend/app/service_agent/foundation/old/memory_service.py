@@ -120,7 +120,7 @@ class LongTermMemoryService:
             query: 사용자 쿼리
             response_summary: 응답 요약 (100-200자 정도)
             relevance: 관련성 ("RELEVANT" or "IRRELEVANT")
-            session_id: 채팅 세션 ID (GPT-style)
+            session_id: 채팅 세션 ID (Chat History & State Endpoints)
             intent_detected: 감지된 의도
             entities_mentioned: 언급된 엔티티 (JSONB)
             conversation_metadata: 추가 메타데이터 (teams_used, response_time 등)

@@ -6,7 +6,7 @@ This module contains ALL database table definitions in one place for clarity.
 
 Tables (9 total):
 1. Session - HTTP/WebSocket session management
-2. ChatSession - GPT-style chat sessions
+2. ChatSession - Chat History & State Endpoints
 3. ChatMessage - Chat message storage
 4. ConversationMemory - Long-term memory (conversation history)
 5. EntityMemory - Entity tracking
@@ -71,10 +71,10 @@ class Session(Base):
 
 class ChatSession(Base):
     """
-    GPT-style 채팅 세션
+    Chat History & State Endpoints
 
     - Each chat session is an independent conversation thread
-    - Similar to ChatGPT's conversation list
+    - Chat History & State Endpoints
     - Auto-generates title from first message via trigger
     """
     __tablename__ = "chat_sessions"

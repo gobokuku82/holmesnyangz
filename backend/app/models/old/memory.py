@@ -55,13 +55,13 @@ class ConversationMemory(Base):
     )
     conversation_metadata = Column(JSONB, comment="추가 메타데이터 (teams_used, response_time 등)")
 
-    # GPT-style Session ID (연결)
+    # Dynamic Session ID (연결)
     session_id = Column(
         String(100),
         ForeignKey("chat_sessions.session_id", ondelete="CASCADE"),
         nullable=True,
         index=True,
-        comment="채팅 세션 ID (GPT-style)"
+        comment="채팅 세션 ID (Chat History & State Endpoints)"
     )
 
     # Relationships

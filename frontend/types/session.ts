@@ -1,5 +1,5 @@
 /**
- * Chat Session Types for GPT-style Multi-Chat System
+ * Chat Session Types - Chat History & State Endpoints System
  *
  * 채팅 세션 관리를 위한 TypeScript 타입 정의
  */

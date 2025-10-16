@@ -1,7 +1,7 @@
 /**
  * useChatSessions Hook
  *
- * GPT-style 멀티 채팅 세션 관리
+ * Chat History & State Endpoints
  * - 세션 CRUD 작업
  * - 현재 활성 세션 추적
  * - API 연동

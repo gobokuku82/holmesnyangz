@@ -3,7 +3,7 @@
 /**
  * SessionList Component
  *
- * GPT-style 채팅 세션 목록
+ * Chat History & State Endpoints
  * - 세션 클릭 시 전환
  * - 세션 삭제 기능
  * - 현재 세션 하이라이트

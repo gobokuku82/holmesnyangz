@@ -848,7 +848,7 @@ class TeamBasedSupervisor:
                     if not response_summary:
                         response_summary = f"{response.get('type', 'response')} 생성 완료"
 
-                    # chat_session_id 추출 (GPT-style)
+                    # chat_session_id 추출 (Chat History & State Endpoints)
                     chat_session_id = state.get("chat_session_id")
 
                     # 대화 저장
@@ -1057,7 +1057,7 @@ class TeamBasedSupervisor:
         Args:
             query: 사용자 쿼리
             session_id: 세션 ID (HTTP/WebSocket)
-            chat_session_id: 채팅 세션 ID (GPT-style, optional)
+            chat_session_id: 채팅 세션 ID (Chat History & State Endpoints, optional)
             user_id: 사용자 ID (Long-term Memory용, 없으면 None)
             progress_callback: 진행 상황 콜백 함수 (WebSocket 전송용)
                                async def callback(event_type: str, event_data: dict)
@@ -1069,7 +1069,7 @@ class TeamBasedSupervisor:
         if user_id:
             logger.info(f"[TeamSupervisor] User ID: {user_id} (Long-term Memory enabled)")
         if chat_session_id:
-            logger.info(f"[TeamSupervisor] Chat session ID: {chat_session_id} (GPT-style)")
+            logger.info(f"[TeamSupervisor] Chat session ID: {chat_session_id} (Chat History & State Endpoints)")
 
         # Checkpointer 초기화 (최초 1회)
         await self._ensure_checkpointer()
@@ -1083,7 +1083,7 @@ class TeamBasedSupervisor:
         initial_state = MainSupervisorState(
             query=query,
             session_id=session_id,
-            chat_session_id=chat_session_id,  # GPT-style 채팅 세션 ID
+            chat_session_id=chat_session_id,  # Chat History & State Endpoints ID
             request_id=f"req_{datetime.now().timestamp()}",
             user_id=user_id,  # Long-term Memory용
             planning_state=None,
@@ -1113,7 +1113,7 @@ class TeamBasedSupervisor:
         try:
             # Checkpointing이 활성화되어 있으면 config에 thread_id 전달
             if self.checkpointer:
-                # ✅ chat_session_id를 thread_id로 사용 (GPT-style 대화 스레드)
+                # ✅ chat_session_id를 thread_id로 사용 (Chat History & State Endpoints)
                 # chat_session_id가 없으면 session_id (HTTP) 사용 (하위 호환성)
                 thread_id = chat_session_id if chat_session_id else session_id
 
