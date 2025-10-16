@@ -12,9 +12,25 @@ import { ChatWSClient, createWSClient, type WSMessage } from "@/lib/ws"
 import type { ExecutionStepState } from "@/lib/types"
 import { ExecutionPlanPage } from "@/components/execution-plan-page"
 import { ExecutionProgressPage } from "@/components/execution-progress-page"
+import { AnswerDisplay } from "@/components/answer-display"
 import type { ProcessState, AgentType } from "@/types/process"
 import type { ExecutionPlan, ExecutionStep } from "@/types/execution"
 import { STEP_MESSAGES } from "@/types/process"
+
+interface AnswerSection {
+  title: string
+  content: string | string[]
+  icon?: string
+  priority?: "high" | "medium" | "low"
+  expandable?: boolean
+  type?: "text" | "checklist" | "warning"
+}
+
+interface AnswerMetadata {
+  confidence: number
+  sources: string[]
+  intent_type: string
+}
 
 interface Message {
   id: string
@@ -23,6 +39,10 @@ interface Message {
   timestamp: Date
   executionPlan?: ExecutionPlan
   executionSteps?: ExecutionStep[]
+  structuredData?: {
+    sections: AnswerSection[]
+    metadata: AnswerMetadata
+  }
 }
 
 interface ConversationMemory {
@@ -319,11 +339,12 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
           m.type !== "execution-progress" && m.type !== "execution-plan"
         ))
 
-        // 봇 응답 추가
+        // 봇 응답 추가 (structured_data 포함)
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: "bot",
-          content: message.response?.content || message.response?.answer || message.response?.message || "응답을 받지 못했습니다.",
+          content: message.response?.answer || message.response?.content || message.response?.message || "응답을 받지 못했습니다.",
+          structuredData: message.response?.structured_data,
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, botMessage])
@@ -476,9 +497,16 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
                     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.type === "user" ? "bg-primary" : "bg-secondary"}`}>
                       {message.type === "user" ? <User className="h-4 w-4 text-primary-foreground" /> : <Bot className="h-4 w-4" />}
                     </div>
-                    <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : ""}`}>
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </Card>
+                    {message.type === "bot" && message.structuredData ? (
+                      <AnswerDisplay
+                        sections={message.structuredData.sections}
+                        metadata={message.structuredData.metadata}
+                      />
+                    ) : (
+                      <Card className={`p-3 ${message.type === "user" ? "bg-primary text-primary-foreground" : ""}`}>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      </Card>
+                    )}
                   </div>
                 </div>
               )}

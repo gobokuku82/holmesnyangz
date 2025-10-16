@@ -17,7 +17,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 # Long-term Memory imports
-from app.service_agent.foundation.memory_service import LongTermMemoryService
+from app.service_agent.foundation.simple_memory_service import LongTermMemoryService
 from app.db.postgre_db import get_async_db
 from app.core.config import settings
 

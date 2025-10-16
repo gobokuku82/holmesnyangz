@@ -4,18 +4,19 @@ FastAPI WebSocket endpoints for real-time chat with service_agent integration
 user_id = 1 (임시 하드코딩)
 """
 
-from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect, Query
+from datetime import datetime, timezone
 import logging
 import asyncio
 import json
+from sqlalchemy import func
 
 from app.api.schemas import (
     SessionStartRequest, SessionStartResponse,
     SessionInfo, DeleteSessionResponse,
     ErrorResponse
 )
-from app.api.session_manager import get_session_manager, SessionManager
+from app.api.postgres_session_manager import get_session_manager, SessionManager
 from app.api.ws_manager import get_connection_manager, ConnectionManager
 from app.service_agent.supervisor.team_supervisor import TeamBasedSupervisor
 
@@ -207,10 +208,17 @@ async def websocket_chat(
         session_id: 세션 ID
     """
     # 1. 세션 검증
-    if not await session_mgr.validate_session(session_id):
+    logger.info(f"🔍 Validating WebSocket session: {session_id}")
+
+    validation_result = await session_mgr.validate_session(session_id)
+    logger.info(f"🔍 Validation result: {validation_result}")
+
+    if not validation_result:
         await websocket.close(code=4004, reason="Session not found or expired")
         logger.warning(f"WebSocket rejected: invalid session {session_id}")
         return
+
+    logger.info(f"✅ Session validated: {session_id}")
 
     # 2. WebSocket 연결
     await conn_mgr.connect(session_id, websocket)
@@ -455,16 +463,15 @@ async def get_memory_history(
         user_id = 1  # 🔧 임시: 테스트용 하드코딩
 
         from app.db.postgre_db import get_async_db
-        from app.service_agent.foundation.memory_service import LongTermMemoryService
+        from app.service_agent.foundation.simple_memory_service import SimpleMemoryService
 
         async for db_session in get_async_db():
-            memory_service = LongTermMemoryService(db_session)
+            memory_service = SimpleMemoryService(db_session)
 
-            # 최근 대화 기록 로드 (RELEVANT만)
-            memories = await memory_service.load_recent_memories(
+            # 최근 메모리 조회 (호환성 메서드)
+            memories = await memory_service.get_recent_memories(
                 user_id=user_id,
-                limit=limit,
-                relevance_filter="RELEVANT"
+                limit=limit
             )
 
             return {
@@ -483,3 +490,351 @@ async def get_memory_history(
             status_code=500,
             detail=f"Failed to fetch memory history: {str(e)}"
         )
+
+
+# ============================================================================
+# GPT-Style Chat Sessions Endpoints (for Frontend)
+# ============================================================================
+
+from typing import List, Optional
+from pydantic import BaseModel
+from sqlalchemy import select, update, delete, desc, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.postgre_db import get_async_db
+from app.models.chat import ChatSession, ChatMessage
+import uuid
+
+
+class ChatSessionCreate(BaseModel):
+    """채팅 세션 생성 요청"""
+    title: Optional[str] = "새 대화"
+    metadata: Optional[dict] = None
+
+
+class ChatSessionUpdate(BaseModel):
+    """채팅 세션 업데이트 요청"""
+    title: str
+
+
+class ChatSessionResponse(BaseModel):
+    """채팅 세션 응답"""
+    id: str
+    title: str
+    created_at: str
+    updated_at: str
+    last_message: Optional[str] = None
+    message_count: int = 0
+
+
+class ChatMessageResponse(BaseModel):
+    """채팅 메시지 응답"""
+    id: int
+    role: str
+    content: str
+    created_at: str
+
+
+@router.get("/sessions", response_model=List[ChatSessionResponse])
+async def get_chat_sessions(
+    limit: int = 50,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    사용자의 채팅 세션 목록 조회 (GPT 스타일)
+
+    Args:
+        limit: 조회할 세션 수 (최대 50)
+        offset: 페이지네이션 오프셋
+
+    Returns:
+        List[ChatSessionResponse]: 채팅 세션 목록
+    """
+    try:
+        user_id = 1  # 임시 하드코딩
+
+        # 세션 목록 조회
+        query = (
+            select(ChatSession)
+            .where(ChatSession.user_id == user_id)
+            .order_by(desc(ChatSession.updated_at))
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await db.execute(query)
+        sessions = result.scalars().all()
+
+        # 각 세션의 마지막 메시지 조회
+        response_sessions = []
+        for session in sessions:
+            # 마지막 메시지 조회
+            last_msg_query = (
+                select(ChatMessage)
+                .where(ChatMessage.session_id == session.session_id)
+                .order_by(desc(ChatMessage.created_at))
+                .limit(1)
+            )
+            last_msg_result = await db.execute(last_msg_query)
+            last_message = last_msg_result.scalar_one_or_none()
+
+            # 메시지 수 조회
+            count_query = select(func.count()).select_from(ChatMessage).where(
+                ChatMessage.session_id == session.session_id
+            )
+            count_result = await db.execute(count_query)
+            message_count = count_result.scalar() or 0
+
+            response_sessions.append(ChatSessionResponse(
+                id=session.session_id,
+                title=session.title,
+                created_at=session.created_at.isoformat(),
+                updated_at=session.updated_at.isoformat(),
+                last_message=last_message.content[:100] if last_message else None,
+                message_count=message_count
+            ))
+
+        return response_sessions
+
+    except Exception as e:
+        logger.error(f"Failed to fetch chat sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch sessions")
+
+
+@router.post("/sessions", response_model=ChatSessionResponse)
+async def create_chat_session(
+    request: ChatSessionCreate = ChatSessionCreate(),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    새 채팅 세션 생성 (GPT 스타일)
+
+    Args:
+        request: 세션 생성 요청
+
+    Returns:
+        ChatSessionResponse: 생성된 세션 정보
+    """
+    try:
+        user_id = 1  # 임시 하드코딩
+        session_id = f"chat-{uuid.uuid4()}"
+
+        # 새 세션 생성
+        new_session = ChatSession(
+            session_id=session_id,
+            user_id=user_id,
+            title=request.title
+        )
+        db.add(new_session)
+        await db.commit()
+        await db.refresh(new_session)
+
+        logger.info(f"Chat session created: {session_id}")
+
+        return ChatSessionResponse(
+            id=new_session.session_id,
+            title=new_session.title,
+            created_at=new_session.created_at.isoformat(),
+            updated_at=new_session.updated_at.isoformat(),
+            last_message=None,
+            message_count=0
+        )
+
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to create chat session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+
+@router.get("/sessions/{session_id}/messages", response_model=List[ChatMessageResponse])
+async def get_session_messages(
+    session_id: str,
+    limit: int = 100,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    특정 세션의 메시지 목록 조회
+
+    Args:
+        session_id: 채팅 세션 ID
+        limit: 조회할 메시지 수
+        offset: 페이지네이션 오프셋
+
+    Returns:
+        List[ChatMessageResponse]: 메시지 목록
+    """
+    try:
+        # 세션 존재 확인
+        session_query = select(ChatSession).where(ChatSession.session_id == session_id)
+        session_result = await db.execute(session_query)
+        session = session_result.scalar_one_or_none()
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # 메시지 조회
+        query = (
+            select(ChatMessage)
+            .where(ChatMessage.session_id == session_id)
+            .order_by(ChatMessage.created_at)
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await db.execute(query)
+        messages = result.scalars().all()
+
+        return [
+            ChatMessageResponse(
+                id=msg.id,
+                role=msg.role,
+                content=msg.content,
+                created_at=msg.created_at.isoformat()
+            )
+            for msg in messages
+        ]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch messages: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch messages")
+
+
+@router.patch("/sessions/{session_id}", response_model=ChatSessionResponse)
+async def update_chat_session(
+    session_id: str,
+    request: ChatSessionUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    채팅 세션 제목 업데이트
+
+    Args:
+        session_id: 채팅 세션 ID
+        request: 업데이트 요청
+
+    Returns:
+        ChatSessionResponse: 업데이트된 세션 정보
+    """
+    try:
+        # 세션 조회
+        query = select(ChatSession).where(ChatSession.session_id == session_id)
+        result = await db.execute(query)
+        session = result.scalar_one_or_none()
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # 제목 업데이트
+        session.title = request.title
+        session.updated_at = datetime.now(timezone.utc)
+        await db.commit()
+        await db.refresh(session)
+
+        # 마지막 메시지 조회
+        last_msg_query = (
+            select(ChatMessage)
+            .where(ChatMessage.session_id == session_id)
+            .order_by(desc(ChatMessage.created_at))
+            .limit(1)
+        )
+        last_msg_result = await db.execute(last_msg_query)
+        last_message = last_msg_result.scalar_one_or_none()
+
+        # 메시지 수 조회
+        count_query = select(func.count()).select_from(ChatMessage).where(
+            ChatMessage.session_id == session_id
+        )
+        count_result = await db.execute(count_query)
+        message_count = count_result.scalar() or 0
+
+        logger.info(f"Chat session updated: {session_id}")
+
+        return ChatSessionResponse(
+            id=session.session_id,
+            title=session.title,
+            created_at=session.created_at.isoformat(),
+            updated_at=session.updated_at.isoformat(),
+            last_message=last_message.content[:100] if last_message else None,
+            message_count=message_count
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to update chat session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update session")
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_chat_session(
+    session_id: str,
+    hard_delete: bool = False,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    채팅 세션 삭제
+
+    Args:
+        session_id: 채팅 세션 ID
+        hard_delete: 완전 삭제 여부 (True: DB에서 삭제, False: 소프트 삭제)
+
+    Returns:
+        dict: 삭제 결과
+    """
+    try:
+        # 세션 조회
+        query = select(ChatSession).where(ChatSession.session_id == session_id)
+        result = await db.execute(query)
+        session = result.scalar_one_or_none()
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if hard_delete:
+            # 하드 삭제 (CASCADE로 messages도 자동 삭제)
+            await db.delete(session)
+
+            # checkpoints 관련 테이블도 정리
+            await db.execute(
+                "DELETE FROM checkpoints WHERE session_id = :session_id",
+                {"session_id": session_id}
+            )
+            await db.execute(
+                "DELETE FROM checkpoint_writes WHERE session_id = :session_id",
+                {"session_id": session_id}
+            )
+            await db.execute(
+                "DELETE FROM checkpoint_blobs WHERE session_id = :session_id",
+                {"session_id": session_id}
+            )
+
+            await db.commit()
+            logger.info(f"Chat session hard deleted: {session_id}")
+
+            return {
+                "message": "Session permanently deleted",
+                "session_id": session_id,
+                "deleted_at": datetime.now().isoformat()
+            }
+        else:
+            # 소프트 삭제 (제목만 변경)
+            session.title = f"[삭제됨] {session.title}"
+            session.updated_at = datetime.now(timezone.utc)
+            await db.commit()
+
+            logger.info(f"Chat session soft deleted: {session_id}")
+
+            return {
+                "message": "Session marked as deleted",
+                "session_id": session_id,
+                "deleted_at": datetime.now().isoformat()
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to delete chat session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete session")

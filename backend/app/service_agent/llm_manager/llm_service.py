@@ -386,8 +386,8 @@ class LLMService:
                 "aggregated_results": aggregated_json
             }
 
-            # LLM 호출 (response_synthesis 프롬프트 사용)
-            answer = await self.complete_async(
+            # LLM 호출 (response_synthesis 프롬프트 사용) - JSON 모드로 변경
+            response_json = await self.complete_json_async(
                 prompt_name="response_synthesis",
                 variables=variables,
                 temperature=0.3,
@@ -398,7 +398,15 @@ class LLMService:
 
             return {
                 "type": "answer",
-                "answer": answer,
+                "answer": response_json.get("answer", ""),
+                "structured_data": {
+                    "sections": self._create_sections(response_json, intent_info),
+                    "metadata": {
+                        "confidence": response_json.get("confidence", 0.8),
+                        "sources": response_json.get("sources", []),
+                        "intent_type": intent_info.get("intent_type", "unknown")
+                    }
+                },
                 "teams_used": list(aggregated_results.keys()),
                 "data": aggregated_results
             }
@@ -431,6 +439,96 @@ class LLMService:
         except Exception as e:
             logger.warning(f"Failed to serialize object to JSON: {e}")
             return str(obj)
+
+    def _create_sections(self, response_json: Dict[str, Any], intent_info: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        JSON 응답을 UI 섹션으로 변환
+
+        Args:
+            response_json: LLM이 생성한 JSON 응답
+            intent_info: 의도 분석 정보
+
+        Returns:
+            UI 섹션 리스트
+        """
+        sections = []
+
+        # 1. 핵심 답변 섹션
+        if response_json.get("answer"):
+            sections.append({
+                "title": "핵심 답변",
+                "content": response_json["answer"],
+                "icon": "target",
+                "priority": "high",
+                "expandable": False  # 핵심 답변은 항상 표시
+            })
+
+        # 2. 세부 정보 섹션
+        details = response_json.get("details", {})
+
+        # 법적 근거
+        if details.get("legal_basis"):
+            sections.append({
+                "title": "법적 근거",
+                "content": details["legal_basis"],
+                "icon": "scale",
+                "priority": "medium",
+                "expandable": True
+            })
+
+        # 데이터 분석
+        if details.get("data_analysis"):
+            sections.append({
+                "title": "데이터 분석",
+                "content": details["data_analysis"],
+                "icon": "chart",
+                "priority": "medium",
+                "expandable": True
+            })
+
+        # 고려사항
+        if details.get("considerations"):
+            sections.append({
+                "title": "고려사항",
+                "content": details["considerations"],
+                "icon": "alert",
+                "type": "checklist",
+                "priority": "medium",
+                "expandable": True
+            })
+
+        # 3. 추천사항 섹션
+        if response_json.get("recommendations"):
+            sections.append({
+                "title": "추천사항",
+                "content": response_json["recommendations"],
+                "icon": "lightbulb",
+                "type": "checklist",
+                "priority": "high",
+                "expandable": True
+            })
+
+        # 4. 추가 정보 섹션
+        if response_json.get("additional_info"):
+            sections.append({
+                "title": "참고사항",
+                "content": response_json["additional_info"],
+                "icon": "info",
+                "priority": "low",
+                "expandable": True
+            })
+
+        # 섹션이 없는 경우 기본 답변 섹션 생성
+        if not sections and response_json.get("answer"):
+            sections.append({
+                "title": "답변",
+                "content": response_json.get("answer", "답변을 생성할 수 없습니다."),
+                "icon": "message",
+                "priority": "high",
+                "expandable": False
+            })
+
+        return sections
 
     def _generate_error_response(self, error_message: str) -> Dict[str, Any]:
         """

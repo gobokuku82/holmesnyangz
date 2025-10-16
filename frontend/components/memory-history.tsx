@@ -39,10 +39,16 @@ export function MemoryHistory({ isCollapsed = false, onLoadMemory }: MemoryHisto
       const response = await fetch("http://localhost:8000/api/v1/chat/memory/history?limit=5")
 
       if (!response.ok) {
+        // 404 에러는 정상적으로 빈 배열 반환 (메모리 기록이 없는 경우)
+        if (response.status === 404) {
+          setMemories([])
+          return
+        }
         throw new Error("Failed to fetch memory history")
       }
 
       const data = await response.json()
+      // SimpleMemoryService는 빈 배열을 반환하므로 정상 처리
       setMemories(data.memories || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error")
