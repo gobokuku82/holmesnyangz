@@ -51,11 +51,11 @@ export function SessionList({
       <div className="flex flex-col gap-1 px-2">
         {sessions.map((session) => (
           <Button
-            key={session.session_id}
-            variant={session.session_id === currentSessionId ? "secondary" : "ghost"}
+            key={session.id}
+            variant={session.id === currentSessionId ? "secondary" : "ghost"}
             size="icon"
             className="h-10 w-10"
-            onClick={() => onSessionClick(session.session_id)}
+            onClick={() => onSessionClick(session.id)}
             title={session.title}
           >
             <MessageCircle className="h-4 w-4" />
@@ -75,11 +75,11 @@ export function SessionList({
         </div>
       ) : (
         sessions.map((session) => {
-          const isActive = session.session_id === currentSessionId
+          const isActive = session.id === currentSessionId
 
           return (
             <div
-              key={session.session_id}
+              key={session.id}
               className={`
                 group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all
                 ${isActive
@@ -87,7 +87,7 @@ export function SessionList({
                   : 'hover:bg-sidebar-accent/50'
                 }
               `}
-              onClick={() => onSessionClick(session.session_id)}
+              onClick={() => onSessionClick(session.id)}
             >
               <div className="flex items-start gap-2">
                 {/* 아이콘 */}
@@ -131,7 +131,7 @@ export function SessionList({
                   onClick={(e) => {
                     e.stopPropagation()
                     if (window.confirm(`"${session.title}" 세션을 삭제하시겠습니까?`)) {
-                      onSessionDelete(session.session_id)
+                      onSessionDelete(session.id)
                     }
                   }}
                 >

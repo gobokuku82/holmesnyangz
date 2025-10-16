@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(tree:*)",
+      "Bash(python -c:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

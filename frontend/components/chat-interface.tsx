@@ -56,9 +56,10 @@ interface ConversationMemory {
 interface ChatInterfaceProps {
   onSplitView: (agentType: PageType) => void
   onRegisterMemoryLoader?: (loader: (memory: ConversationMemory) => void) => void
+  currentSessionId?: string | null
 }
 
-export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader }: ChatInterfaceProps) {
+export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader, currentSessionId }: ChatInterfaceProps) {
   const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -313,6 +314,53 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
 
     loadMessagesFromDB()
   }, [sessionId, wsConnected])
+
+  // 세션 전환 시 메시지 로드
+  useEffect(() => {
+    if (!currentSessionId || !wsConnected) return
+
+    const loadSessionMessages = async () => {
+      try {
+        console.log('[ChatInterface] 🔄 Switching to session:', currentSessionId)
+
+        // 환영 메시지로 초기화
+        setMessages([{
+          id: "1",
+          type: "bot",
+          content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
+          timestamp: new Date(),
+        }])
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const response = await fetch(
+          `${apiUrl}/api/v1/chat/sessions/${currentSessionId}/messages?limit=100`
+        )
+
+        if (response.ok) {
+          const dbMessages = await response.json()
+
+          if (dbMessages.length > 0) {
+            const formattedMessages = dbMessages.map((msg: any) => ({
+              id: msg.id.toString(),
+              type: msg.role === 'user' ? 'user' : 'bot',
+              content: msg.content,
+              structuredData: msg.structured_data,
+              timestamp: new Date(msg.created_at)
+            }))
+
+            setMessages(formattedMessages)
+            console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages for session ${currentSessionId}`)
+          } else {
+            console.log(`[ChatInterface] Session ${currentSessionId} has no messages`)
+          }
+        }
+      } catch (error) {
+        console.error('[ChatInterface] Failed to load session messages:', error)
+      }
+    }
+
+    loadSessionMessages()
+  }, [currentSessionId, wsConnected])
 
   // 스크롤 자동 이동
   useEffect(() => {

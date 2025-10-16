@@ -4,15 +4,31 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { MemoryHistory } from "@/components/memory-history"
+import { SessionList } from "@/components/session-list"
 import type { PageType } from "@/app/page"
+import type { SessionListItem } from "@/hooks/use-chat-sessions"
 
 interface SidebarProps {
   currentPage: PageType
   onPageChange: (page: PageType) => void
   onLoadMemory: ((memory: any) => void) | null
+  sessions: SessionListItem[]
+  currentSessionId: string | null
+  onCreateSession: () => Promise<string | null>
+  onSwitchSession: (sessionId: string) => void
+  onDeleteSession: (sessionId: string) => Promise<boolean>
 }
 
-export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProps) {
+export function Sidebar({
+  currentPage,
+  onPageChange,
+  onLoadMemory,
+  sessions,
+  currentSessionId,
+  onCreateSession,
+  onSwitchSession,
+  onDeleteSession
+}: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const menuItems = [
@@ -54,15 +70,12 @@ export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProp
       {!isCollapsed && (
         <div className="p-4 border-b border-sidebar-border">
           <Button
-            onClick={() => {
-              // localStorage 초기화 (메시지 + chat_session_id)
-              localStorage.removeItem('chat-messages')
-              localStorage.removeItem('current_chat_session_id')
-              console.log('[Sidebar] Cleared chat messages and chat_session_id')
-              // 채팅 페이지로 이동
-              onPageChange("chat")
-              // 페이지 새로고침으로 초기화
-              window.location.reload()
+            onClick={async () => {
+              const newSessionId = await onCreateSession()
+              if (newSessionId) {
+                console.log('[Sidebar] Created new session:', newSessionId)
+                onPageChange("chat")
+              }
             }}
             className="w-full gap-2"
             variant="default"
@@ -134,6 +147,22 @@ export function Sidebar({ currentPage, onPageChange, onLoadMemory }: SidebarProp
           </div>
         )}
       </nav>
+
+      {/* Session List */}
+      {!isCollapsed && (
+        <div className="border-t border-sidebar-border">
+          <SessionList
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSessionClick={(sessionId) => {
+              onSwitchSession(sessionId)
+              onPageChange("chat")
+            }}
+            onSessionDelete={onDeleteSession}
+            isCollapsed={isCollapsed}
+          />
+        </div>
+      )}
 
       {/* Memory History */}
       <MemoryHistory isCollapsed={isCollapsed} onLoadMemory={onLoadMemory} />

@@ -7,34 +7,36 @@
 import type { Message } from '@/components/chat-interface'
 
 /**
- * 채팅 세션 (완전한 데이터)
+ * 채팅 세션 응답 (백엔드 ChatSessionResponse)
  *
- * PostgreSQL chat_sessions 테이블과 매핑
+ * GET /sessions, POST /sessions, PATCH /sessions 응답
  */
-export interface ChatSession {
-  session_id: string
-  user_id: number
+export interface ChatSessionResponse {
+  id: string  // session_id
   title: string
-  last_message: string | null
-  message_count: number
   created_at: string  // ISO 8601 format
   updated_at: string  // ISO 8601 format
-  is_active: boolean
-  metadata?: Record<string, any>
+  last_message: string | null
+  message_count: number
 }
 
 /**
- * 세션 목록 아이템 (간소화된 정보)
+ * 세션 목록 아이템 (SessionListItem = ChatSessionResponse의 별칭)
  *
  * 사이드바에 표시할 요약 정보
  */
-export interface SessionListItem {
-  session_id: string
-  title: string
-  last_message: string | null
-  message_count: number
-  updated_at: string
-  is_active: boolean
+export type SessionListItem = ChatSessionResponse
+
+/**
+ * 채팅 세션 (완전한 데이터)
+ *
+ * @deprecated Use ChatSessionResponse instead
+ */
+export type ChatSession = ChatSessionResponse & {
+  session_id: string  // id의 별칭
+  user_id?: number
+  is_active?: boolean
+  metadata?: Record<string, any>
 }
 
 /**
@@ -46,33 +48,19 @@ export interface CreateSessionRequest {
 }
 
 /**
- * 세션 생성 응답
+ * 세션 업데이트 요청
  */
-export interface CreateSessionResponse {
-  success: boolean
-  session: ChatSession
-  timestamp: string
+export interface UpdateSessionRequest {
+  title?: string
 }
 
 /**
- * 세션 목록 응답
+ * 세션 삭제 응답 (백엔드)
  */
-export interface SessionsResponse {
-  user_id: number
-  count: number
-  sessions: SessionListItem[]
-  timestamp: string
-}
-
-/**
- * 세션 메시지 응답
- */
-export interface SessionMessagesResponse {
+export interface DeleteSessionResponse {
+  message: string
   session_id: string
-  session_info: ChatSession
-  message_count: number
-  messages: ConversationMemory[]
-  timestamp: string
+  deleted_at: string
 }
 
 /**
@@ -89,21 +77,4 @@ export interface ConversationMemory {
   entities_mentioned: Record<string, any> | null
   created_at: string
   conversation_metadata: Record<string, any> | null
-}
-
-/**
- * 세션 업데이트 요청
- */
-export interface UpdateSessionRequest {
-  title?: string
-}
-
-/**
- * 세션 삭제 응답
- */
-export interface DeleteSessionResponse {
-  success: boolean
-  session_id: string
-  deleted: 'soft' | 'hard'
-  timestamp: string
 }

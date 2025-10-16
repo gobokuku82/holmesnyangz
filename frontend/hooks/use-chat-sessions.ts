@@ -9,11 +9,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type {
-  ChatSession,
+  ChatSessionResponse,
   SessionListItem,
   CreateSessionRequest,
-  CreateSessionResponse,
-  SessionsResponse,
   UpdateSessionRequest,
   DeleteSessionResponse
 } from '@/types/session'
@@ -40,15 +38,16 @@ export function useChatSessions() {
         throw new Error(`Failed to fetch sessions: ${response.statusText}`)
       }
 
-      const data: SessionsResponse = await response.json()
-      setSessions(data.sessions)
+      // 백엔드는 ChatSessionResponse[] 배열을 직접 반환
+      const data: ChatSessionResponse[] = await response.json()
+      setSessions(data)
 
       // 첫 로드 시 가장 최근 세션을 현재 세션으로 설정
-      if (!currentSessionId && data.sessions.length > 0) {
-        setCurrentSessionId(data.sessions[0].session_id)
+      if (!currentSessionId && data.length > 0) {
+        setCurrentSessionId(data[0].id)
       }
 
-      console.log(`[useChatSessions] Loaded ${data.sessions.length} sessions`)
+      console.log(`[useChatSessions] Loaded ${data.length} sessions`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setError(message)
@@ -80,24 +79,15 @@ export function useChatSessions() {
         throw new Error(`Failed to create session: ${response.statusText}`)
       }
 
-      const data: CreateSessionResponse = await response.json()
-      const newSession = data.session
+      // 백엔드는 ChatSessionResponse 객체를 직접 반환
+      const newSession: ChatSessionResponse = await response.json()
 
       // 새 세션을 목록 맨 앞에 추가
-      const newListItem: SessionListItem = {
-        session_id: newSession.session_id,
-        title: newSession.title,
-        last_message: newSession.last_message,
-        message_count: newSession.message_count,
-        updated_at: newSession.updated_at,
-        is_active: newSession.is_active
-      }
+      setSessions(prev => [newSession, ...prev])
+      setCurrentSessionId(newSession.id)
 
-      setSessions(prev => [newListItem, ...prev])
-      setCurrentSessionId(newSession.session_id)
-
-      console.log(`[useChatSessions] Created new session: ${newSession.session_id}`)
-      return newSession.session_id
+      console.log(`[useChatSessions] Created new session: ${newSession.id}`)
+      return newSession.id
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setError(message)
@@ -133,9 +123,9 @@ export function useChatSessions() {
         throw new Error(`Failed to update session title: ${response.statusText}`)
       }
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 (id 필드 사용)
       setSessions(prev => prev.map(s =>
-        s.session_id === sessionId ? { ...s, title } : s
+        s.id === sessionId ? { ...s, title } : s
       ))
 
       console.log(`[useChatSessions] Updated session ${sessionId} title: ${title}`)
@@ -165,20 +155,20 @@ export function useChatSessions() {
 
       const data: DeleteSessionResponse = await response.json()
 
-      // 로컬 상태 업데이트
-      setSessions(prev => prev.filter(s => s.session_id !== sessionId))
+      // 로컬 상태 업데이트 (id 필드 사용)
+      setSessions(prev => prev.filter(s => s.id !== sessionId))
 
       // 현재 세션이 삭제되면 다른 세션으로 전환
       if (currentSessionId === sessionId) {
-        const remainingSessions = sessions.filter(s => s.session_id !== sessionId)
+        const remainingSessions = sessions.filter(s => s.id !== sessionId)
         if (remainingSessions.length > 0) {
-          setCurrentSessionId(remainingSessions[0].session_id)
+          setCurrentSessionId(remainingSessions[0].id)
         } else {
           setCurrentSessionId(null)
         }
       }
 
-      console.log(`[useChatSessions] Deleted session: ${sessionId} (${data.deleted})`)
+      console.log(`[useChatSessions] Deleted session: ${sessionId} at ${data.deleted_at}`)
       return true
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'

@@ -9,6 +9,7 @@ import { VerificationAgent } from "@/components/agents/verification-agent"
 import { ConsultationAgent } from "@/components/agents/consultation-agent"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { useChatSessions } from "@/hooks/use-chat-sessions"
 
 export type PageType = "chat" | "map" | "analysis" | "verification" | "consultation"
 
@@ -18,6 +19,15 @@ export default function HomePage() {
   const [splitContent, setSplitContent] = useState<PageType | null>(null)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [loadMemory, setLoadMemory] = useState<((memory: any) => void) | null>(null)
+
+  // Session management
+  const {
+    sessions,
+    currentSessionId,
+    createSession,
+    switchSession,
+    deleteSession,
+  } = useChatSessions()
 
   const handlePageChange = (page: PageType) => {
     setCurrentPage(page)
@@ -43,7 +53,7 @@ export default function HomePage() {
   const renderMainContent = () => {
     switch (currentPage) {
       case "chat":
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} currentSessionId={currentSessionId} />
       case "map":
         return <MapInterface />
       case "analysis":
@@ -53,7 +63,7 @@ export default function HomePage() {
       case "consultation":
         return <ConsultationAgent />
       default:
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} currentSessionId={currentSessionId} />
     }
   }
 
@@ -94,7 +104,16 @@ export default function HomePage() {
         transition-transform duration-300 ease-in-out
       `}
       >
-        <Sidebar currentPage={currentPage} onPageChange={handlePageChange} onLoadMemory={loadMemory} />
+        <Sidebar
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          onLoadMemory={loadMemory}
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onCreateSession={createSession}
+          onSwitchSession={switchSession}
+          onDeleteSession={deleteSession}
+        />
       </div>
 
       <div className="flex-1 flex">
