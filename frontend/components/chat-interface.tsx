@@ -59,10 +59,6 @@ interface ChatInterfaceProps {
   onRegisterMemoryLoader?: (loader: (memory: ConversationMemory) => void) => void
 }
 
-const STORAGE_KEY = 'chat-messages'
-const MAX_STORED_MESSAGES = 50
-const CHAT_SESSION_KEY = 'current_chat_session_id'
-
 export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader }: ChatInterfaceProps) {
   const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
   const [messages, setMessages] = useState<Message[]>([
@@ -81,7 +77,6 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
   })
   const [todos, setTodos] = useState<ExecutionStepState[]>([])
   const [wsConnected, setWsConnected] = useState(false)
-  const [chatSessionId, setChatSessionId] = useState<string>("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const wsClientRef = useRef<ChatWSClient | null>(null)
 
@@ -92,22 +87,6 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     "관리비의 부과 대상과 납부 의무자는 누구인가요?",
     "부동산 등기에서 사용되는 전문 용어들은 무엇인가요?",
   ]
-
-  // chat_session_id 생성 또는 로드 (GPT-style)
-  useEffect(() => {
-    let currentChatSessionId = localStorage.getItem(CHAT_SESSION_KEY)
-
-    if (!currentChatSessionId) {
-      // 새로운 chat_session_id 생성
-      currentChatSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      localStorage.setItem(CHAT_SESSION_KEY, currentChatSessionId)
-      console.log('[ChatInterface] Created new chat_session_id:', currentChatSessionId)
-    } else {
-      console.log('[ChatInterface] Loaded existing chat_session_id:', currentChatSessionId)
-    }
-
-    setChatSessionId(currentChatSessionId)
-  }, [])
 
   // WebSocket 메시지 핸들러
   const handleWSMessage = useCallback((message: WSMessage) => {
@@ -346,35 +325,6 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     }
   }, [messages])
 
-  // ❌ DEPRECATED: localStorage 저장/복원 로직 비활성화
-  // DB 저장이 Phase 1에서 구현되어 더 이상 localStorage 사용 안함
-  /*
-  // localStorage에 메시지 저장 (자동)
-  useEffect(() => {
-    if (messages.length > 1) { // 초기 환영 메시지 제외
-      const recentMessages = messages.slice(-MAX_STORED_MESSAGES) // 최근 50개만 저장
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recentMessages))
-    }
-  }, [messages])
-
-  // localStorage에서 메시지 복원 (초기 로드)
-  useEffect(() => {
-    const savedMessages = localStorage.getItem(STORAGE_KEY)
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages)
-        setMessages(parsed.map((m: Message) => ({
-          ...m,
-          timestamp: new Date(m.timestamp) // Date 객체 복원
-        })))
-        console.log('[ChatInterface] Restored messages from localStorage:', parsed.length)
-      } catch (e) {
-        console.error('[ChatInterface] Failed to restore messages:', e)
-      }
-    }
-  }, []) // 빈 배열: 최초 1회만 실행
-  */
-
   // Memory 로드 함수 등록
   useEffect(() => {
     if (onRegisterMemoryLoader) {
@@ -405,20 +355,6 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     // 기존 메시지를 교체 (누적하지 않음)
     setMessages([userMessage, botMessage])
     console.log('[ChatInterface] Replaced messages with memory conversation')
-  }
-
-  // 채팅 기록 삭제
-  const clearHistory = () => {
-    localStorage.removeItem(STORAGE_KEY)
-    setMessages([
-      {
-        id: "1",
-        type: "bot",
-        content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
-        timestamp: new Date()
-      }
-    ])
-    console.log('[ChatInterface] Chat history cleared')
   }
 
   const handleSendMessage = async (content: string) => {
@@ -462,15 +398,12 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
       startTime: Date.now()
     })
 
-    // WebSocket으로 쿼리 전송 (chat_session_id 포함)
+    // WebSocket으로 쿼리 전송
     wsClientRef.current.send({
       type: "query",
       query: content,
-      chat_session_id: chatSessionId,
       enable_checkpointing: true
     })
-
-    console.log('[ChatInterface] Sent query with chat_session_id:', chatSessionId)
 
     // 나머지 처리는 handleWSMessage에서 실시간으로 처리됨
   }

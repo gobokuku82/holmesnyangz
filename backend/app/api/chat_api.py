@@ -313,7 +313,6 @@ async def websocket_chat(
                 if message_type == "query":
                     query = data.get("query")
                     enable_checkpointing = data.get("enable_checkpointing", True)
-                    chat_session_id = data.get("chat_session_id")  # GPT-style chat session ID
 
                     if not query:
                         await conn_mgr.send_message(session_id, {
@@ -322,10 +321,6 @@ async def websocket_chat(
                             "timestamp": datetime.now().isoformat()
                         })
                         continue
-
-                    # chat_session_id 로깅
-                    if chat_session_id:
-                        logger.info(f"[WebSocket] Received chat_session_id: {chat_session_id}")
 
                     # Progress callback 정의
                     async def progress_callback(event_type: str, event_data: dict):
@@ -342,7 +337,6 @@ async def websocket_chat(
                             supervisor=supervisor,
                             query=query,
                             session_id=session_id,
-                            chat_session_id=chat_session_id,
                             enable_checkpointing=enable_checkpointing,
                             progress_callback=progress_callback,
                             conn_mgr=conn_mgr,
@@ -401,7 +395,6 @@ async def _process_query_async(
     supervisor: TeamBasedSupervisor,
     query: str,
     session_id: str,
-    chat_session_id: str,
     enable_checkpointing: bool,
     progress_callback,
     conn_mgr: ConnectionManager,
@@ -414,7 +407,6 @@ async def _process_query_async(
         supervisor: TeamBasedSupervisor 인스턴스
         query: 사용자 질문
         session_id: 세션 ID (HTTP/WebSocket)
-        chat_session_id: 채팅 세션 ID (GPT-style)
         enable_checkpointing: Checkpoint 활성화 여부
         progress_callback: 진행 상황 콜백
         conn_mgr: ConnectionManager
@@ -422,8 +414,6 @@ async def _process_query_async(
     """
     try:
         logger.info(f"Processing query for {session_id}: {query[:100]}...")
-        if chat_session_id:
-            logger.info(f"Chat session ID: {chat_session_id}")
 
         # 💾 사용자 메시지 저장
         await _save_message_to_db(session_id, "user", query)
@@ -435,11 +425,10 @@ async def _process_query_async(
             if user_id:
                 logger.info(f"User ID {user_id} extracted from session {session_id}")
 
-        # Streaming 방식으로 쿼리 처리 (chat_session_id 포함)
+        # Streaming 방식으로 쿼리 처리
         result = await supervisor.process_query_streaming(
             query=query,
             session_id=session_id,
-            chat_session_id=chat_session_id,
             user_id=user_id,
             progress_callback=progress_callback
         )
