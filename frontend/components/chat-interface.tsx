@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Send, Bot, User } from "lucide-react"
 import type { PageType } from "@/app/page"
 import { useSession } from "@/hooks/use-session"
@@ -318,10 +317,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
   // 스크롤 자동 이동
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
   }, [messages])
 
@@ -457,7 +453,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+      <div ref={scrollAreaRef} className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4 max-w-3xl mx-auto">
           {messages.map((message) => (
             <div key={message.id} className="space-y-2">
@@ -492,7 +488,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Example Questions */}
       <div className="border-t border-border p-4">
