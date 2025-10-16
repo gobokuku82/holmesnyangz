@@ -24,6 +24,44 @@ router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
 
 # ============================================================================
+# Helper Functions
+# ============================================================================
+
+async def _save_message_to_db(session_id: str, role: str, content: str) -> bool:
+    """
+    chat_messages 테이블에 메시지 저장
+
+    Args:
+        session_id: WebSocket session ID (NOT chat_session_id!)
+        role: 'user' or 'assistant'
+        content: 메시지 내용
+
+    Returns:
+        bool: 저장 성공 여부
+    """
+    result = False
+    async for db in get_async_db():
+        try:
+            message = ChatMessage(
+                session_id=session_id,
+                role=role,
+                content=content
+            )
+            db.add(message)
+            await db.commit()
+            logger.info(f"💾 Message saved: {role} → {session_id[:20]}...")
+            result = True
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"❌ Failed to save message: {e}")
+            result = False
+        finally:
+            break
+
+    return result
+
+
+# ============================================================================
 # Supervisor Singleton Pattern
 # ============================================================================
 
@@ -359,6 +397,9 @@ async def _process_query_async(
         if chat_session_id:
             logger.info(f"Chat session ID: {chat_session_id}")
 
+        # 💾 사용자 메시지 저장
+        await _save_message_to_db(session_id, "user", query)
+
         # 세션에서 user_id 추출 (Long-term Memory용)
         user_id = 1  # 🔧 임시: 테스트용 하드코딩
         session_data = await session_mgr.get_session(session_id)
@@ -384,6 +425,16 @@ async def _process_query_async(
             "response": final_response,
             "timestamp": datetime.now().isoformat()
         })
+
+        # 💾 AI 응답 저장
+        response_content = (
+            final_response.get("answer") or
+            final_response.get("content") or
+            final_response.get("message") or
+            ""
+        )
+        if response_content:
+            await _save_message_to_db(session_id, "assistant", response_content)
 
         logger.info(f"Query completed for {session_id}")
 

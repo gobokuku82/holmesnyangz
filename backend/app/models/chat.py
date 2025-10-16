@@ -113,7 +113,7 @@ class ChatMessage(Base):
     """채팅 메시지 모델"""
     __tablename__ = "chat_messages"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
 
     # session_id를 String으로 변경 (ChatSession.session_id가 VARCHAR이므로)
     session_id = Column(
@@ -124,10 +124,10 @@ class ChatMessage(Base):
         comment="세션 ID"
     )
 
-    sender_type = Column(
+    role = Column(
         String(20),
         nullable=False,
-        comment="발신자 타입 (user/assistant)"
+        comment="메시지 역할 (user/assistant/system)"
     )
 
     content = Column(

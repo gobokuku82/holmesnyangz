@@ -116,7 +116,11 @@ CREATE TABLE chat_sessions (
     user_id INTEGER NOT NULL DEFAULT 1,  -- 임시 하드코딩 (인증 미구현)
     title VARCHAR(200) NOT NULL DEFAULT '새 대화',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    last_message TEXT,  -- 마지막 메시지 미리보기 (세션 목록 UI용)
+    message_count INTEGER DEFAULT 0,  -- 세션 내 메시지 개수
+    is_active BOOLEAN DEFAULT true,  -- 세션 활성 상태
+    metadata JSONB  -- 추가 메타데이터 (향후 확장용)
 );
 
 -- Indexes
@@ -125,12 +129,16 @@ CREATE INDEX idx_chat_sessions_updated_at ON chat_sessions(updated_at DESC);
 CREATE INDEX idx_chat_sessions_user_updated ON chat_sessions(user_id, updated_at DESC);
 
 -- Comments
-COMMENT ON TABLE chat_sessions IS 'GPT-style chat sessions (conversation threads)';
+COMMENT ON TABLE chat_sessions IS 'Chat sessions (conversation threads)';
 COMMENT ON COLUMN chat_sessions.session_id IS 'Session ID (unified across all tables, including checkpoints)';
 COMMENT ON COLUMN chat_sessions.user_id IS 'User ID (default: 1, authentication not implemented)';
 COMMENT ON COLUMN chat_sessions.title IS 'Session title (auto-generated from first message)';
 COMMENT ON COLUMN chat_sessions.created_at IS 'Session created timestamp';
 COMMENT ON COLUMN chat_sessions.updated_at IS 'Session last updated timestamp (auto-updated by trigger)';
+COMMENT ON COLUMN chat_sessions.last_message IS 'Last message preview for session list UI';
+COMMENT ON COLUMN chat_sessions.message_count IS 'Number of messages in this session';
+COMMENT ON COLUMN chat_sessions.is_active IS 'Session active status (for archiving)';
+COMMENT ON COLUMN chat_sessions.metadata IS 'Additional metadata (JSONB for future extension)';
 
 \echo '  ✓ chat_sessions created'
 
