@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { ChatInterface } from "@/components/chat-interface"
 import { MapInterface } from "@/components/map-interface"
@@ -36,10 +36,14 @@ export default function HomePage() {
     setSplitContent(null)
   }
 
+  const handleRegisterMemoryLoader = useCallback((loader: (memory: any) => void) => {
+    setLoadMemory(() => loader)
+  }, [])
+
   const renderMainContent = () => {
     switch (currentPage) {
       case "chat":
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={(loader) => setLoadMemory(() => loader)} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} />
       case "map":
         return <MapInterface />
       case "analysis":
@@ -49,7 +53,7 @@ export default function HomePage() {
       case "consultation":
         return <ConsultationAgent />
       default:
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={(loader) => setLoadMemory(() => loader)} />
+        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} />
     }
   }
 
