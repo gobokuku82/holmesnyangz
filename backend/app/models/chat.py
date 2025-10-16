@@ -136,6 +136,13 @@ class ChatMessage(Base):
         comment="메시지 내용"
     )
 
+    # 구조화된 데이터 (sections, metadata 등)
+    structured_data = Column(
+        JSONB,
+        nullable=True,
+        comment="구조화된 답변 데이터 (sections, metadata)"
+    )
+
     created_at = Column(
         TIMESTAMP(timezone=True),
         server_default=func.now(),

@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Helper Functions
 # ============================================================================
 
-async def _save_message_to_db(session_id: str, role: str, content: str) -> bool:
+async def _save_message_to_db(session_id: str, role: str, content: str, structured_data: dict = None) -> bool:
     """
     chat_messages 테이블에 메시지 저장
 
@@ -35,6 +35,7 @@ async def _save_message_to_db(session_id: str, role: str, content: str) -> bool:
         session_id: WebSocket session ID (NOT chat_session_id!)
         role: 'user' or 'assistant'
         content: 메시지 내용
+        structured_data: 구조화된 답변 데이터 (sections, metadata 등)
 
     Returns:
         bool: 저장 성공 여부
@@ -45,11 +46,12 @@ async def _save_message_to_db(session_id: str, role: str, content: str) -> bool:
             message = ChatMessage(
                 session_id=session_id,
                 role=role,
-                content=content
+                content=content,
+                structured_data=structured_data  # ✅ 추가
             )
             db.add(message)
             await db.commit()
-            logger.info(f"💾 Message saved: {role} → {session_id[:20]}...")
+            logger.info(f"💾 Message saved: {role} → {session_id[:20]}... (structured: {structured_data is not None})")
             result = True
         except Exception as e:
             await db.rollback()
@@ -123,6 +125,32 @@ async def start_session(
             user_id=request.user_id,
             metadata=request.metadata
         )
+
+        # ✅ chat_sessions 테이블에도 저장 (DB 영속성)
+        async for db in get_async_db():
+            try:
+                # 이미 존재하는지 확인
+                existing_session_query = select(ChatSession).where(ChatSession.session_id == session_id)
+                result = await db.execute(existing_session_query)
+                existing_session = result.scalar_one_or_none()
+
+                if not existing_session:
+                    # 새 세션 추가
+                    new_chat_session = ChatSession(
+                        session_id=session_id,
+                        user_id=request.user_id or 1,
+                        title="새 대화"
+                    )
+                    db.add(new_chat_session)
+                    await db.commit()
+                    logger.info(f"✅ Session saved to chat_sessions table: {session_id}")
+                else:
+                    logger.info(f"Session already exists in chat_sessions: {session_id}")
+            except Exception as db_error:
+                await db.rollback()
+                logger.error(f"Failed to save session to chat_sessions: {db_error}")
+            finally:
+                break
 
         logger.info(
             f"New session created: {session_id} "
@@ -433,8 +461,11 @@ async def _process_query_async(
             final_response.get("message") or
             ""
         )
+        # structured_data 추출
+        structured_data = final_response.get("structured_data")
+
         if response_content:
-            await _save_message_to_db(session_id, "assistant", response_content)
+            await _save_message_to_db(session_id, "assistant", response_content, structured_data)
 
         logger.info(f"Query completed for {session_id}")
 
@@ -582,6 +613,7 @@ class ChatMessageResponse(BaseModel):
     id: int
     role: str
     content: str
+    structured_data: Optional[dict] = None  # ✅ 추가
     created_at: str
 
 
@@ -739,6 +771,7 @@ async def get_session_messages(
                 id=msg.id,
                 role=msg.role,
                 content=msg.content,
+                structured_data=msg.structured_data,  # ✅ 추가
                 created_at=msg.created_at.isoformat()
             )
             for msg in messages

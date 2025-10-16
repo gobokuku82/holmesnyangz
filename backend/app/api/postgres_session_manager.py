@@ -153,7 +153,8 @@ class PostgreSQLSessionManager:
                     "title": session.title,
                     "created_at": session.created_at,
                     "updated_at": session.updated_at,
-                    "expires_at": session.created_at + self.session_ttl  # 계산값
+                    "expires_at": session.created_at + self.session_ttl,  # 계산값
+                    "last_activity": session.updated_at  # ✅ P1 버그 수정: last_activity 키 추가
                 }
 
             except Exception as e:

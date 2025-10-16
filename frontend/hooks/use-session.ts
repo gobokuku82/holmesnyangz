@@ -23,22 +23,14 @@ export function useSession() {
       const storedSessionId = sessionStorage.getItem(SESSION_STORAGE_KEY)
 
       if (storedSessionId) {
-        // 2. 세션 유효성 검증
-        try {
-          await chatAPI.getSessionInfo(storedSessionId)
-          console.log("✅ Existing session valid:", storedSessionId)
-          setSessionId(storedSessionId)
-          setIsLoading(false)
-          return
-        } catch (error) {
-          // 만료된 세션 - 삭제하고 새로 생성
-          console.warn("⚠️ Session expired or invalid, creating new session:", error)
-          sessionStorage.removeItem(SESSION_STORAGE_KEY)
-          // 여기서 계속 진행하여 새 세션 생성
-        }
+        // ✅ 그냥 바로 사용! (검증 제거 - WebSocket에서 자동 검증됨)
+        console.log("✅ Using existing session:", storedSessionId)
+        setSessionId(storedSessionId)
+        setIsLoading(false)
+        return
       }
 
-      // 3. 새 세션 생성
+      // 2. 새 세션 생성
       console.log("🔄 Creating new session...")
       const response = await chatAPI.startSession({
         metadata: {

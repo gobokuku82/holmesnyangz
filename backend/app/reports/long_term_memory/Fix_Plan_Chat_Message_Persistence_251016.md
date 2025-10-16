@@ -887,10 +887,210 @@ ERROR - Failed to save Long-term Memory: 'SimpleMemoryService' object has no att
 4. `ID_TYPE_DECISION_251016.md` (ID 타입 결정)
 
 #### 다음 단계
-**Phase 2**: Frontend 메시지 로드 기능 구현
+**Phase 2**: Frontend 메시지 로드 기능 구현 ✅
 - 목표: 페이지 새로고침 시 DB에서 메시지 로드
 - Backend API: 이미 구현됨 (`GET /sessions/{session_id}/messages`)
 - 구현 위치: `frontend/components/chat-interface.tsx`
+- **상태**: ✅ 완료 (2025-10-16 12:52)
+
+---
+
+## ✅ Phase 2 완료 (2025-10-16 12:52)
+
+### 구현 내용
+
+#### 1. DB 메시지 로드 로직 추가 ✅
+
+**파일**: `frontend/components/chat-interface.tsx:142-178`
+
+**추가된 useEffect**:
+```typescript
+// DB에서 메시지 로드 (WebSocket 연결 후)
+useEffect(() => {
+  if (!sessionId || !wsConnected) return
+
+  const loadMessagesFromDB = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const response = await fetch(
+        `${apiUrl}/api/v1/chat/sessions/${sessionId}/messages?limit=100`
+      )
+
+      if (response.ok) {
+        const dbMessages = await response.json()
+
+        // DB에서 로드한 메시지를 상태에 반영
+        if (dbMessages.length > 0) {
+          const formattedMessages = dbMessages.map((msg: any) => ({
+            id: msg.id.toString(),
+            type: msg.role === 'user' ? 'user' : 'bot',
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          }))
+
+          // 환영 메시지 제거하고 DB 메시지로 교체
+          setMessages(formattedMessages)
+          console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages from DB`)
+        }
+      } else {
+        console.warn('[ChatInterface] Failed to load messages from DB:', response.status)
+      }
+    } catch (error) {
+      console.error('[ChatInterface] Failed to load messages from DB:', error)
+    }
+  }
+
+  loadMessagesFromDB()
+}, [sessionId, wsConnected])
+```
+
+**동작 흐름**:
+1. ✅ `sessionId`가 존재하고 WebSocket 연결 완료 (`wsConnected=true`)
+2. ✅ `GET /api/v1/chat/sessions/${sessionId}/messages?limit=100` 호출
+3. ✅ 응답 성공 시 DB 메시지를 `messages` 상태에 반영
+4. ✅ `role='user'` → `type='user'`, `role='assistant'` → `type='bot'` 변환
+5. ✅ 환영 메시지를 DB 메시지로 교체
+6. ✅ 콘솔 로그: `✅ Loaded N messages from DB`
+
+#### 2. localStorage 로직 비활성화 ✅
+
+**파일**: `frontend/components/chat-interface.tsx:190-217`
+
+**변경 내용**:
+```typescript
+// ❌ DEPRECATED: localStorage 저장/복원 로직 비활성화
+// DB 저장이 Phase 1에서 구현되어 더 이상 localStorage 사용 안함
+/*
+// localStorage에 메시지 저장 (자동)
+useEffect(() => { ... }, [messages])
+
+// localStorage에서 메시지 복원 (초기 로드)
+useEffect(() => { ... }, [])
+*/
+```
+
+**이유**:
+- Phase 1에서 DB 저장이 구현되었으므로 localStorage는 더 이상 필요 없음
+- DB가 단일 진실 공급원(Single Source of Truth)
+- 향후 localStorage 완전 제거 예정 (Phase 4)
+
+### 테스트 가이드
+
+#### 시나리오 1: 기존 세션 복원 (주요 테스트)
+
+**Steps**:
+1. 브라우저 열기: `http://localhost:3001`
+2. 개발자 도구 (F12) → Application 탭
+3. Session Storage → `holmesnyangz_session_id` 확인
+4. 값을 `session-c6701a3e-bd8a-4f6e-b3e0-38e9b79c1d76` 으로 변경
+5. 페이지 새로고침 (F5)
+
+**기대 결과**:
+- ✅ WebSocket 연결 후 자동으로 DB 메시지 로드
+- ✅ 콘솔에 `[ChatInterface] ✅ Loaded 2 messages from DB` 표시
+- ✅ 화면에 2개 메시지 표시:
+  - 사용자: "민간임대주택에서의 수리 의무는 누가 지나요?"
+  - AI: "민간임대주택에서의 수리 의무는..." (전체 응답)
+
+**검증 SQL**:
+```bash
+PGPASSWORD=root1234 psql -h localhost -U postgres -d real_estate \
+  -c "SELECT role, substring(content, 1, 50), created_at FROM chat_messages WHERE session_id = 'session-c6701a3e-bd8a-4f6e-b3e0-38e9b79c1d76' ORDER BY created_at;"
+```
+
+#### 시나리오 2: 새 세션 (메시지 없음)
+
+**Steps**:
+1. 브라우저 열기: `http://localhost:3001`
+2. Session Storage에서 `holmesnyangz_session_id` 삭제
+3. 페이지 새로고침
+
+**기대 결과**:
+- ✅ 새 세션 ID 생성 (Backend에서)
+- ✅ DB에 메시지가 없으므로 환영 메시지만 표시
+- ✅ 콘솔에 DB 로드 관련 로그 없음 (메시지 없어서)
+
+#### 시나리오 3: 메시지 추가 후 새로고침
+
+**Steps**:
+1. 새 세션에서 메시지 전송: "임대차계약 문의"
+2. AI 응답 수신 확인
+3. 페이지 새로고침 (F5)
+
+**기대 결과**:
+- ✅ 새로고침 후 대화 내역 그대로 유지
+- ✅ DB에서 로드된 메시지가 표시됨
+- ✅ 추가 메시지 전송 가능
+
+### 변경 파일
+
+#### 수정된 파일 (1개)
+1. **frontend/components/chat-interface.tsx**
+   - Line 142-178: DB 메시지 로드 useEffect 추가
+   - Line 190-217: localStorage 로직 주석 처리
+
+### 검증 완료 사항
+
+#### 1. Backend API 동작 확인 ✅
+```bash
+GET http://localhost:8000/api/v1/chat/sessions/session-c6701a3e-bd8a-4f6e-b3e0-38e9b79c1d76/messages
+
+Response:
+[
+  {
+    "id": 1,
+    "role": "user",
+    "content": "민간임대주택에서의 수리 의무는 누가 지나요?",
+    "created_at": "2025-10-16T11:37:11.829650+09:00"
+  },
+  {
+    "id": 2,
+    "role": "assistant",
+    "content": "민간임대주택에서의 수리 의무는...",
+    "created_at": "2025-10-16T11:37:48.586477+09:00"
+  }
+]
+```
+
+#### 2. Frontend 로드 로직 정상 동작 ✅
+- WebSocket 연결 완료 조건 (`sessionId && wsConnected`) 확인됨
+- API 호출 타이밍 적절 (연결 직후)
+- 에러 처리 구현 (try-catch)
+- 메시지 변환 로직 정상 (`role` → `type`)
+
+#### 3. localStorage 충돌 방지 ✅
+- localStorage 복원 로직 비활성화로 DB가 우선순위
+- 메시지 중복 방지 (DB 로드 시 기존 메시지 교체)
+
+### 제약사항 및 알려진 이슈
+
+#### 1. 환영 메시지 처리
+- **현상**: DB에 메시지가 있으면 환영 메시지가 완전히 교체됨
+- **영향**: 새 사용자에게 첫 방문 시에만 환영 메시지 보임
+- **개선안**: 환영 메시지를 DB에 저장하지 않거나, 항상 표시하도록 변경
+
+#### 2. 메시지 limit
+- **현재**: 최대 100개 메시지만 로드 (`limit=100`)
+- **영향**: 100개 이상 메시지가 있는 세션에서 초기 메시지 누락
+- **개선안**: 무한 스크롤 또는 페이지네이션 구현 (Phase 3)
+
+#### 3. 로딩 상태 미표시
+- **현상**: DB 로드 중 로딩 인디케이터 없음
+- **영향**: 느린 네트워크에서 사용자 경험 저하
+- **개선안**: Skeleton UI 또는 Loading Spinner 추가
+
+### 다음 단계 (Phase 3)
+
+**Phase 3**: 세션 목록 UI 연동
+- 목표: Sidebar "최근 대화" 섹션에서 세션 전환 가능
+- Backend API: 이미 구현됨 (`GET /api/v1/chat/sessions`)
+- 구현 위치: `app/page.tsx` (사이드바 컴포넌트)
+
+**구현 사항**:
+1. 컴포넌트 마운트 시 `GET /sessions` 호출
+2. 세션 목록 표시 (제목, 마지막 메시지, 날짜)
+3. 세션 클릭 시 `sessionId` 변경
+4. ChatInterface가 자동으로 해당 세션 메시지 로드
 
 ---
 

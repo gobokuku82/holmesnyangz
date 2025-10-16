@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -109,119 +109,8 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     setChatSessionId(currentChatSessionId)
   }, [])
 
-  // WebSocket 초기화
-  useEffect(() => {
-    if (!sessionId) return
-
-    const wsClient = createWSClient({
-      baseUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
-      sessionId,
-      onMessage: handleWSMessage,
-      onConnected: () => {
-        console.log('[ChatInterface] WebSocket connected')
-        setWsConnected(true)
-      },
-      onDisconnected: () => {
-        console.log('[ChatInterface] WebSocket disconnected')
-        setWsConnected(false)
-      },
-      onError: (error) => {
-        console.error('[ChatInterface] WebSocket error:', error)
-      }
-    })
-
-    wsClient.connect()
-    wsClientRef.current = wsClient
-
-    return () => {
-      wsClient.disconnect()
-      wsClientRef.current = null
-    }
-  }, [sessionId])
-
-  // 스크롤 자동 이동
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
-      }
-    }
-  }, [messages])
-
-  // localStorage에 메시지 저장 (자동)
-  useEffect(() => {
-    if (messages.length > 1) { // 초기 환영 메시지 제외
-      const recentMessages = messages.slice(-MAX_STORED_MESSAGES) // 최근 50개만 저장
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recentMessages))
-    }
-  }, [messages])
-
-  // localStorage에서 메시지 복원 (초기 로드)
-  useEffect(() => {
-    const savedMessages = localStorage.getItem(STORAGE_KEY)
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages)
-        setMessages(parsed.map((m: Message) => ({
-          ...m,
-          timestamp: new Date(m.timestamp) // Date 객체 복원
-        })))
-        console.log('[ChatInterface] Restored messages from localStorage:', parsed.length)
-      } catch (e) {
-        console.error('[ChatInterface] Failed to restore messages:', e)
-      }
-    }
-  }, []) // 빈 배열: 최초 1회만 실행
-
-  // Memory 로드 함수 등록
-  useEffect(() => {
-    if (onRegisterMemoryLoader) {
-      onRegisterMemoryLoader(loadMemoryConversation)
-    }
-  }, [onRegisterMemoryLoader])
-
-  // Memory에서 대화 로드
-  const loadMemoryConversation = (memory: ConversationMemory) => {
-    console.log('[ChatInterface] Loading memory conversation:', memory.id)
-
-    // 사용자 질문 메시지
-    const userMessage: Message = {
-      id: `memory-user-${memory.id}`,
-      type: "user",
-      content: memory.query,
-      timestamp: new Date(memory.created_at)
-    }
-
-    // 봇 응답 메시지 (요약본)
-    const botMessage: Message = {
-      id: `memory-bot-${memory.id}`,
-      type: "bot",
-      content: memory.response_summary,
-      timestamp: new Date(memory.created_at)
-    }
-
-    // 기존 메시지를 교체 (누적하지 않음)
-    setMessages([userMessage, botMessage])
-    console.log('[ChatInterface] Replaced messages with memory conversation')
-  }
-
-  // 채팅 기록 삭제
-  const clearHistory = () => {
-    localStorage.removeItem(STORAGE_KEY)
-    setMessages([
-      {
-        id: "1",
-        type: "bot",
-        content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
-        timestamp: new Date()
-      }
-    ])
-    console.log('[ChatInterface] Chat history cleared')
-  }
-
   // WebSocket 메시지 핸들러
-  const handleWSMessage = (message: WSMessage) => {
+  const handleWSMessage = useCallback((message: WSMessage) => {
     console.log('[ChatInterface] Received WS message:', message.type)
 
     switch (message.type) {
@@ -373,6 +262,163 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
         }])
         break
     }
+  }, [])
+
+  // WebSocket 초기화
+  useEffect(() => {
+    if (!sessionId) return
+
+    const wsClient = createWSClient({
+      baseUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
+      sessionId,
+      onMessage: handleWSMessage,
+      onConnected: () => {
+        console.log('[ChatInterface] WebSocket connected')
+        setWsConnected(true)
+      },
+      onDisconnected: () => {
+        console.log('[ChatInterface] WebSocket disconnected')
+        setWsConnected(false)
+      },
+      onError: (error) => {
+        console.error('[ChatInterface] WebSocket error:', error)
+      }
+    })
+
+    wsClient.connect()
+    wsClientRef.current = wsClient
+
+    return () => {
+      wsClient.disconnect()
+      wsClientRef.current = null
+    }
+  }, [sessionId, handleWSMessage])
+
+  // DB에서 메시지 로드 (WebSocket 연결 후)
+  useEffect(() => {
+    if (!sessionId || !wsConnected) return
+
+    const loadMessagesFromDB = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        const response = await fetch(
+          `${apiUrl}/api/v1/chat/sessions/${sessionId}/messages?limit=100`
+        )
+
+        if (response.ok) {
+          const dbMessages = await response.json()
+
+          // DB에 메시지가 있으면 로드
+          if (dbMessages.length > 0) {
+            const formattedMessages = dbMessages.map((msg: any) => ({
+              id: msg.id.toString(),
+              type: msg.role === 'user' ? 'user' : 'bot',
+              content: msg.content,
+              structuredData: msg.structured_data,  // ✅ 추가
+              timestamp: new Date(msg.created_at)
+            }))
+
+            // ✅ DB에 메시지가 있으면 환영 메시지 제거하고 DB 메시지로 교체
+            setMessages(formattedMessages)
+            console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages from DB`)
+          } else {
+            // ✅ DB에 메시지가 없으면 환영 메시지 유지 (초기 상태)
+            console.log('[ChatInterface] No messages in DB, keeping welcome message')
+          }
+        } else {
+          console.warn('[ChatInterface] Failed to load messages from DB:', response.status)
+        }
+      } catch (error) {
+        console.error('[ChatInterface] Failed to load messages from DB:', error)
+      }
+    }
+
+    loadMessagesFromDB()
+  }, [sessionId, wsConnected])
+
+  // 스크롤 자동 이동
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
+    }
+  }, [messages])
+
+  // ❌ DEPRECATED: localStorage 저장/복원 로직 비활성화
+  // DB 저장이 Phase 1에서 구현되어 더 이상 localStorage 사용 안함
+  /*
+  // localStorage에 메시지 저장 (자동)
+  useEffect(() => {
+    if (messages.length > 1) { // 초기 환영 메시지 제외
+      const recentMessages = messages.slice(-MAX_STORED_MESSAGES) // 최근 50개만 저장
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recentMessages))
+    }
+  }, [messages])
+
+  // localStorage에서 메시지 복원 (초기 로드)
+  useEffect(() => {
+    const savedMessages = localStorage.getItem(STORAGE_KEY)
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages)
+        setMessages(parsed.map((m: Message) => ({
+          ...m,
+          timestamp: new Date(m.timestamp) // Date 객체 복원
+        })))
+        console.log('[ChatInterface] Restored messages from localStorage:', parsed.length)
+      } catch (e) {
+        console.error('[ChatInterface] Failed to restore messages:', e)
+      }
+    }
+  }, []) // 빈 배열: 최초 1회만 실행
+  */
+
+  // Memory 로드 함수 등록
+  useEffect(() => {
+    if (onRegisterMemoryLoader) {
+      onRegisterMemoryLoader(loadMemoryConversation)
+    }
+  }, [onRegisterMemoryLoader])
+
+  // Memory에서 대화 로드
+  const loadMemoryConversation = (memory: ConversationMemory) => {
+    console.log('[ChatInterface] Loading memory conversation:', memory.id)
+
+    // 사용자 질문 메시지
+    const userMessage: Message = {
+      id: `memory-user-${memory.id}`,
+      type: "user",
+      content: memory.query,
+      timestamp: new Date(memory.created_at)
+    }
+
+    // 봇 응답 메시지 (요약본)
+    const botMessage: Message = {
+      id: `memory-bot-${memory.id}`,
+      type: "bot",
+      content: memory.response_summary,
+      timestamp: new Date(memory.created_at)
+    }
+
+    // 기존 메시지를 교체 (누적하지 않음)
+    setMessages([userMessage, botMessage])
+    console.log('[ChatInterface] Replaced messages with memory conversation')
+  }
+
+  // 채팅 기록 삭제
+  const clearHistory = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    setMessages([
+      {
+        id: "1",
+        type: "bot",
+        content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
+        timestamp: new Date()
+      }
+    ])
+    console.log('[ChatInterface] Chat history cleared')
   }
 
   const handleSendMessage = async (content: string) => {

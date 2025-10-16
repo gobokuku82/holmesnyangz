@@ -40,7 +40,8 @@
       "Bash(where psql)",
       "Bash(PGPASSWORD=root1234 psql:*)",
       "Bash(curl -s \"http://localhost:8000/api/v1/chat/memory/history?limit=5\")",
-      "Bash(test -f \"c:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend\\create_memory_tables.py\")"
+      "Bash(test -f \"c:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend\\create_memory_tables.py\")",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
