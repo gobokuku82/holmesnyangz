@@ -150,7 +150,10 @@ export function Sidebar({
 
       {/* Session List */}
       {!isCollapsed && (
-        <div className="border-t border-sidebar-border">
+        <div className="border-t border-sidebar-border py-4">
+          <h3 className="px-4 mb-3 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
+            최근 대화
+          </h3>
           <SessionList
             sessions={sessions}
             currentSessionId={currentSessionId}

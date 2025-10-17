@@ -66,7 +66,7 @@ export function SessionList({
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 px-2 py-2 max-h-[300px] overflow-y-auto">
       {sessions.length === 0 ? (
         <div className="px-4 py-8 text-center text-sm text-muted-foreground">
           세션이 없습니다.

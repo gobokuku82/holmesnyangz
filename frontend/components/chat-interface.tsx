@@ -79,6 +79,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
   const [wsConnected, setWsConnected] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const wsClientRef = useRef<ChatWSClient | null>(null)
+  const prevSessionIdRef = useRef<string | null>(null)  // 이전 세션 ID 추적
 
   const exampleQuestions = [
     "공인중개사가 할 수 없는 금지행위에는 어떤 것들이 있나요?",
@@ -315,21 +316,23 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     loadMessagesFromDB()
   }, [sessionId, wsConnected])
 
-  // 세션 전환 시 메시지 로드
+  // 세션 전환 시 메시지 로드 (Chat History 시스템용)
   useEffect(() => {
+    // currentSessionId가 없거나 WebSocket이 연결되지 않았으면 실행 안 함
     if (!currentSessionId || !wsConnected) return
+
+    // ✅ 실제로 세션이 변경되었을 때만 실행 (F5 새로고침 시 중복 방지)
+    if (prevSessionIdRef.current === currentSessionId) {
+      console.log('[ChatInterface] Session unchanged, skipping reload')
+      return
+    }
+
+    // 이전 세션 ID 업데이트
+    prevSessionIdRef.current = currentSessionId
 
     const loadSessionMessages = async () => {
       try {
-        console.log('[ChatInterface] 🔄 Switching to session:', currentSessionId)
-
-        // 환영 메시지로 초기화
-        setMessages([{
-          id: "1",
-          type: "bot",
-          content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
-          timestamp: new Date(),
-        }])
+        console.log('[ChatInterface] 🔄 Loading session:', currentSessionId)
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
         const response = await fetch(
@@ -351,7 +354,14 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
             setMessages(formattedMessages)
             console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages for session ${currentSessionId}`)
           } else {
-            console.log(`[ChatInterface] Session ${currentSessionId} has no messages`)
+            // 빈 세션 - 환영 메시지만 표시
+            setMessages([{
+              id: "1",
+              type: "bot",
+              content: "안녕하세요! 도와줘 홈즈냥즈입니다. 안전한 부동산 거래를 위해 어떤 도움이 필요하신가요?",
+              timestamp: new Date(),
+            }])
+            console.log(`[ChatInterface] Session ${currentSessionId} is empty - showing welcome message`)
           }
         }
       } catch (error) {
@@ -360,7 +370,7 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
     }
 
     loadSessionMessages()
-  }, [currentSessionId, wsConnected])
+  }, [currentSessionId, wsConnected])  // sessionId 의존성 제거 - 충돌 방지
 
   // 스크롤 자동 이동
   useEffect(() => {

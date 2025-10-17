@@ -40,14 +40,17 @@ export function useChatSessions() {
 
       // 백엔드는 ChatSessionResponse[] 배열을 직접 반환
       const data: ChatSessionResponse[] = await response.json()
-      setSessions(data)
+
+      // ✅ 빈 세션 필터링 (message_count === 0인 세션 제외)
+      const filteredSessions = data.filter(session => session.message_count > 0)
+      setSessions(filteredSessions)
 
       // 첫 로드 시 가장 최근 세션을 현재 세션으로 설정
-      if (!currentSessionId && data.length > 0) {
-        setCurrentSessionId(data[0].id)
+      if (!currentSessionId && filteredSessions.length > 0) {
+        setCurrentSessionId(filteredSessions[0].id)
       }
 
-      console.log(`[useChatSessions] Loaded ${data.length} sessions`)
+      console.log(`[useChatSessions] Loaded ${filteredSessions.length} sessions (${data.length - filteredSessions.length} empty sessions filtered)`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setError(message)
