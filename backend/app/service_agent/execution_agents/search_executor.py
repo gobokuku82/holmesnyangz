@@ -58,6 +58,7 @@ class SearchExecutor:
         self.market_data_tool = None
         self.real_estate_search_tool = None  # ✅ Phase 2 추가
         self.loan_data_tool = None
+        self.infrastructure_tool = None  # ✅ Infrastructure Tool 추가
 
         # Decision Logger 초기화
         try:
@@ -93,6 +94,13 @@ class SearchExecutor:
             logger.info("RealEstateSearchTool initialized successfully (PostgreSQL)")
         except Exception as e:
             logger.warning(f"RealEstateSearchTool initialization failed: {e}")
+
+        try:
+            from app.service_agent.tools.infrastructure_tool import InfrastructureTool
+            self.infrastructure_tool = InfrastructureTool()
+            logger.info("InfrastructureTool initialized successfully (Kakao API)")
+        except Exception as e:
+            logger.warning(f"InfrastructureTool initialization failed: {e}")
 
         # 서브그래프 구성
         self.app = None
@@ -300,6 +308,20 @@ class SearchExecutor:
                     "주택담보대출",
                     "금리 정보",
                     "대출 한도"
+                ],
+                "available": True
+            }
+
+        if self.infrastructure_tool:
+            tools["infrastructure_search"] = {
+                "name": "infrastructure_search",
+                "description": "부동산 주변 인프라 조회 (지하철역, 학교, 편의시설 등)",
+                "capabilities": [
+                    "지하철역 검색",
+                    "초/중/고등학교 검색",
+                    "마트/편의점 검색",
+                    "병원/약국 검색",
+                    "주변 시설 종합 조회"
                 ],
                 "available": True
             }
@@ -700,6 +722,82 @@ class SearchExecutor:
                     "error": str(e)
                 }
 
+        # === 3-2. 주변 인프라 검색 (Infrastructure Tool) ===
+        if "infrastructure_search" in selected_tools and self.infrastructure_tool:
+            try:
+                logger.info("[SearchTeam] Executing infrastructure search")
+
+                # 쿼리에서 위도/경도 추출 또는 주소에서 변환 필요
+                # 현재는 property_search_results에서 좌표를 가져옴
+                search_params = {}
+
+                # 개별 매물 검색 결과가 있으면 첫 번째 매물의 좌표 사용
+                if state.get("property_search_results") and len(state["property_search_results"]) > 0:
+                    first_property = state["property_search_results"][0]
+                    search_params["latitude"] = first_property.get("latitude")
+                    search_params["longitude"] = first_property.get("longitude")
+
+                # 카테고리 추출
+                if "지하철" in query or "역" in query:
+                    search_params["category"] = "subway"
+                elif "학교" in query:
+                    if "초등" in query:
+                        search_params["category"] = "elementary_school"
+                    elif "중학" in query:
+                        search_params["category"] = "middle_school"
+                    elif "고등" in query:
+                        search_params["category"] = "high_school"
+                    else:
+                        search_params["category"] = "elementary_school"
+                elif "마트" in query or "편의점" in query:
+                    search_params["category"] = "mart" if "마트" in query else "convenience_store"
+                elif "병원" in query:
+                    search_params["category"] = "hospital"
+                elif "약국" in query:
+                    search_params["category"] = "pharmacy"
+                else:
+                    search_params["category"] = "all"  # 전체 조회
+
+                search_params["radius"] = 1000  # 기본 1km
+                search_params["limit"] = 10
+
+                # 좌표가 있을 때만 검색 실행
+                if search_params.get("latitude") and search_params.get("longitude"):
+                    result = self.infrastructure_tool.search(query, search_params)
+
+                    if result.get("status") == "success":
+                        infrastructure_data = result.get("results", [])
+
+                        # 결과 저장
+                        state["infrastructure_results"] = infrastructure_data
+                        state["search_progress"]["infrastructure_search"] = "completed"
+                        logger.info(f"[SearchTeam] Infrastructure search completed: {len(infrastructure_data)} results")
+                        execution_results["infrastructure_search"] = {
+                            "status": "success",
+                            "result_count": len(infrastructure_data)
+                        }
+                    else:
+                        state["search_progress"]["infrastructure_search"] = "failed"
+                        execution_results["infrastructure_search"] = {
+                            "status": "failed",
+                            "error": result.get("error", "Unknown error")
+                        }
+                else:
+                    # 좌표가 없으면 스킵
+                    logger.warning("[SearchTeam] Infrastructure search skipped: no coordinates available")
+                    execution_results["infrastructure_search"] = {
+                        "status": "skipped",
+                        "reason": "no_coordinates"
+                    }
+
+            except Exception as e:
+                logger.error(f"Infrastructure search failed: {e}")
+                state["search_progress"]["infrastructure_search"] = "failed"
+                execution_results["infrastructure_search"] = {
+                    "status": "error",
+                    "error": str(e)
+                }
+
         # === 4. SearchAgent 실행 (추가 검색 필요 시) ===
         # 법률/부동산/대출 검색이 이미 완료되었으므로 scope에서 제외
         remaining_scope = [s for s in search_scope if s not in ["legal", "real_estate", "loan"]]
@@ -813,6 +911,10 @@ class SearchExecutor:
             total_results += len(state["property_search_results"])
             sources.append("property_db")
 
+        if state.get("infrastructure_results"):
+            total_results += len(state["infrastructure_results"])
+            sources.append("kakao_api")
+
         state["total_results"] = total_results
         state["sources_used"] = sources
 
@@ -823,7 +925,8 @@ class SearchExecutor:
                 "legal": len(state.get("legal_results", [])),
                 "real_estate": len(state.get("real_estate_results", [])),
                 "loan": len(state.get("loan_results", [])),
-                "property_search": len(state.get("property_search_results", []))
+                "property_search": len(state.get("property_search_results", [])),
+                "infrastructure": len(state.get("infrastructure_results", []))
             },
             "sources": sources,
             "keywords_used": state.get("keywords", {})
