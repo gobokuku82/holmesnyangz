@@ -18,7 +18,8 @@
       "Bash(powershell.exe -Command \"\nWrite-Host ''==========================================''\nWrite-Host ''📊 데이터베이스 현황''\nWrite-Host ''==========================================''\nWrite-Host ''''\n\n# 테이블 존재 확인\n$tables = @(''real_estates'', ''transactions'', ''chat_sessions'', ''chat_messages'')\n\nforeach ($table in $tables) {\n    try {\n        $count = psql -U postgres -d real_estate -t -c \"\"SELECT COUNT(*) FROM $table;\"\" 2>$null\n        if ($LASTEXITCODE -eq 0) {\n            Write-Host \"\"✅ $table : $count 개\"\"\n        } else {\n            Write-Host \"\"❌ $table : 테이블 없음\"\"\n        }\n    } catch {\n        Write-Host \"\"❌ $table : 테이블 없음\"\"\n    }\n}\n\nWrite-Host ''''\nWrite-Host ''==========================================''\n\")",
       "Bash(powershell.exe -Command \"echo ''부동산 매물:'' ; psql -U postgres -d real_estate -t -c ''SELECT COUNT(*) FROM real_estates;'' 2>&1\")",
       "Bash(powershell.exe -Command \"cd ''C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend'' ; psql -U postgres -d real_estate -c ''SELECT COUNT(*) as 부동산매물 FROM real_estates;'' ; psql -U postgres -d real_estate -c ''SELECT COUNT(*) as 채팅세션 FROM chat_sessions;''\")",
-      "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c ''SELECT table_name FROM information_schema.tables WHERE table_schema = ''''public'''' ORDER BY table_name;''\")"
+      "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c ''SELECT table_name FROM information_schema.tables WHERE table_schema = ''''public'''' ORDER BY table_name;''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend''; psql -U postgres -d real_estate -c \"\"SELECT session_id FROM chat_sessions WHERE session_id LIKE ''session-9b050480%'' LIMIT 5;\"\"\")"
     ],
     "deny": [],
     "ask": []

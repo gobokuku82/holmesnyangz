@@ -95,9 +95,6 @@ class RealEstate(Base):
 
     # Relationships
     transactions = relationship("Transaction", back_populates="real_estate", cascade="all, delete-orphan")
-    trust_scores = relationship("TrustScore", back_populates="real_estate")
-    agent = relationship("RealEstateAgent", back_populates="real_estate", uselist=False)
-    favorites = relationship("UserFavorite", back_populates="real_estate")
 
 
 class Transaction(Base):
@@ -175,6 +172,4 @@ class RealEstateAgent(Base):
     # 관리 정보
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), comment="생성일")
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.now(), comment="수정일")
-
-    # Relationships
-    real_estate = relationship("RealEstate", back_populates="agent")
+    
