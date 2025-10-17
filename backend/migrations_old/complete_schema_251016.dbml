@@ -264,7 +264,7 @@ Table chat_messages {
 // ============================================================================
 
 Table checkpoints {
-  session_id text [not null, note: 'Session ID (chat_sessions.session_id와 동일 값)']
+  session_id text [not null, ref: > chat_sessions.session_id, note: 'Session ID (chat_sessions.session_id 참조, CASCADE DELETE)']
   checkpoint_ns text [not null, default: '', note: 'Checkpoint 네임스페이스 (기본: 빈 문자열)']
   checkpoint_id text [not null, note: 'Checkpoint 고유 ID (LangGraph 생성)']
   parent_checkpoint_id text [note: 'Parent checkpoint ID (버전 히스토리용)']
@@ -279,14 +279,14 @@ Table checkpoints {
 
   Note: '''
   LangGraph 상태 스냅샷 (일시정지/재개용)
-  - session_id: chat_sessions.session_id와 동일 값 사용
+  - session_id: chat_sessions.session_id 참조 (CASCADE DELETE)
+  - 세션 삭제 시 checkpoint도 자동 삭제됨
   - LangGraph가 자동 관리
-  - FK 제약 없음 (유연한 정리 위함)
   '''
 }
 
 Table checkpoint_blobs {
-  session_id text [not null, note: 'Session ID']
+  session_id text [not null, ref: > chat_sessions.session_id, note: 'Session ID (chat_sessions.session_id 참조, CASCADE DELETE)']
   checkpoint_ns text [not null, default: '', note: 'Checkpoint 네임스페이스']
   channel text [not null, note: '채널명 (예: messages, documents)']
   version text [not null, note: 'Blob 버전']
@@ -297,11 +297,11 @@ Table checkpoint_blobs {
     (session_id, checkpoint_ns, channel, version) [pk]
   }
 
-  Note: 'LangGraph 바이너리 데이터 저장소'
+  Note: 'LangGraph 바이너리 데이터 저장소 (CASCADE DELETE)'
 }
 
 Table checkpoint_writes {
-  session_id text [not null, note: 'Session ID']
+  session_id text [not null, ref: > chat_sessions.session_id, note: 'Session ID (chat_sessions.session_id 참조, CASCADE DELETE)']
   checkpoint_ns text [not null, default: '', note: 'Checkpoint 네임스페이스']
   checkpoint_id text [not null, note: 'Checkpoint ID']
   task_id text [not null, note: 'Task ID (병렬 실행용)']
@@ -315,7 +315,7 @@ Table checkpoint_writes {
     (session_id, checkpoint_ns, checkpoint_id, task_id, idx) [pk]
   }
 
-  Note: 'LangGraph 증분 상태 업데이트'
+  Note: 'LangGraph 증분 상태 업데이트 (CASCADE DELETE)'
 }
 
 Table checkpoint_migrations {
@@ -347,9 +347,9 @@ Table checkpoint_migrations {
 // - chat_messages.session_id → chat_sessions.session_id (N:1, CASCADE DELETE)
 
 // Checkpoint 관련:
-// - checkpoints.session_id → chat_sessions.session_id (암묵적, FK 제약 없음)
-// - checkpoint_blobs.session_id → chat_sessions.session_id (암묵적, FK 제약 없음)
-// - checkpoint_writes.session_id → chat_sessions.session_id (암묵적, FK 제약 없음)
+// - checkpoints.session_id → chat_sessions.session_id (N:1, CASCADE DELETE)
+// - checkpoint_blobs.session_id → chat_sessions.session_id (N:1, CASCADE DELETE)
+// - checkpoint_writes.session_id → chat_sessions.session_id (N:1, CASCADE DELETE)
 
 // ============================================================================
 // 주요 변경사항 (vs. simplified_schema_unified.dbml)

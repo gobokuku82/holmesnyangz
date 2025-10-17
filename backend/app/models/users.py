@@ -48,8 +48,6 @@ class User(Base):
     favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
 
-    # Long-term Memory Relationships removed (tables deleted in migration)
-
 
 class LocalAuth(Base):
     """로컬 로그인 인증 정보"""
@@ -108,7 +106,7 @@ class UserFavorite(Base):
 
     # Relationships
     user = relationship("User", back_populates="favorites")
-    real_estate = relationship("RealEstate", back_populates="favorites")
+    real_estate = relationship("RealEstate")
 
     # Indexes
     __table_args__ = (

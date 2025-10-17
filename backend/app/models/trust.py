@@ -14,4 +14,4 @@ class TrustScore(Base):
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.now(), comment="수정일")
 
     # Relationships
-    real_estate = relationship("RealEstate", back_populates="trust_scores")
+    real_estate = relationship("RealEstate")
