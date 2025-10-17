@@ -12,6 +12,7 @@ import type { ExecutionStepState } from "@/lib/types"
 import { ExecutionPlanPage } from "@/components/execution-plan-page"
 import { ExecutionProgressPage } from "@/components/execution-progress-page"
 import { AnswerDisplay } from "@/components/answer-display"
+import { GuidancePage } from "@/components/guidance-page"
 import type { ProcessState, AgentType } from "@/types/process"
 import type { ExecutionPlan, ExecutionStep } from "@/types/execution"
 import { STEP_MESSAGES } from "@/types/process"
@@ -31,9 +32,15 @@ interface AnswerMetadata {
   intent_type: string
 }
 
+interface GuidanceData {
+  detected_intent: "irrelevant" | "unclear" | "unknown"
+  original_query: string
+  message: string
+}
+
 interface Message {
   id: string
-  type: "user" | "bot" | "execution-plan" | "execution-progress"
+  type: "user" | "bot" | "execution-plan" | "execution-progress" | "guidance"
   content: string
   timestamp: Date
   executionPlan?: ExecutionPlan
@@ -42,6 +49,7 @@ interface Message {
     sections: AnswerSection[]
     metadata: AnswerMetadata
   }
+  guidanceData?: GuidanceData
 }
 
 interface ConversationMemory {
@@ -208,15 +216,31 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
           m.type !== "execution-progress" && m.type !== "execution-plan"
         ))
 
-        // 봇 응답 추가 (structured_data 포함)
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "bot",
-          content: message.response?.answer || message.response?.content || message.response?.message || "응답을 받지 못했습니다.",
-          structuredData: message.response?.structured_data,
-          timestamp: new Date(),
+        // ✅ Guidance 응답 체크
+        if (message.response?.type === "guidance") {
+          const guidanceMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "guidance",
+            content: message.response.message,
+            timestamp: new Date(),
+            guidanceData: {
+              detected_intent: message.response.detected_intent || "unknown",
+              original_query: message.response.original_query || "",
+              message: message.response.message
+            }
+          }
+          setMessages((prev) => [...prev, guidanceMessage])
+        } else {
+          // 봇 응답 추가 (structured_data 포함)
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            type: "bot",
+            content: message.response?.answer || message.response?.content || message.response?.message || "응답을 받지 못했습니다.",
+            structuredData: message.response?.structured_data,
+            timestamp: new Date(),
+          }
+          setMessages((prev) => [...prev, botMessage])
         }
-        setMessages((prev) => [...prev, botMessage])
         setTodos([])
 
         // 프로세스 완료 - idle 상태로 전환하여 입력 활성화
@@ -523,6 +547,9 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
                   steps={message.executionSteps}
                   plan={message.executionPlan}
                 />
+              )}
+              {message.type === "guidance" && message.guidanceData && (
+                <GuidancePage guidance={message.guidanceData} />
               )}
               {(message.type === "user" || message.type === "bot") && (
                 <div className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Map, FileText, Shield, Users, Home, ChevronLeft, ChevronRight, Plus } from "lucide-react"
-import { MemoryHistory } from "@/components/memory-history"
 import { SessionList } from "@/components/session-list"
 import type { PageType } from "@/app/page"
 import type { SessionListItem } from "@/hooks/use-chat-sessions"
@@ -87,7 +86,7 @@ export function Sidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -166,9 +165,6 @@ export function Sidebar({
           />
         </div>
       )}
-
-      {/* Memory History */}
-      <MemoryHistory isCollapsed={isCollapsed} onLoadMemory={onLoadMemory} />
 
       {/* Footer */}
       {!isCollapsed && (

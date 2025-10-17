@@ -4,7 +4,11 @@
       "Bash(findstr:*)",
       "Bash(tree:*)",
       "Bash(python -c:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(dir \"c:\\kdy\\Projects\\holmesnyangz\\beta_v001\\frontend\" /s /b)",
+      "Bash(dir:*)",
+      "Bash(sqlite3:*)"
     ],
     "deny": [],
     "ask": []
