@@ -329,11 +329,12 @@ case 'todo_created':
 
 ### 🟡 Low Priority
 
-#### 3. 장기 메모리 Props 제거
+#### 3. 장기 메모리 Props 제거 ✅ 완료
 - **이유**: 현재 시스템으로 충분
 - **효과**: 코드 간소화
 - **난이도**: ⭐ (쉬움)
 - **작업 시간**: 30분
+- **상태**: ✅ 완료 (2025-10-17)
 
 ---
 
@@ -606,11 +607,23 @@ export function ChatInterface({ onSplitView, onRegisterMemoryLoader, currentSess
 
 ---
 
-### Task 3: 장기 메모리 Props 제거 (선택적)
+### Task 3: 장기 메모리 Props 제거 ✅ 완료
 
 **목표**: Dead Code 제거
 
-이 부분은 기존 Cleanup Plan과 동일하므로 생략.
+**완료 사항**:
+- ✅ `page.tsx`: `handleRegisterMemoryLoader`, `loadMemory` state 제거
+- ✅ `page.tsx`: `onRegisterMemoryLoader`, `onLoadMemory` props 제거 (Sidebar, ChatInterface)
+- ✅ `chat-interface.tsx`: `ConversationMemory` interface 제거
+- ✅ `chat-interface.tsx`: `onRegisterMemoryLoader` prop 제거
+- ✅ `chat-interface.tsx`: `loadMemoryConversation` callback 제거 (30줄)
+- ✅ `sidebar.tsx`: `onLoadMemory` prop 제거
+- ✅ `types/session.ts`: `ConversationMemory` interface 제거
+
+**결과**:
+- 총 제거된 코드: ~45줄
+- Props drilling 3단계 제거
+- 더 이상 사용되지 않는 ConversationMemory 시스템 완전 제거
 
 ---
 

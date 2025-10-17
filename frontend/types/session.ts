@@ -62,19 +62,3 @@ export interface DeleteSessionResponse {
   session_id: string
   deleted_at: string
 }
-
-/**
- * 대화 기록 (ConversationMemory)
- *
- * PostgreSQL conversation_memories 테이블과 매핑
- */
-export interface ConversationMemory {
-  id: string
-  query: string
-  response_summary: string
-  relevance: string
-  intent_detected: string | null
-  entities_mentioned: Record<string, any> | null
-  created_at: string
-  conversation_metadata: Record<string, any> | null
-}

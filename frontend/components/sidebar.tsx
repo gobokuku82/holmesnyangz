@@ -10,7 +10,6 @@ import type { SessionListItem } from "@/hooks/use-chat-sessions"
 interface SidebarProps {
   currentPage: PageType
   onPageChange: (page: PageType) => void
-  onLoadMemory: ((memory: any) => void) | null
   sessions: SessionListItem[]
   currentSessionId: string | null
   onCreateSession: () => Promise<string | null>
@@ -21,7 +20,6 @@ interface SidebarProps {
 export function Sidebar({
   currentPage,
   onPageChange,
-  onLoadMemory,
   sessions,
   currentSessionId,
   onCreateSession,

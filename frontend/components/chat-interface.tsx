@@ -52,22 +52,12 @@ interface Message {
   guidanceData?: GuidanceData
 }
 
-interface ConversationMemory {
-  id: string
-  query: string
-  response_summary: string
-  relevance: string
-  intent_detected: string
-  created_at: string
-}
-
 interface ChatInterfaceProps {
   onSplitView: (agentType: PageType) => void
-  onRegisterMemoryLoader?: (loader: (memory: ConversationMemory) => void) => void
   currentSessionId?: string | null
 }
 
-export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoader, currentSessionId }: ChatInterfaceProps) {
+export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: ChatInterfaceProps) {
   const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -402,38 +392,6 @@ export function ChatInterface({ onSplitView: _onSplitView, onRegisterMemoryLoade
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
   }, [messages])
-
-  // Memory에서 대화 로드 (useCallback으로 메모이제이션)
-  const loadMemoryConversation = useCallback((memory: ConversationMemory) => {
-    console.log('[ChatInterface] Loading memory conversation:', memory.id)
-
-    // 사용자 질문 메시지
-    const userMessage: Message = {
-      id: `memory-user-${memory.id}`,
-      type: "user",
-      content: memory.query,
-      timestamp: new Date(memory.created_at)
-    }
-
-    // 봇 응답 메시지 (요약본)
-    const botMessage: Message = {
-      id: `memory-bot-${memory.id}`,
-      type: "bot",
-      content: memory.response_summary,
-      timestamp: new Date(memory.created_at)
-    }
-
-    // 기존 메시지를 교체 (누적하지 않음)
-    setMessages([userMessage, botMessage])
-    console.log('[ChatInterface] Replaced messages with memory conversation')
-  }, [])
-
-  // Memory 로드 함수 등록
-  useEffect(() => {
-    if (onRegisterMemoryLoader) {
-      onRegisterMemoryLoader(loadMemoryConversation)
-    }
-  }, [onRegisterMemoryLoader, loadMemoryConversation])
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !sessionId || !wsClientRef.current) return

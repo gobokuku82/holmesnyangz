@@ -18,7 +18,6 @@ export default function HomePage() {
   const [isSplitView, setIsSplitView] = useState(false)
   const [splitContent, setSplitContent] = useState<PageType | null>(null)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [loadMemory, setLoadMemory] = useState<((memory: any) => void) | null>(null)
 
   // Session management
   const {
@@ -46,14 +45,10 @@ export default function HomePage() {
     setSplitContent(null)
   }
 
-  const handleRegisterMemoryLoader = useCallback((loader: (memory: any) => void) => {
-    setLoadMemory(() => loader)
-  }, [])
-
   const renderMainContent = () => {
     switch (currentPage) {
       case "chat":
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} currentSessionId={currentSessionId} />
+        return <ChatInterface onSplitView={handleSplitView} currentSessionId={currentSessionId} />
       case "map":
         return <MapInterface />
       case "analysis":
@@ -63,7 +58,7 @@ export default function HomePage() {
       case "consultation":
         return <ConsultationAgent />
       default:
-        return <ChatInterface onSplitView={handleSplitView} onRegisterMemoryLoader={handleRegisterMemoryLoader} currentSessionId={currentSessionId} />
+        return <ChatInterface onSplitView={handleSplitView} currentSessionId={currentSessionId} />
     }
   }
 
@@ -107,7 +102,6 @@ export default function HomePage() {
         <Sidebar
           currentPage={currentPage}
           onPageChange={handlePageChange}
-          onLoadMemory={loadMemory}
           sessions={sessions}
           currentSessionId={currentSessionId}
           onCreateSession={createSession}
