@@ -41,16 +41,14 @@ export function useChatSessions() {
       // 백엔드는 ChatSessionResponse[] 배열을 직접 반환
       const data: ChatSessionResponse[] = await response.json()
 
-      // ✅ 빈 세션 필터링 (message_count === 0인 세션 제외)
-      const filteredSessions = data.filter(session => session.message_count > 0)
+      // ✅ 빈 세션 + [삭제됨] 세션 필터링
+      const filteredSessions = data.filter(session =>
+        session.message_count > 0 &&
+        !session.title.startsWith('[삭제됨]')
+      )
       setSessions(filteredSessions)
 
-      // 첫 로드 시 가장 최근 세션을 현재 세션으로 설정
-      if (!currentSessionId && filteredSessions.length > 0) {
-        setCurrentSessionId(filteredSessions[0].id)
-      }
-
-      console.log(`[useChatSessions] Loaded ${filteredSessions.length} sessions (${data.length - filteredSessions.length} empty sessions filtered)`)
+      console.log(`[useChatSessions] Loaded ${filteredSessions.length} sessions (${data.length - filteredSessions.length} filtered)`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setError(message)
@@ -58,7 +56,7 @@ export function useChatSessions() {
     } finally {
       setLoading(false)
     }
-  }, [currentSessionId])
+  }, [])  // ✅ 의존성 배열 비움 - Race Condition 해결
 
   /**
    * 새 세션 생성
@@ -142,13 +140,14 @@ export function useChatSessions() {
   }, [])
 
   /**
-   * 세션 삭제
+   * 세션 삭제 (완전 삭제)
    */
-  const deleteSession = useCallback(async (sessionId: string, hardDelete: boolean = false): Promise<boolean> => {
+  const deleteSession = useCallback(async (sessionId: string): Promise<boolean> => {
     try {
       setError(null)
 
-      const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}?hard_delete=${hardDelete}`, {
+      // ✅ hard_delete=true로 고정 (완전 삭제)
+      const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}?hard_delete=true`, {
         method: 'DELETE'
       })
 
@@ -158,18 +157,21 @@ export function useChatSessions() {
 
       const data: DeleteSessionResponse = await response.json()
 
-      // 로컬 상태 업데이트 (id 필드 사용)
-      setSessions(prev => prev.filter(s => s.id !== sessionId))
+      // ✅ setSessions 콜백 내에서 세션 전환 처리 (Stale Closure 방지)
+      setSessions(prev => {
+        const filteredSessions = prev.filter(s => s.id !== sessionId)
 
-      // 현재 세션이 삭제되면 다른 세션으로 전환
-      if (currentSessionId === sessionId) {
-        const remainingSessions = sessions.filter(s => s.id !== sessionId)
-        if (remainingSessions.length > 0) {
-          setCurrentSessionId(remainingSessions[0].id)
-        } else {
-          setCurrentSessionId(null)
+        // 현재 세션이 삭제되면 다른 세션으로 전환
+        if (currentSessionId === sessionId) {
+          if (filteredSessions.length > 0) {
+            setCurrentSessionId(filteredSessions[0].id)
+          } else {
+            setCurrentSessionId(null)
+          }
         }
-      }
+
+        return filteredSessions
+      })
 
       console.log(`[useChatSessions] Deleted session: ${sessionId} at ${data.deleted_at}`)
       return true
@@ -179,7 +181,7 @@ export function useChatSessions() {
       console.error('[useChatSessions] Failed to delete session:', err)
       return false
     }
-  }, [currentSessionId, sessions])
+  }, [currentSessionId])  // ✅ sessions 의존성 제거
 
   /**
    * 초기 로드
@@ -187,6 +189,17 @@ export function useChatSessions() {
   useEffect(() => {
     fetchSessions()
   }, [fetchSessions])
+
+  /**
+   * 첫 로드 시 세션 자동 선택
+   */
+  useEffect(() => {
+    // ✅ 로딩 완료 후에만 자동 선택 (loading=false 체크)
+    if (!currentSessionId && sessions.length > 0 && !loading) {
+      setCurrentSessionId(sessions[0].id)
+      console.log(`[useChatSessions] Auto-selected first session: ${sessions[0].id}`)
+    }
+  }, [sessions, currentSessionId, loading])
 
   return {
     // 상태

@@ -17,7 +17,7 @@ interface SessionListProps {
   sessions: SessionListItem[]
   currentSessionId: string | null
   onSessionClick: (sessionId: string) => void
-  onSessionDelete: (sessionId: string) => void
+  onSessionDelete: (sessionId: string) => Promise<boolean>  // ✅ Promise<boolean> 반환
   isCollapsed?: boolean
 }
 
@@ -128,10 +128,13 @@ export function SessionList({
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation()
                     if (window.confirm(`"${session.title}" 세션을 삭제하시겠습니까?`)) {
-                      onSessionDelete(session.id)
+                      const success = await onSessionDelete(session.id)
+                      if (!success) {
+                        alert('세션 삭제에 실패했습니다.')
+                      }
                     }
                   }}
                 >

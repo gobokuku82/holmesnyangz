@@ -8,7 +8,17 @@
       "Bash(netstat:*)",
       "Bash(dir \"c:\\kdy\\Projects\\holmesnyangz\\beta_v001\\frontend\" /s /b)",
       "Bash(dir:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(python scripts/check_db_data.py:*)",
+      "Bash(python scripts/check_chat_tables.py:*)",
+      "Bash(powershell.exe -Command \"cd ''C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend''; python check_all_data.py\")",
+      "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c \"\"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' ORDER BY table_name;\"\"\")",
+      "Bash(timeout 5 powershell.exe -Command \"psql -U postgres -d real_estate -t -c \"\"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ''public'';\"\"\")",
+      "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c \"\"SELECT ''real_estates'' as table_name, COUNT(*) as count FROM real_estates UNION ALL SELECT ''transactions'', COUNT(*) FROM transactions UNION ALL SELECT ''chat_sessions'', COUNT(*) FROM chat_sessions UNION ALL SELECT ''chat_messages'', COUNT(*) FROM chat_messages;\"\"\")",
+      "Bash(powershell.exe -Command \"\nWrite-Host ''==========================================''\nWrite-Host ''📊 데이터베이스 현황''\nWrite-Host ''==========================================''\nWrite-Host ''''\n\n# 테이블 존재 확인\n$tables = @(''real_estates'', ''transactions'', ''chat_sessions'', ''chat_messages'')\n\nforeach ($table in $tables) {\n    try {\n        $count = psql -U postgres -d real_estate -t -c \"\"SELECT COUNT(*) FROM $table;\"\" 2>$null\n        if ($LASTEXITCODE -eq 0) {\n            Write-Host \"\"✅ $table : $count 개\"\"\n        } else {\n            Write-Host \"\"❌ $table : 테이블 없음\"\"\n        }\n    } catch {\n        Write-Host \"\"❌ $table : 테이블 없음\"\"\n    }\n}\n\nWrite-Host ''''\nWrite-Host ''==========================================''\n\")",
+      "Bash(powershell.exe -Command \"echo ''부동산 매물:'' ; psql -U postgres -d real_estate -t -c ''SELECT COUNT(*) FROM real_estates;'' 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend'' ; psql -U postgres -d real_estate -c ''SELECT COUNT(*) as 부동산매물 FROM real_estates;'' ; psql -U postgres -d real_estate -c ''SELECT COUNT(*) as 채팅세션 FROM chat_sessions;''\")",
+      "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c ''SELECT table_name FROM information_schema.tables WHERE table_schema = ''''public'''' ORDER BY table_name;''\")"
     ],
     "deny": [],
     "ask": []

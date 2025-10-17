@@ -258,16 +258,20 @@ export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: C
     }
   }, [])
 
-  // WebSocket 초기화
+  // WebSocket 초기화 및 세션 전환 시 재연결
   useEffect(() => {
-    if (!sessionId) return
+    // ✅ currentSessionId 우선 사용 (새 채팅 버튼으로 생성된 세션)
+    const activeSessionId = currentSessionId || sessionId
+    if (!activeSessionId) return
+
+    console.log('[ChatInterface] 🔌 Initializing WebSocket with session:', activeSessionId)
 
     const wsClient = createWSClient({
       baseUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
-      sessionId,
+      sessionId: activeSessionId,  // ✅ currentSessionId 또는 sessionId 사용
       onMessage: handleWSMessage,
       onConnected: () => {
-        console.log('[ChatInterface] WebSocket connected')
+        console.log('[ChatInterface] ✅ WebSocket connected to session:', activeSessionId)
         setWsConnected(true)
       },
       onDisconnected: () => {
@@ -283,20 +287,23 @@ export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: C
     wsClientRef.current = wsClient
 
     return () => {
+      console.log('[ChatInterface] 🔌 Disconnecting WebSocket from session:', activeSessionId)
       wsClient.disconnect()
       wsClientRef.current = null
     }
-  }, [sessionId, handleWSMessage])
+  }, [currentSessionId, sessionId, handleWSMessage])  // ✅ currentSessionId 추가
 
-  // DB에서 메시지 로드 (WebSocket 연결 후)
+  // DB에서 메시지 로드 (WebSocket 연결 후) - 초기 로드용
   useEffect(() => {
-    if (!sessionId || !wsConnected) return
+    // ✅ currentSessionId 우선 사용
+    const activeSessionId = currentSessionId || sessionId
+    if (!activeSessionId || !wsConnected) return
 
     const loadMessagesFromDB = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
         const response = await fetch(
-          `${apiUrl}/api/v1/chat/sessions/${sessionId}/messages?limit=100`
+          `${apiUrl}/api/v1/chat/sessions/${activeSessionId}/messages?limit=100`
         )
 
         if (response.ok) {
@@ -314,7 +321,7 @@ export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: C
 
             // ✅ DB에 메시지가 있으면 환영 메시지 제거하고 DB 메시지로 교체
             setMessages(formattedMessages)
-            console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages from DB`)
+            console.log(`[ChatInterface] ✅ Loaded ${dbMessages.length} messages from DB for session ${activeSessionId}`)
           } else {
             // ✅ DB에 메시지가 없으면 환영 메시지 유지 (초기 상태)
             console.log('[ChatInterface] No messages in DB, keeping welcome message')
@@ -328,7 +335,7 @@ export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: C
     }
 
     loadMessagesFromDB()
-  }, [sessionId, wsConnected])
+  }, [currentSessionId, sessionId, wsConnected])  // ✅ currentSessionId 추가
 
   // 세션 전환 시 메시지 로드 (Chat History 시스템용)
   useEffect(() => {
@@ -394,7 +401,9 @@ export function ChatInterface({ onSplitView: _onSplitView, currentSessionId }: C
   }, [messages])
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim() || !sessionId || !wsClientRef.current) return
+    // ✅ currentSessionId 우선 사용
+    const activeSessionId = currentSessionId || sessionId
+    if (!content.trim() || !activeSessionId || !wsClientRef.current) return
 
     const userMessage: Message = {
       id: Date.now().toString(),

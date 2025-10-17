@@ -30,7 +30,7 @@ export function useSession() {
         return
       }
 
-      // 2. 새 세션 생성
+      // 2. 새 세션 생성 (WebSocket용)
       console.log("🔄 Creating new session...")
       const response = await chatAPI.startSession({
         metadata: {

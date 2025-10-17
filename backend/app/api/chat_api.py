@@ -297,7 +297,7 @@ async def create_chat_session(
     """
     try:
         user_id = 1  # 임시 하드코딩
-        session_id = f"chat-{uuid.uuid4()}"
+        session_id = f"session-{uuid.uuid4()}"  # ✅ 스키마 표준 형식으로 수정
 
         # 새 세션 생성
         new_session = ChatSession(
