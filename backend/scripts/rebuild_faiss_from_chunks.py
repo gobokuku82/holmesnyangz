@@ -93,13 +93,21 @@ def rebuild_faiss():
     print(f"\n[2/4] FAISS 디렉토리 준비 중... {FAISS_DIR}")
     FAISS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 기존 파일 삭제
+    # 기존 파일 백업 및 삭제
+    from datetime import datetime
+    import shutil
+
     if FAISS_INDEX_FILE.exists():
+        backup_index = FAISS_DIR / f"legal_documents_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.index"
+        shutil.copy(FAISS_INDEX_FILE, backup_index)
+        print(f"   ✅ 인덱스 백업: {backup_index.name}")
         FAISS_INDEX_FILE.unlink()
-        print(f"   ⚠️  기존 인덱스 파일 삭제: {FAISS_INDEX_FILE.name}")
+
     if METADATA_FILE.exists():
+        backup_metadata = FAISS_DIR / f"legal_metadata_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+        shutil.copy(METADATA_FILE, backup_metadata)
+        print(f"   ✅ 메타데이터 백업: {backup_metadata.name}")
         METADATA_FILE.unlink()
-        print(f"   ⚠️  기존 메타데이터 파일 삭제: {METADATA_FILE.name}")
 
     print(f"   ✅ FAISS 디렉토리 준비 완료")
 
@@ -122,6 +130,8 @@ def rebuild_faiss():
     documents = []
     metadatas = []
     all_embeddings = []
+    seen_chunk_ids = set()  # 중복 chunk_id 방지
+    skipped_count = 0
 
     batch_size = 100
 
@@ -130,6 +140,16 @@ def rebuild_faiss():
         batch_docs = []
 
         for chunk in batch:
+            # chunk_id 추출 및 중복 체크
+            chunk_id = chunk.get("id", "")
+
+            # 중복 chunk_id 스킵 (SQLite와 동일한 로직)
+            if chunk_id in seen_chunk_ids:
+                skipped_count += 1
+                continue
+
+            seen_chunk_ids.add(chunk_id)
+
             # 문서 내용
             content = chunk.get("content", "")
             if not content:
@@ -138,16 +158,19 @@ def rebuild_faiss():
             if not content:
                 continue
 
+            # 청크 파일의 metadata 필드에서 정보 추출
+            chunk_metadata = chunk.get("metadata", {})
+
             # 메타데이터
             metadata = {
-                "chunk_id": chunk.get("chunk_id", f"chunk_{len(metadatas)}"),
+                "chunk_id": chunk.get("id", f"chunk_{len(metadatas)}"),
                 "law_title": chunk.get("law_title", ""),
-                "article_number": chunk.get("article_number", ""),
-                "article_title": chunk.get("article_title", ""),
+                "article_number": chunk_metadata.get("article_number", ""),
+                "article_title": chunk_metadata.get("article_title", ""),
                 "doc_type": chunk.get("doc_type", "법률"),
                 "category": chunk.get("category", ""),
-                "chapter": chunk.get("chapter", ""),
-                "section": chunk.get("section", ""),
+                "chapter": chunk_metadata.get("chapter", ""),
+                "section": chunk_metadata.get("section", ""),
                 "content": content  # 원본 텍스트도 저장
             }
 
@@ -184,7 +207,9 @@ def rebuild_faiss():
 
     print(f"\n{'='*80}")
     print(f"✅ FAISS 벡터DB 재생성 완료!")
-    print(f"   - 총 청크: {len(chunks)}개")
+    print(f"   - 총 청크 로드: {len(chunks)}개")
+    print(f"   - 중복 제거: {skipped_count}개")
+    print(f"   - 고유 벡터: {len(metadatas)}개")
     print(f"   - 벡터 차원: {embedding_dim}")
     print(f"   - 인덱스 파일: {FAISS_INDEX_FILE}")
     print(f"   - 메타데이터 파일: {METADATA_FILE}")

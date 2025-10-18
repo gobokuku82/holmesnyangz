@@ -23,7 +23,8 @@
       "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -t -c ''SELECT COUNT(*) FROM real_estates;'' 2>&1\")",
       "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c \"\"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' AND table_name = ''real_estates'';\"\"\")",
       "Bash(uv run python:*)",
-      "Bash(powershell.exe:*)"
+      "Bash(powershell.exe:*)",
+      "Bash(python analyze_chunk_metadata.py:*)"
     ],
     "deny": [],
     "ask": []
