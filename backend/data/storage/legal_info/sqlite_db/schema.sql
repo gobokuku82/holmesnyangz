@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS laws (
 CREATE TABLE IF NOT EXISTS articles (
     article_id INTEGER PRIMARY KEY AUTOINCREMENT,
     law_id INTEGER NOT NULL,
-    article_number TEXT NOT NULL,        -- 조항 번호 (예: 제1조)
+    article_number TEXT NOT NULL,        -- 조항 번호 (예: 제1조) - 본문/부칙 중복 가능
     article_title TEXT,                  -- 조항 제목
     chapter TEXT,                        -- 장
     section TEXT,                        -- 절
@@ -34,10 +34,11 @@ CREATE TABLE IF NOT EXISTS articles (
     is_tax_related INTEGER DEFAULT 0,    -- 세금 관련
     is_delegation INTEGER DEFAULT 0,     -- 위임
     is_penalty_related INTEGER DEFAULT 0, -- 벌칙
-    chunk_ids TEXT,                      -- ChromaDB chunk ID 배열 (JSON)
+    chunk_ids TEXT,                      -- FAISS chunk ID 배열 (JSON) - 고유 매칭 키
     metadata_json TEXT,                  -- 전체 메타데이터 (JSON)
-    FOREIGN KEY (law_id) REFERENCES laws(law_id),
-    UNIQUE(law_id, article_number)
+    FOREIGN KEY (law_id) REFERENCES laws(law_id)
+    -- UNIQUE(law_id, article_number) 제거: 본문/부칙 제1조 구분 위해
+    -- 고유성은 chunk_ids가 보장
 );
 
 -- =============================================================================

@@ -165,23 +165,37 @@ def rebuild_faiss():
 
             # 청크 파일의 metadata 필드에서 정보 추출
             chunk_metadata = chunk.get("metadata", {})
+            article_title = chunk_metadata.get("article_title", "")
+            chapter = chunk_metadata.get("chapter", "")
+
+            # ⭐ 제목 + 장 포함 임베딩 내용 생성 (검색 품질 개선)
+            enhanced_content = content
+            if article_title or chapter:
+                parts = []
+                if chapter:
+                    parts.append(f"[{chapter}]")
+                if article_title:
+                    parts.append(article_title)
+
+                if parts:
+                    enhanced_content = f"{' '.join(parts)}\n{content}"
 
             # 메타데이터
             metadata = {
                 "chunk_id": chunk.get("id", f"chunk_{len(metadatas)}"),
                 "law_title": chunk.get("law_title", ""),
                 "article_number": chunk_metadata.get("article_number", ""),
-                "article_title": chunk_metadata.get("article_title", ""),
+                "article_title": article_title,
                 "doc_type": chunk.get("doc_type", "법률"),
                 "category": chunk.get("category", ""),
-                "chapter": chunk_metadata.get("chapter", ""),
+                "chapter": chapter,
                 "section": chunk_metadata.get("section", ""),
-                "content": content  # 원본 텍스트도 저장
+                "content": content  # 원본 텍스트 유지
             }
 
-            documents.append(content)
+            documents.append(enhanced_content)  # 제목+장 포함 임베딩
             metadatas.append(metadata)
-            batch_docs.append(content)
+            batch_docs.append(enhanced_content)  # 제목+장 포함 임베딩
 
         if batch_docs:
             # 배치 임베딩 생성

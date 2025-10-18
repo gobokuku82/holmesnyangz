@@ -199,10 +199,8 @@ def rebuild_sqlite():
             # article_number가 없는 경우 (용어집 등) chunk_id 사용
             if not article_number:
                 article_number = chunk_id if chunk_id else f"item_{article_counter}"
-            else:
-                # 같은 article_number가 중복될 수 있음 (본문 제1조 vs 부칙 제1조)
-                # 고유성 보장: article_number + chunk_id 조합
-                article_number = f"{article_number}_{chunk_id}"
+            # else 블록 제거: article_number는 원본 그대로 사용 (예: "제1조")
+            # 고유성은 chunk_ids 필드가 보장 (본문/부칙 구분 가능)
 
             # 특수 플래그 판단
             content = chunk.get("text", "")
