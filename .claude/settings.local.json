@@ -24,7 +24,8 @@
       "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c \"\"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' AND table_name = ''real_estates'';\"\"\")",
       "Bash(uv run python:*)",
       "Bash(powershell.exe:*)",
-      "Bash(python analyze_chunk_metadata.py:*)"
+      "Bash(python analyze_chunk_metadata.py:*)",
+      "Bash(python scripts/verify_faiss_db.py:*)"
     ],
     "deny": [],
     "ask": []

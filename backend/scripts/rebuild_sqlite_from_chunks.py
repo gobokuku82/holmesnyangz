@@ -204,13 +204,6 @@ def rebuild_sqlite():
                 # 고유성 보장: article_number + chunk_id 조합
                 article_number = f"{article_number}_{chunk_id}"
 
-            # 디버깅: 처음 2개 법령만 출력
-            if article_counter < 5 and (
-                law_title == "공인중개사법 시행규칙(국토교통부령)(제01349호)(20240710)" or
-                law_title == "공인중개사법 시행령(대통령령)(제34401호)(20240710)"
-            ):
-                print(f"      DEBUG [{law_title[:30]}] law_id={law_id}, article_number={article_number}, chunk_id={chunk_id}")
-
             # 특수 플래그 판단
             content = chunk.get("text", "")
             is_tenant_protection = 1 if any(term in content for term in ["임차인", "전세", "보증금"]) else 0

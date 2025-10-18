@@ -142,13 +142,18 @@ def rebuild_faiss():
         for chunk in batch:
             # chunk_id 추출 및 중복 체크
             chunk_id = chunk.get("id", "")
+            law_title = chunk.get("law_title", "")
 
-            # 중복 chunk_id 스킵 (SQLite와 동일한 로직)
-            if chunk_id in seen_chunk_ids:
+            # 법령별로 고유한 키 생성 (law_title + chunk_id)
+            # 예: "공인중개사법(법률)(제19841호)(20241227)_article_1"
+            unique_key = f"{law_title}_{chunk_id}"
+
+            # 중복 chunk 스킵 (같은 법령 + 같은 chunk_id)
+            if unique_key in seen_chunk_ids:
                 skipped_count += 1
                 continue
 
-            seen_chunk_ids.add(chunk_id)
+            seen_chunk_ids.add(unique_key)
 
             # 문서 내용
             content = chunk.get("content", "")
