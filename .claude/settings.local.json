@@ -22,7 +22,8 @@
       "Bash(powershell.exe -Command \"cd ''C:\\kdy\\Projects\\holmesnyangz\\beta_v001\\backend''; psql -U postgres -d real_estate -c \"\"SELECT session_id FROM chat_sessions WHERE session_id LIKE ''session-9b050480%'' LIMIT 5;\"\"\")",
       "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -t -c ''SELECT COUNT(*) FROM real_estates;'' 2>&1\")",
       "Bash(powershell.exe -Command \"psql -U postgres -d real_estate -c \"\"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' AND table_name = ''real_estates'';\"\"\")",
-      "Bash(uv run python:*)"
+      "Bash(uv run python:*)",
+      "Bash(powershell.exe:*)"
     ],
     "deny": [],
     "ask": []

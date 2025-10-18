@@ -31,6 +31,7 @@ aiosqlite==0.20.0
 # alembic==1.13.0  # For migrations (optional)
 # asyncpg==0.29.0  # For PostgreSQL (optional)
 chromadb>=0.5.0
+faiss-cpu==1.9.0.post1  # Vector similarity search (CPU version)
 
 # Data Analysis
 pandas>=2.0.0

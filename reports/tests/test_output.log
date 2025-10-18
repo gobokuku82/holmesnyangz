@@ -1,0 +1,1814 @@
+INFO - ================================================================================
+INFO - Phase 1 Test Runner 초기화 중...
+INFO - ================================================================================
+INFO - \u2713 LLM Context 초기화 완료
+INFO - \u2713 Planning Agent 초기화 완료
+INFO - \u2713 Query Decomposer 초기화 완료
+INFO - 시스템 초기화 완료
+
+INFO - 
+
+================================================================================
+INFO - Phase 1 테스트 시작
+INFO - ================================================================================
+
+INFO - 테스트 데이터 로드: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\tests\test_queries_phase1.json
+INFO - 총 40개 질문 로드 완료
+
+INFO - 
+================================================================================
+INFO - PART 1: 단일 질문 테스트 (20개)
+INFO - ================================================================================
+INFO - 
+================================================================================
+INFO - [1] 단일 질문 테스트: S001
+INFO - 질문: 전세금 5% 인상 제한이 언제까지인가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전세금 5% 인상 제한이 언제까지인가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3383 (prompt: 3184, completion: 199)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['전세금', '인상', '제한', '법률'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'price': '5%', 'action_verbs': ['확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 전세금 인상 제한에 대한 질문. 2단계(유형): 정보 확인형 - 법률적 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 전세금 인상 제한에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2471 (prompt: 2364, completion: 107)
+INFO - LLM agent selection reasoning: 1단계: 전세금 인상 제한에 대한 법률 정보 조회 필요. 2단계: 단순 정보 확인으로 저복잡도. 3단계: 독립적 작업으로 search_team만으로 충분. 4단계: 법률 검색만으로 질문에 답변 가능.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전세금 5% 인상 제한이 언제까지인가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 9.07초)
+INFO - 
+================================================================================
+INFO - [2] 단일 질문 테스트: S002
+INFO - 질문: 강남구 아파트 전세 시세 알려주세요
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 강남구 아파트 전세 시세 알려주세요...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3379 (prompt: 3180, completion: 199)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['강남구', '아파트', '전세', '시세'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '강남구', 'contract_type': '전세'}, 'reasoning': "1단계(구조): 단순 정보 요청으로 '강남구 아파트 전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회만 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류."}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2483 (prompt: 2360, completion: 123)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 강남구 아파트 전세 시세를 단순히 조회하고자 함. 2단계: 이는 단순 정보 조회로 저복잡도에 해당. 3단계: 독립적인 작업으로 search_team만으로 충분히 처리 가능. 4단계: search_team이 부동산 시세 조회 전문이므로 적합.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 강남구 아파트 전세 시세 알려주세요...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 9.69초)
+INFO - 
+================================================================================
+INFO - [3] 단일 질문 테스트: S003
+INFO - 질문: 전세자금대출 한도가 얼마나 되나요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전세자금대출 한도가 얼마나 되나요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3378 (prompt: 3181, completion: 197)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['전세자금대출', '한도'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '전세자금대출', 'action_verbs': ['확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 전세자금대출 한도에 대한 질문. 2단계(유형): 정보 확인형 - 대출 한도에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2546 (prompt: 2356, completion: 190)
+INFO - LLM agent selection reasoning: 1단계: 전세자금대출 한도에 대한 정보 조회와 함께 대출 조건 분석이 필요합니다. 2단계: 대출 한도에 대한 단순 정보 조회가 아닌, 대출 조건과 관련된 분석이 필요하므로 중간 복잡도로 판단했습니다. 3단계: 대출 한도 정보를 검색한 후, 그에 대한 분석이 필요하므로 순차적 의존성이 있습니다. 4단계: search_team을 통해 대출 한도를 확인한 후, analysis_team을 통해 그 한도에 대한 적절성 및 조건을 분석할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전세자금대출 한도가 얼마나 되나요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.70초)
+INFO - 
+================================================================================
+INFO - [4] 단일 질문 테스트: S004
+INFO - 질문: 임대차계약서 작성해주세요
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 임대차계약서 작성해주세요...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3377 (prompt: 3177, completion: 200)
+INFO - LLM Intent Analysis Result: {'intent': 'CONTRACT_CREATION', 'confidence': 0.95, 'keywords': ['임대차계약서', '작성'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'contract_type': '임대차계약서', 'action_verbs': ['작성', '만들기']}, 'reasoning': '1단계(구조): 단순 요청으로 임대차계약서 작성 요청 포함. 2단계(유형): 계약서 작성 요청형 - 단순 정보가 아닌 문서 생성 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 문서 생성 에이전트 호출 필요. 5단계(검증): 요청이 명확하므로 CONTRACT_CREATION으로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2447 (prompt: 2351, completion: 96)
+INFO - LLM agent selection reasoning: 사용자가 요청한 '임대차계약서 작성'은 문서 생성 작업으로, document_team이 전문성을 가지고 있습니다. 이 팀은 계약서 작성 및 문서 생성에 특화되어 있으며, 사용자의 요청에 직접적으로 부합합니다.
+INFO - \u2705 Primary LLM selected agents: ['document_team']
+INFO -   의도: 계약서작성
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['document_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 임대차계약서 작성해주세요...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 계약서작성
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['document_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 15.41초)
+INFO - 
+================================================================================
+INFO - [5] 단일 질문 테스트: S005
+INFO - 질문: 계약 갱신 거부 가능한가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 계약 갱신 거부 가능한가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3384 (prompt: 3179, completion: 205)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['계약', '갱신', '거부'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'contract_type': '임대차계약', 'action_verbs': ['확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 계약 갱신 거부 가능성에 대한 질문. 2단계(유형): 정보 확인형 - 법률적 규정 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 계약 갱신 거부 가능성에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2545 (prompt: 2355, completion: 190)
+INFO - LLM agent selection reasoning: 1단계: 계약 갱신 거부 가능성에 대한 법률 상담이 필요하므로 법률 정보 검색이 필요하다. 2단계: 사용자가 '거부'라는 특정 상황을 언급했으므로, 법률적 판단과 함께 그에 따른 리스크 평가가 필요하다. 3단계: 법률 정보를 검색한 후, 그 정보를 바탕으로 계약 갱신 거부의 타당성을 분석해야 하므로 순차적 의존성이 있다. 4단계: 단순 법률 검색만으로는 충분하지 않으며, 분석이 필수적이다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 계약 갱신 거부 가능한가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 9.46초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [6] 단일 질문 테스트: S006
+INFO - 질문: 서초구 아파트 매매 시세는?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 서초구 아파트 매매 시세는?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3387 (prompt: 3180, completion: 207)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['서초구', '아파트', '매매', '시세'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '서초구', 'property_type': '아파트', 'action_verbs': ['조회', '확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로, 서초구 아파트 매매 시세에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만 필요. 5단계(검증): 단순 시세 조회이므로 MARKET_INQUIRY로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2442 (prompt: 2359, completion: 83)
+INFO - LLM agent selection reasoning: 사용자의 질문은 서초구 아파트 매매 시세에 대한 단순 정보 조회입니다. 따라서 search_team만으로 충분히 시세 정보를 제공할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 서초구 아파트 매매 시세는?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 7.95초)
+INFO - 
+================================================================================
+INFO - [7] 단일 질문 테스트: S007
+INFO - 질문: LTV 비율이 뭔가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: LTV 비율이 뭔가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3363 (prompt: 3179, completion: 184)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['LTV', '비율'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'action_verbs': ['알려줘']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 LTV 비율에 대한 정의를 묻고 있음. 2단계(유형): 정보 확인형 - LTV 비율에 대한 사실 확인이 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2536 (prompt: 2350, completion: 186)
+INFO - LLM agent selection reasoning: 1단계: LTV 비율에 대한 설명과 대출 상담이 필요. 2단계: LTV 비율은 대출과 관련된 정보이므로 중간 복잡도로 판단. 3단계: LTV 비율에 대한 정보 검색 후, 대출 조건 분석이 필요하므로 순차적 의존성 존재. 4단계: 단순 정보 조회로는 LTV 비율에 대한 충분한 답변이 불가능하므로, search_team으로 LTV 비율에 대한 정보를 수집하고, analysis_team으로 대출 조건을 분석해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: LTV 비율이 뭔가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 9.05초)
+INFO - 
+================================================================================
+INFO - [8] 단일 질문 테스트: S008
+INFO - 질문: 보증금 반환 보증 가입 방법은?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 보증금 반환 보증 가입 방법은?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3379 (prompt: 3179, completion: 200)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.85, 'keywords': ['보증금', '반환', '보증', '가입', '방법'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'action_verbs': ['가입', '방법']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 보증금 반환 보증 가입 방법에 대한 질문. 2단계(유형): 정보 확인형 - 가입 방법에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 보증금 반환 보증 가입 방법에 대한 정보 검색 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2551 (prompt: 2361, completion: 190)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 보증금 반환 보증 가입 방법에 대한 법률 상담을 요청하고 있습니다. 이는 단순한 정보 조회가 아니라 법률적 상황에 대한 분석과 해결책 제시가 필요합니다. 2단계: 복잡도는 높습니다. 법률 정보 검색 후, 그에 대한 분석이 필요합니다. 3단계: 법률 정보를 검색한 후, 그 정보를 바탕으로 분석팀이 상황을 평가하고 해결책을 제시해야 합니다. 4단계: 단순 법률 조회로는 충분하지 않으며, 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 보증금 반환 보증 가입 방법은?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2792 (prompt: 2689, completion: 103)
+INFO - Successfully decomposed into 1 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 1
+INFO -   실행 모드: parallel
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 12.01초)
+INFO - 
+================================================================================
+INFO - [9] 단일 질문 테스트: S009
+INFO - 질문: 송파구 아파트 가격 동향 알려주세요
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 송파구 아파트 가격 동향 알려주세요...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3379 (prompt: 3179, completion: 200)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['송파구', '아파트', '가격', '동향'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '송파구', 'property_type': '아파트', 'action_verbs': ['알려줘']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 가격 동향에 대한 질문. 2단계(유형): 정보 확인형 - 가격 동향에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 가격 동향 요청이므로 MARKET_INQUIRY로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2471 (prompt: 2358, completion: 113)
+INFO - LLM agent selection reasoning: 1단계: 송파구 아파트 가격 동향에 대한 시세 조회 필요. 2단계: 단순 정보 조회로 저복잡도. 3단계: 독립적 작업으로 search_team만으로 충분. 4단계: search_team이 송파구 아파트 시세 정보를 제공할 수 있음.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 송파구 아파트 가격 동향 알려주세요...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 7.71초)
+INFO - 
+================================================================================
+INFO - [10] 단일 질문 테스트: S010
+INFO - 질문: 주택담보대출 금리 비교해주세요
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 주택담보대출 금리 비교해주세요...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3381 (prompt: 3179, completion: 202)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['주택담보대출', '금리', '비교'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['비교']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 금리 비교에 대한 질문. 2단계(유형): 정보 확인형 - 금리 정보를 확인하는 것이므로 검색만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 금리 정보 검색 필요. 5단계(검증): 단순 금리 비교 요청이므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2523 (prompt: 2359, completion: 164)
+INFO - LLM agent selection reasoning: 1단계: 주택담보대출 금리 비교 요청으로, 대출 상품 정보 검색과 분석이 필요. 2단계: 중간 복잡도 (검색 + 분석). 3단계: 대출 상품 정보를 검색한 후, 금리 비교 및 분석이 필요하므로 순차적 의존 관계가 형성됨. 4단계: search_team으로 대출 상품 정보를 수집한 후, analysis_team으로 금리 비교 및 분석을 수행해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 주택담보대출 금리 비교해주세요...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.81초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [11] 단일 질문 테스트: S011
+INFO - 질문: 임대차보호법 적용 대상은?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 임대차보호법 적용 대상은?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3389 (prompt: 3179, completion: 210)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['임대차보호법', '적용', '대상'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'law': '임대차보호법', 'action_verbs': ['적용', '확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로, 임대차보호법의 적용 대상을 묻고 있음. 2단계(유형): 정보 확인형 - 법률에 대한 사실 확인이 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2538 (prompt: 2358, completion: 180)
+INFO - LLM agent selection reasoning: 1단계: 임대차보호법의 적용 대상에 대한 법률 정보 검색이 필요하고, 법률적 해석이나 적용 가능성에 대한 판단이 요구됨. 2단계: 중간 복잡도로, 법률 정보 검색 후 그에 대한 분석이 필요함. 3단계: 법률 정보를 검색한 후, 그 정보를 바탕으로 적용 대상을 분석해야 하므로 순차적 의존성이 있음. 4단계: 단순 법률 검색만으로는 충분하지 않으며, 분석이 필수적임.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 임대차보호법 적용 대상은?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 15.25초)
+INFO - 
+================================================================================
+INFO - [12] 단일 질문 테스트: S012
+INFO - 질문: 마포구 오피스텔 전세 시세는?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 마포구 오피스텔 전세 시세는?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3388 (prompt: 3182, completion: 206)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['마포구', '오피스텔', '전세', '시세'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '마포구', 'property_type': '오피스텔', 'contract_type': '전세'}, 'reasoning': "1단계(구조): 단순 정보 요청으로 '전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류."}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2506 (prompt: 2363, completion: 143)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 마포구 오피스텔 전세 시세를 조회하고자 하므로, 단순한 시세 조회가 필요합니다. 2단계: 이 요청은 단순 정보 조회로 분류됩니다. 3단계: 독립적인 작업으로, search_team만으로 충분합니다. 4단계: search_team이 부동산 시세 조회에 적합하므로, 이 팀만으로 질문에 답변할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 마포구 오피스텔 전세 시세는?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 7.58초)
+INFO - 
+================================================================================
+INFO - [13] 단일 질문 테스트: S013
+INFO - 질문: DSR 규제가 뭔가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: DSR 규제가 뭔가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3357 (prompt: 3178, completion: 179)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['DSR', '규제'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'action_verbs': ['알려줘']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 DSR 규제에 대한 설명을 요구. 2단계(유형): 정보 확인형 - DSR 규제에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 제공으로 끝나므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2525 (prompt: 2349, completion: 176)
+INFO - LLM agent selection reasoning: 1단계: DSR 규제에 대한 정보 조회와 대출 관련 상담이 필요. 2단계: DSR 규제는 대출 상담과 관련된 내용이므로 중간 복잡도로 판단. 3단계: DSR 규제에 대한 정보 검색 후, 대출 조건 분석이 필요하므로 순차적 의존 관계가 있음. 4단계: 단순 정보 조회만으로는 DSR 규제의 의미와 대출 상담을 모두 해결할 수 없으므로 search_team과 analysis_team이 필요.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: DSR 규제가 뭔가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 16.79초)
+INFO - 
+================================================================================
+INFO - [14] 단일 질문 테스트: S014
+INFO - 질문: 묵시적 갱신이 뭔가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 묵시적 갱신이 뭔가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3368 (prompt: 3182, completion: 186)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['묵시적', '갱신', '임대차'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {}, 'reasoning': '1단계(구조): 단순 정보 요청으로 묵시적 갱신의 정의를 묻고 있음. 2단계(유형): 정보 확인형 - 사실 확인만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 관련 정보 검색만 필요. 5단계(검증): 묵시적 갱신에 대한 정의를 제공하면 충분하므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2522 (prompt: 2361, completion: 161)
+INFO - LLM agent selection reasoning: 1단계: 묵시적 갱신에 대한 법률적 정보 검색과 함께, 이와 관련된 상황 분석 및 해결책 제시가 필요합니다. 2단계: 법률 상담이므로 중간 복잡도로 판단됩니다. 3단계: 법률 정보 검색 후, 그에 대한 분석이 필요하므로 순차적 의존성이 있습니다. 4단계: 단순 법률 조회만으로는 충분하지 않으며, 상황에 대한 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 묵시적 갱신이 뭔가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.29초)
+INFO - 
+================================================================================
+INFO - [15] 단일 질문 테스트: S015
+INFO - 질문: 용산구 아파트 실거래가 조회
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 용산구 아파트 실거래가 조회...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3381 (prompt: 3179, completion: 202)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['용산구', '아파트', '실거래가', '조회'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '용산구', 'property_type': '아파트', 'action_verbs': ['조회']}, 'reasoning': "1단계(구조): 단순 정보 요청으로 '실거래가 조회' 포함. 2단계(유형): 정보 확인형 - 실거래가에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만으로 충분. 5단계(검증): 단순 정보 요청이므로 MARKET_INQUIRY로 분류."}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2493 (prompt: 2360, completion: 133)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 용산구 아파트의 실거래가를 조회하고자 하므로 단순한 시세 조회가 필요합니다. 2단계: 이 요청은 단순 정보 조회로 분류됩니다. 3단계: 독립적인 작업으로, search_team만으로 충분합니다. 4단계: search_team이 아파트 실거래가 정보를 제공할 수 있으므로 적합합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 용산구 아파트 실거래가 조회...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.76초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [16] 단일 질문 테스트: S016
+INFO - 질문: 신혼부부 특례 대출 조건은?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 신혼부부 특례 대출 조건은?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3395 (prompt: 3180, completion: 215)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['신혼부부', '특례', '대출', '조건'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '신혼부부 특례 대출', 'action_verbs': ['알려줘', '확인']}, 'reasoning': "1단계(구조): 단순 정보 요청으로 '신혼부부 특례 대출 조건'에 대한 질문. 2단계(유형): 정보 확인형 - 대출 조건에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 조건에 대한 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류."}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2556 (prompt: 2360, completion: 196)
+INFO - LLM agent selection reasoning: 1단계: 신혼부부 특례 대출 조건에 대한 정보 조회와 함께, 대출 조건의 적절성을 평가해야 하므로 search_team과 analysis_team이 필요합니다. 2단계: 대출 조건에 대한 정보 검색과 그 조건의 적합성을 판단하는 중간 복잡도 작업입니다. 3단계: 대출 조건을 확인한 후, 그 조건이 신혼부부에게 적합한지 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순히 대출 조건을 조회하는 것만으로는 충분하지 않으며, 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 신혼부부 특례 대출 조건은?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.33초)
+INFO - 
+================================================================================
+INFO - [17] 단일 질문 테스트: S017
+INFO - 질문: 계약금 환불 가능한가요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 계약금 환불 가능한가요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3376 (prompt: 3177, completion: 199)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.85, 'keywords': ['계약금', '환불', '가능'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'contract_type': '계약금', 'action_verbs': ['환불', '가능']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 계약금 환불 가능성에 대한 질문. 2단계(유형): 정보 확인형 - 계약금 환불 가능 여부 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 계약금 환불에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2513 (prompt: 2352, completion: 161)
+INFO - LLM agent selection reasoning: 1단계: 계약금 환불 가능성에 대한 법률 정보 검색과 함께, 환불 가능성에 대한 분석이 필요합니다. 2단계: 중간 복잡도 (법률 정보 확인 + 판단). 3단계: 법률 검색 후 환불 가능성에 대한 분석이 필요하므로 순차적 의존성이 있습니다. 4단계: 단순 법률 검색만으로는 충분하지 않으며, 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 계약금 환불 가능한가요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.10초)
+INFO - 
+================================================================================
+INFO - [18] 단일 질문 테스트: S018
+INFO - 질문: 성동구 빌라 전세 시세 알려주세요
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 성동구 빌라 전세 시세 알려주세요...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3383 (prompt: 3181, completion: 202)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.95, 'keywords': ['성동구', '빌라', '전세', '시세'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '성동구', 'property_type': '빌라', 'contract_type': '전세'}, 'reasoning': "1단계(구조): 단순 정보 요청으로 '전세 시세'에 대한 질문. 2단계(유형): 정보 확인형 - 시세에 대한 사실 확인. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 시세 데이터 조회만 필요. 5단계(검증): 단순 시세 요청이므로 MARKET_INQUIRY로 분류."}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2471 (prompt: 2361, completion: 110)
+INFO - LLM agent selection reasoning: 1단계: 성동구 빌라 전세 시세 조회 필요. 2단계: 단순 정보 조회로 저복잡도. 3단계: 독립적 작업으로 search_team만으로 충분. 4단계: search_team이 부동산 시세 조회 전문이므로 적합.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.95
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 성동구 빌라 전세 시세 알려주세요...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 시세조회
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 6.26초)
+INFO - 
+================================================================================
+INFO - [19] 단일 질문 테스트: S019
+INFO - 질문: 생애최초 주택 구매 대출 한도는?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 생애최초 주택 구매 대출 한도는?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3389 (prompt: 3182, completion: 207)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['생애최초', '주택', '구매', '대출', '한도'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'first_time_homebuyer': True}, 'reasoning': '1단계(구조): 단순 정보 요청으로 대출 한도에 대한 질문. 2단계(유형): 정보 확인형 - 대출 한도에 대한 사실 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 한도에 대한 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2562 (prompt: 2367, completion: 195)
+INFO - LLM agent selection reasoning: 1단계: 대출 한도에 대한 정보 조회와 함께 대출 조건 분석이 필요합니다. 2단계: 대출 한도에 대한 정보는 단순 조회가 아닌, 조건에 따라 달라질 수 있으므로 중간 복잡도로 판단됩니다. 3단계: 대출 한도를 확인하기 위해서는 먼저 대출 상품 정보를 검색한 후, 그에 따른 분석이 필요하므로 순차적 의존성이 있습니다. 4단계: 대출 한도에 대한 정보는 search_team을 통해 수집하고, 그 정보를 바탕으로 analysis_team이 대출 가능 금액을 분석해야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 생애최초 주택 구매 대출 한도는?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 대출상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team', 'analysis_team']
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 8.78초)
+INFO - 
+================================================================================
+INFO - [20] 단일 질문 테스트: S020
+INFO - 질문: 전입신고 기간은 얼마나 되나요?
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전입신고 기간은 얼마나 되나요?...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3352 (prompt: 3179, completion: 173)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.8, 'keywords': ['전입신고', '기간'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'action_verbs': ['확인']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 전입신고 기간에 대한 질문. 2단계(유형): 정보 확인형 - 사실 확인만으로 충분. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 검색만 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2460 (prompt: 2351, completion: 109)
+INFO - LLM agent selection reasoning: 1단계: 전입신고 기간에 대한 정보 조회 필요. 2단계: 단순 정보 조회로 저복잡도. 3단계: 독립적 작업으로 search_team만으로 충분. 4단계: 법률 검색만으로 전입신고 기간에 대한 답변 가능.
+INFO - \u2705 Primary LLM selected agents: ['search_team']
+INFO -   의도: 법률상담
+INFO -   신뢰도: 0.80
+INFO -   추천 Agent: ['search_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전입신고 기간은 얼마나 되나요?...
+INFO - Query is simple, no decomposition needed
+INFO -   복합 질문: False
+INFO -   작업 수: 1
+INFO -   실행 모드: sequential
+INFO - 
+[Step 3] Execution Plan 생성...
+INFO - Creating execution plan for intent: 법률상담
+WARNING - AgentRegistry is empty, using default teams
+INFO - Selected agents/teams for execution: ['search_team']
+INFO -   전략: sequential
+INFO -   단계 수: 1
+INFO - 
+\u2713 테스트 성공 (소요시간: 6.06초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+
+================================================================================
+INFO - PART 2: 복합 질문 테스트 (20개)
+INFO - ================================================================================
+INFO - 
+================================================================================
+INFO - [21] 복합 질문 테스트: D001
+INFO - 질문: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3428 (prompt: 3186, completion: 242)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['강남구', '아파트', '시세', '대출', '가능 금액'], 'sub_intents': ['LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['강남구 아파트 시세 조회', '대출 가능 금액 계산'], 'entities': {'location': '강남구', 'property_type': '아파트'}, 'reasoning': '1단계(구조): 두 개의 요청(시세 확인 + 대출 가능 금액 계산) 포함. 2단계(유형): 정보 확인형(시세) + 대출 관련 정보 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 대출 가능 금액 계산을 위한 검색 필요. 5단계(검증): 두 가지 요청이 명확하므로 복합 질문으로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2544 (prompt: 2371, completion: 173)
+INFO - LLM agent selection reasoning: 1단계: 강남구 아파트 시세 조회와 대출 가능 금액 계산이 필요합니다. 2단계: 시세 조회는 단순 정보 검색이지만, 대출 가능 금액 계산은 분석이 필요하므로 중간 복잡도로 판단됩니다. 3단계: 시세 데이터가 대출 가능 금액 계산에 필요하므로 순차적으로 진행해야 합니다. 4단계: search_team으로 시세를 조회한 후, analysis_team으로 대출 가능 금액을 계산해야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2873 (prompt: 2695, completion: 178)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 강남구 아파트 시세 조회 (search_team)
+INFO -     - task_1: 대출 가능 금액 계산 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘...
+INFO - Analyzing intent for query: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3435 (prompt: 3186, completion: 249)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['강남구', '아파트', '시세', '대출', '가능 금액'], 'sub_intents': ['LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['강남구 아파트 시세 조회', '대출 가능 금액 계산'], 'entities': {'location': '강남구', 'property_type': '아파트', 'action_verbs': ['확인', '계산']}, 'reasoning': '1단계(구조): 두 개의 요청(시세 확인 + 대출 가능 금액 계산) 포함. 2단계(유형): 정보 확인형(시세) + 대출 관련 정보 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 대출 가능 금액 계산을 위한 검색 필요. 5단계(검증): 두 가지 요청이 있으므로 복합 질문으로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2538 (prompt: 2371, completion: 167)
+INFO - LLM agent selection reasoning: 1단계: 강남구 아파트 시세 조회와 대출 가능 금액 계산이 필요. 2단계: 시세 조회와 대출 계산은 중간 복잡도로, 두 가지 작업이 필요하다. 3단계: 시세 데이터가 대출 가능 금액 계산에 필요하므로 순차적 의존성이 있다. 4단계: search_team이 시세를 조회한 후, analysis_team이 대출 가능 금액을 계산하는 방식으로 진행해야 한다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 시세조회 (confidence: 0.85)
+INFO - Decomposing query: 강남구 아파트 시세 확인하고 대출 가능 금액 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2901 (prompt: 2723, completion: 178)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 시세조회 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 26.81초)
+INFO - 
+================================================================================
+INFO - [22] 복합 질문 테스트: D002
+INFO - 질문: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3455 (prompt: 3187, completion: 268)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['서초동', '전세', '시세', '법적', '주의사항'], 'sub_intents': ['MARKET_INQUIRY', 'LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['서초동 전세 시세 조회', '전세 계약의 법적 주의사항 확인'], 'entities': {'location': '서초동', 'contract_type': '전세', 'action_verbs': ['알려줘', '확인']}, 'reasoning': '1단계(구조): 두 개의 요청(전세 시세 + 법적 주의사항). 2단계(유형): 정보 확인형(시세) + 평가/판단형(법적 주의사항). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 법적 주의사항 확인이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2572 (prompt: 2372, completion: 200)
+INFO - LLM agent selection reasoning: 1단계: 서초동 전세 시세 조회와 법적 주의사항에 대한 종합적인 분석이 필요합니다. 2단계: 전세 시세 조회와 법적 주의사항은 단순 정보 조회가 아닌, 법률적 맥락과 시장 분석이 결합된 중간 복잡도의 작업입니다. 3단계: 법률 정보 검색 후, 해당 정보를 바탕으로 시장 분석이 필요하므로 순차적으로 진행해야 합니다. 4단계: 단순 법률 조회로는 '법적 주의사항'에 대한 충분한 답변이 불가능하므로, 분석 팀의 도움이 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2877 (prompt: 2697, completion: 180)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: parallel
+INFO -     - task_0: 서초동 전세 시세 조회 (search_team)
+INFO -     - task_1: 전세 계약 관련 법적 주의사항 조회 (search_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘...
+INFO - Analyzing intent for query: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3455 (prompt: 3187, completion: 268)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['서초동', '전세', '시세', '법적', '주의사항'], 'sub_intents': ['MARKET_INQUIRY', 'LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['서초동 전세 시세 조회', '전세 계약의 법적 주의사항 확인'], 'entities': {'location': '서초동', 'contract_type': '전세', 'action_verbs': ['알려줘', '확인']}, 'reasoning': '1단계(구조): 두 개의 요청(전세 시세 + 법적 주의사항). 2단계(유형): 정보 확인형(시세) + 평가/판단형(법적 주의사항). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 법적 주의사항 확인이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2563 (prompt: 2372, completion: 191)
+INFO - LLM agent selection reasoning: 1단계: 서초동 전세 시세 조회와 법적 주의사항에 대한 종합적인 분석이 필요. 2단계: 복잡한 질문으로, 단순 정보 조회가 아닌 법률적 측면과 시세 분석이 모두 포함됨. 3단계: 법률 정보 검색 후 시세 분석이 필요하므로 순차적 의존 관계가 형성됨. 4단계: 법적 주의사항을 확인하기 위해 search_team이 먼저 법률 정보를 수집하고, 그 후 analysis_team이 시세와 법적 리스크를 종합적으로 분석해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 서초동 전세 시세 알려주고 법적 주의사항도 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2906 (prompt: 2726, completion: 180)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'search_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: parallel | Agents: search_team, search_team | Estimated time: 20.0s | Parallel groups: [['search_team']]
+INFO -   전략: parallel
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 23.33초)
+INFO - 
+================================================================================
+INFO - [23] 복합 질문 테스트: D003
+INFO - 질문: 이 계약서 검토하고 위험 요소 분석해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 이 계약서 검토하고 위험 요소 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3424 (prompt: 3180, completion: 244)
+INFO - LLM Intent Analysis Result: {'intent': 'CONTRACT_REVIEW', 'confidence': 0.85, 'keywords': ['계약서', '검토', '위험', '분석'], 'sub_intents': ['RISK_ANALYSIS'], 'is_compound': True, 'decomposed_tasks': ['계약서 검토', '위험 요소 분석'], 'entities': {'contract_type': '계약서', 'action_verbs': ['검토', '분석']}, 'reasoning': '1단계(구조): 계약서 검토 요청과 위험 요소 분석 요청이 포함됨. 2단계(유형): 계약서 검토와 위험 분석이 모두 포함되어 있어 평가/판단형과 해결책 요청형의 복합 요청. 3단계(복잡도): 고 - 두 가지 작업이 동시에 요구됨. 4단계(처리): 계약서 검토와 위험 요소 분석이 필요함. 5단계(검증): 단순 계약서 검토만으로는 부족하므로 RISK_ANALYSIS도 포함되어야 함.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2494 (prompt: 2361, completion: 133)
+INFO - LLM agent selection reasoning: 사용자가 계약서 검토와 위험 요소 분석을 요청하였으므로, 계약서 검토를 전문으로 하는 document_team과 리스크 평가를 전문으로 하는 analysis_team이 필요합니다. document_team이 계약서를 검토한 후, 그 결과를 바탕으로 analysis_team이 위험 요소를 분석하는 순차적 처리가 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['document_team', 'analysis_team']
+INFO -   의도: 계약서검토
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['document_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 이 계약서 검토하고 위험 요소 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2853 (prompt: 2690, completion: 163)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 계약서 내용 전체 검토 (search_team)
+INFO -     - task_1: 위험 요소 및 문제점 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 이 계약서 검토하고 위험 요소 분석해줘...
+INFO - Analyzing intent for query: 이 계약서 검토하고 위험 요소 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3402 (prompt: 3180, completion: 222)
+INFO - LLM Intent Analysis Result: {'intent': 'CONTRACT_REVIEW', 'confidence': 0.85, 'keywords': ['계약서', '검토', '위험', '분석'], 'sub_intents': ['RISK_ANALYSIS'], 'is_compound': True, 'decomposed_tasks': ['계약서 검토', '위험 요소 분석'], 'entities': {'contract_type': '계약서', 'action_verbs': ['검토', '분석']}, 'reasoning': '1단계(구조): 계약서 검토 요청 + 위험 요소 분석 포함. 2단계(유형): 검토 요청형 + 위험 분석 요청형. 3단계(복잡도): 중 - 계약서 검토와 위험 요소 분석이 필요. 4단계(처리): 계약서 검토 + 위험 요소 분석 필요. 5단계(검증): 두 가지 요청이 포함되어 있어 CONTRACT_REVIEW와 RISK_ANALYSIS로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2490 (prompt: 2361, completion: 129)
+INFO - LLM agent selection reasoning: 사용자가 계약서 검토와 위험 요소 분석을 요청했습니다. 계약서 검토는 document_team의 전문 분야이며, 위험 요소 분석은 analysis_team이 담당합니다. 따라서 두 팀이 필요합니다. document_team이 계약서를 검토한 후, analysis_team이 리스크를 평가하는 순차적 처리가 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['document_team', 'analysis_team']
+INFO - Intent analyzed: 계약서검토 (confidence: 0.85)
+INFO - Decomposing query: 이 계약서 검토하고 위험 요소 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2873 (prompt: 2711, completion: 162)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 계약서검토 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 55.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 18.89초)
+INFO - 
+================================================================================
+INFO - [24] 복합 질문 테스트: D004
+INFO - 질문: 송파구 시세 조회하고 투자 가치 평가해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 송파구 시세 조회하고 투자 가치 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3420 (prompt: 3181, completion: 239)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['송파구', '시세', '투자', '가치', '평가'], 'sub_intents': ['MARKET_INQUIRY', 'EVALUATION'], 'is_compound': True, 'decomposed_tasks': ['송파구 시세 조회', '송파구 투자 가치 평가'], 'entities': {'location': '송파구', 'action_verbs': ['조회', '평가']}, 'reasoning': '1단계(구조): 시세 조회와 투자 가치 평가 요청 포함. 2단계(유형): 두 가지 요청이 있어 종합적인 분석 필요. 3단계(복잡도): 중 - 시세와 투자 가치를 동시에 고려해야 함. 4단계(처리): 시세 데이터 조회와 투자 가치 분석 필요. 5단계(검증): 단순 시세 조회로는 부족하므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2518 (prompt: 2366, completion: 152)
+INFO - LLM agent selection reasoning: 1단계: 송파구 시세 조회와 투자 가치 평가가 필요합니다. 2단계: 이는 중간 복잡도로, 시세 조회 후 분석이 필요합니다. 3단계: 시세 데이터가 투자 가치 평가에 의존하므로 순차적으로 진행해야 합니다. 4단계: 단순 시세 조회만으로는 투자 가치 평가를 할 수 없으므로, 두 팀이 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 송파구 시세 조회하고 투자 가치 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2869 (prompt: 2691, completion: 178)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 송파구 아파트 시세 조회 (search_team)
+INFO -     - task_1: 송파구 시세에 대한 투자 가치 평가 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 송파구 시세 조회하고 투자 가치 평가해줘...
+INFO - Analyzing intent for query: 송파구 시세 조회하고 투자 가치 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3425 (prompt: 3181, completion: 244)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['송파구', '시세', '투자', '가치', '평가'], 'sub_intents': ['MARKET_INQUIRY', 'EVALUATION'], 'is_compound': True, 'decomposed_tasks': ['송파구 시세 조회', '송파구 투자 가치 평가'], 'entities': {'location': '송파구', 'action_verbs': ['조회', '평가']}, 'reasoning': '1단계(구조): 시세 조회와 투자 가치 평가 요청이 포함. 2단계(유형): 두 가지 요청이므로 종합적인 분석 필요. 3단계(복잡도): 중 - 시세와 투자 가치를 동시에 고려해야 함. 4단계(처리): 시세 데이터 조회와 투자 가치 분석 필요. 5단계(검증): 단순 시세 조회가 아닌 투자 가치 평가도 요구하므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2522 (prompt: 2366, completion: 156)
+INFO - LLM agent selection reasoning: 1단계: 송파구 시세 조회와 투자 가치 평가가 필요하므로, 두 가지 작업이 포함됨. 2단계: 시세 조회 후 투자 가치 분석이 필요하므로 중간 복잡도. 3단계: 시세 데이터가 투자 분석에 필요하므로 순차적 의존성 존재. 4단계: search_team으로 시세를 조회한 후, analysis_team으로 투자 가치를 평가해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 송파구 시세 조회하고 투자 가치 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2886 (prompt: 2710, completion: 176)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 22.28초)
+INFO - 
+================================================================================
+INFO - [25] 복합 질문 테스트: D005
+INFO - 질문: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3444 (prompt: 3184, completion: 260)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['전세금', '인상', '법조항'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['전세금 인상 가능 여부 확인', '관련 법조항 검색'], 'entities': {'price': None, 'contract_type': '전세', 'action_verbs': ['확인', '찾다']}, 'reasoning': '1단계(구조): 전세금 인상 가능 여부 확인 요청과 관련 법조항 검색 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 법적 근거와 가능성 확인 필요. 3단계(복잡도): 중 - 전세금 인상 가능성과 법적 조항을 동시에 고려해야 함. 4단계(처리): 법률 검색과 인상 가능성 확인이 필요. 5단계(검증): LEGAL_CONSULT만으로는 불충분, 종합적 분석 필요 → COMPREHENSIVE 선택.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2511 (prompt: 2362, completion: 149)
+INFO - LLM agent selection reasoning: 1단계: 전세금 인상 가능 여부 확인과 관련 법조항 검색이 필요하므로 search_team이 필요합니다. 2단계: 전세금 인상에 대한 법적 해석과 그에 따른 리스크 평가가 필요하므로 analysis_team도 포함해야 합니다. 3단계: 법률 검색 후 인상 가능성에 대한 분석이 필요하므로 순차적으로 진행해야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2867 (prompt: 2694, completion: 173)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 전세금 인상 가능 여부 확인 (search_team)
+INFO -     - task_1: 전세금 인상 관련 법조항 조회 (search_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘...
+INFO - Analyzing intent for query: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3388 (prompt: 3184, completion: 204)
+INFO - LLM Intent Analysis Result: {'intent': 'LEGAL_CONSULT', 'confidence': 0.9, 'keywords': ['전세금', '인상', '법조항'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'action_verbs': ['확인', '찾다']}, 'reasoning': '1단계(구조): 전세금 인상 가능 여부 확인 요청 + 관련 법조항 찾기 포함. 2단계(유형): 정보 확인형 - 전세금 인상 가능성에 대한 법률 정보 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 법률 데이터베이스 검색 필요. 5단계(검증): 전세금 인상 가능 여부에 대한 법률 질문이므로 LEGAL_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2551 (prompt: 2362, completion: 189)
+INFO - LLM agent selection reasoning: 1단계: 전세금 인상 가능 여부와 관련 법조항 확인이 필요하며, 이는 법률 검색과 함께 상황 분석이 요구됨. 2단계: 복잡도는 중간으로, 법률 정보 조회 후 인상 가능성에 대한 분석이 필요함. 3단계: 법률 정보를 먼저 확인한 후, 그에 대한 분석이 필요하므로 순차적 의존성이 존재함. 4단계: 단순 법률 조회만으로는 충분하지 않으며, 인상 가능성에 대한 판단이 필요하므로 analysis_team이 포함되어야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 법률상담 (confidence: 0.90)
+INFO - Decomposing query: 전세금 인상 가능 여부 확인하고 관련 법조항 찾아줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2879 (prompt: 2706, completion: 173)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'search_team' depends on missing 'task_0'", "Agent 'search_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 법률상담 (confidence: 0.90) | Strategy: sequential | Agents: search_team, search_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 22.13초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [26] 복합 질문 테스트: D006
+INFO - 질문: 대출 한도 조회하고 금리 비교해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 대출 한도 조회하고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3378 (prompt: 3180, completion: 198)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.85, 'keywords': ['대출', '한도', '금리', '비교'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['조회', '비교']}, 'reasoning': '1단계(구조): 대출 한도 조회와 금리 비교 요청. 2단계(유형): 대출 관련 정보 확인형. 3단계(복잡도): 중 - 두 가지 독립적 조회. 4단계(처리): 대출 한도 조회와 금리 정보 검색 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2556 (prompt: 2360, completion: 196)
+INFO - LLM agent selection reasoning: 1단계: 대출 한도 조회와 금리 비교를 요청하였으므로, 대출 상품 정보 검색이 필요하고, 이를 통해 한도와 금리를 비교 분석해야 합니다. 2단계: 중간 복잡도에 해당하며, 검색과 분석이 모두 필요합니다. 3단계: 대출 상품 정보를 검색한 후, 그 데이터를 기반으로 금리 비교 및 한도 분석을 진행해야 하므로 순차적 의존성이 존재합니다. 4단계: search_team이 대출 상품 정보를 수집한 후, analysis_team이 이를 분석하여 금리 비교와 한도 정보를 제공할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 대출 한도 조회하고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2965 (prompt: 2690, completion: 275)
+INFO - Successfully decomposed into 3 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 3
+INFO -   실행 모드: conditional
+INFO -     - task_0: 대출 한도 조회 (search_team)
+INFO -     - task_1: 금리 정보 조회 (search_team)
+INFO -     - task_2: 대출 한도와 금리 비교 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 대출 한도 조회하고 금리 비교해줘...
+INFO - Analyzing intent for query: 대출 한도 조회하고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3381 (prompt: 3180, completion: 201)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['대출', '한도', '금리', '비교'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['조회', '비교']}, 'reasoning': '1단계(구조): 대출 한도 조회와 금리 비교 요청. 2단계(유형): 대출 관련 정보 요청으로 LOAN_CONSULT. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 한도와 금리 정보 검색 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2570 (prompt: 2360, completion: 210)
+INFO - LLM agent selection reasoning: 1단계: 대출 한도 조회와 금리 비교가 필요하므로 대출 상품 정보 검색이 가능한 search_team과 대출 조건 분석 및 비교가 가능한 analysis_team이 필요합니다. 2단계: 중간 복잡도에 해당하며, 대출 한도와 금리를 비교하는 작업이 포함되어 있습니다. 3단계: search_team이 대출 상품 정보를 수집한 후, analysis_team이 이를 바탕으로 금리 비교 및 한도 분석을 수행해야 하므로 순차적 의존성이 있습니다. 4단계: 단순히 search_team만으로는 금리 비교와 한도 분석을 수행할 수 없으므로 analysis_team이 반드시 포함되어야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 대출상담 (confidence: 0.90)
+INFO - Decomposing query: 대출 한도 조회하고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2882 (prompt: 2713, completion: 169)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'search_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 대출상담 (confidence: 0.90) | Strategy: sequential | Agents: search_team, search_team | Estimated time: 20.0s | Parallel groups: [['task_0', 'task_1']]
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 21.30초)
+INFO - 
+================================================================================
+INFO - [27] 복합 질문 테스트: D007
+INFO - 질문: 마포구 아파트 시세 알려주고 계약서 작성해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 마포구 아파트 시세 알려주고 계약서 작성해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3451 (prompt: 3184, completion: 267)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['마포구', '아파트', '시세', '계약서', '작성'], 'sub_intents': ['MARKET_INQUIRY', 'CONTRACT_CREATION'], 'is_compound': True, 'decomposed_tasks': ['마포구 아파트 시세 조회', '임대차계약서 작성'], 'entities': {'location': '마포구', 'contract_type': '아파트', 'action_verbs': ['알려주고', '작성해줘']}, 'reasoning': '1단계(구조): 두 개의 요청(시세 조회 + 계약서 작성) 포함. 2단계(유형): 정보 확인형(시세) + 계약서 작성 요청(해결책 요청형). 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 시세 조회와 계약서 작성을 위한 별도의 처리 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2532 (prompt: 2369, completion: 163)
+INFO - LLM agent selection reasoning: 1단계: 마포구 아파트 시세 조회와 계약서 작성이 필요. 2단계: 시세 조회는 search_team이 담당하고, 계약서 작성은 document_team이 담당해야 함. 3단계: 시세 데이터를 먼저 수집한 후, 이를 바탕으로 계약서를 작성해야 하므로 순차적 의존성이 있음. 4단계: search_team이 시세 정보를 제공한 후, document_team이 계약서를 작성하는 구조로 진행.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'document_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'document_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 마포구 아파트 시세 알려주고 계약서 작성해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2869 (prompt: 2694, completion: 175)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 마포구 아파트 시세 조회 (search_team)
+INFO -     - task_1: 계약서 작성 (document_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 마포구 아파트 시세 알려주고 계약서 작성해줘...
+INFO - Analyzing intent for query: 마포구 아파트 시세 알려주고 계약서 작성해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3439 (prompt: 3184, completion: 255)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['마포구', '아파트', '시세', '계약서', '작성'], 'sub_intents': ['MARKET_INQUIRY', 'CONTRACT_CREATION'], 'is_compound': True, 'decomposed_tasks': ['마포구 아파트 시세 조회', '임대차계약서 작성'], 'entities': {'location': '마포구', 'contract_type': '임대차계약서', 'action_verbs': ['조회', '작성']}, 'reasoning': '1단계(구조): 두 개의 요청(시세 조회 + 계약서 작성) 포함. 2단계(유형): 정보 확인형(시세) + 계약서 작성 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 조회와 계약서 작성 모두 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2522 (prompt: 2369, completion: 153)
+INFO - LLM agent selection reasoning: 1단계: 마포구 아파트 시세 조회와 계약서 작성이 필요. 2단계: 시세 조회는 search_team이 담당하고, 계약서 작성은 document_team이 담당해야 함. 3단계: 시세 조회 후 계약서 작성이 필요하므로 순차적으로 진행해야 함. 4단계: search_team이 시세 정보를 제공한 후, document_team이 계약서를 작성할 수 있음.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'document_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 마포구 아파트 시세 알려주고 계약서 작성해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2899 (prompt: 2724, completion: 175)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'document_team' depends on missing 'task_0'", "Agent 'document_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, document_team | Estimated time: 50.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 24.59초)
+INFO - 
+================================================================================
+INFO - [28] 복합 질문 테스트: D008
+INFO - 질문: 전세 시세 확인하고 리스크 평가해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전세 시세 확인하고 리스크 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3433 (prompt: 3180, completion: 253)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['전세', '시세', '리스크', '평가'], 'sub_intents': ['MARKET_INQUIRY', 'RISK_ANALYSIS'], 'is_compound': True, 'decomposed_tasks': ['전세 시세 확인', '리스크 평가'], 'entities': {'location': None, 'price': None, 'contract_type': '전세', 'date': None, 'area': None, 'action_verbs': ['확인', '평가']}, 'reasoning': '1단계(구조): 전세 시세 확인 요청 + 리스크 평가 요청 포함. 2단계(유형): 두 가지 요청이 있어 정보 확인형과 평가형이 결합됨. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 시세 조회와 리스크 분석이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2532 (prompt: 2360, completion: 172)
+INFO - LLM agent selection reasoning: 1단계: 전세 시세 확인과 리스크 평가가 필요하므로, 시세 조회를 위한 search_team과 리스크 평가를 위한 analysis_team이 필요합니다. 2단계: 중간 복잡도로, 시세 조회 후 리스크 평가가 이루어져야 합니다. 3단계: 시세 데이터가 리스크 평가에 필요하므로 순차적 의존성이 있습니다. 4단계: search_team으로 시세를 확인한 후, analysis_team으로 리스크를 평가할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전세 시세 확인하고 리스크 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2867 (prompt: 2690, completion: 177)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 전세 시세 조회 (search_team)
+INFO -     - task_1: 전세 시세에 대한 리스크 평가 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 전세 시세 확인하고 리스크 평가해줘...
+INFO - Analyzing intent for query: 전세 시세 확인하고 리스크 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3431 (prompt: 3180, completion: 251)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['전세', '시세', '리스크', '평가'], 'sub_intents': ['MARKET_INQUIRY', 'RISK_ANALYSIS'], 'is_compound': True, 'decomposed_tasks': ['전세 시세 확인', '리스크 평가'], 'entities': {'location': None, 'price': None, 'contract_type': '전세', 'date': None, 'area': None, 'action_verbs': ['확인', '평가']}, 'reasoning': '1단계(구조): 전세 시세 확인 요청 + 리스크 평가 요청 포함. 2단계(유형): 두 가지 요청이 포함되어 있어 해결책 요청형으로 판단. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 시세 조회와 리스크 분석이 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2545 (prompt: 2360, completion: 185)
+INFO - LLM agent selection reasoning: 1단계: 전세 시세 확인과 리스크 평가가 필요하므로, 시세 조회(search_team)와 리스크 분석(analysis_team)이 모두 필요합니다. 2단계: 중간 복잡도로, 시세 데이터 수집 후 리스크 평가가 이루어져야 합니다. 3단계: 시세 조회 후 그 데이터를 바탕으로 리스크 평가를 진행해야 하므로 순차적 의존성이 존재합니다. 4단계: 단순히 시세 조회만으로는 리스크 평가를 할 수 없으므로, 두 팀이 모두 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 전세 시세 확인하고 리스크 평가해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2907 (prompt: 2730, completion: 177)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 29.37초)
+INFO - 
+================================================================================
+INFO - [29] 복합 질문 테스트: D009
+INFO - 질문: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3439 (prompt: 3184, completion: 255)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['임대차보호법', '적용', '가능 여부'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['임대차보호법 내용 검색', '적용 가능 여부 판단'], 'entities': {'law': '임대차보호법', 'action_verbs': ['찾고', '판단']}, 'reasoning': '1단계(구조): 임대차보호법 내용 요청 + 적용 가능 여부 판단 포함. 2단계(유형): 해결책 요청형 - 법률 정보 확인과 적용 가능성 분석 필요. 3단계(복잡도): 중 - 법률 내용 확인과 그에 대한 적용 여부 판단. 4단계(처리): 법률 내용 검색 + 적용 가능성 분석 필요. 5단계(검증): 단순 법률 정보 제공으로 끝나지 않고, 적용 가능성에 대한 판단이 필요하므로 COMPREHENSIVE 선택.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2549 (prompt: 2364, completion: 185)
+INFO - LLM agent selection reasoning: 1단계: 임대차보호법에 대한 정보 검색과 적용 가능 여부 판단이 필요. 2단계: 법률 정보 검색 후, 해당 법률이 사용자의 상황에 어떻게 적용될 수 있는지 분석해야 하므로 중간 복잡도로 판단. 3단계: 법률 정보를 검색한 후, 그 결과를 바탕으로 적용 가능성을 평가해야 하므로 순차적 의존성이 존재. 4단계: 단순 법률 조회만으로는 사용자의 상황에 대한 해결책을 제시할 수 없으므로, 분석 팀이 필요.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2886 (prompt: 2694, completion: 192)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 임대차보호법 내용 조회 (search_team)
+INFO -     - task_1: 임대차보호법 적용 가능 여부 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘...
+INFO - Analyzing intent for query: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3426 (prompt: 3184, completion: 242)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['임대차보호법', '적용', '가능 여부'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['임대차보호법 내용 검색', '적용 가능 여부 판단'], 'entities': {'law': '임대차보호법', 'action_verbs': ['찾고', '판단']}, 'reasoning': '1단계(구조): 임대차보호법 내용 요청 + 적용 가능 여부 판단 포함. 2단계(유형): 해결책 요청형 - 법률 정보 확인과 적용 가능성 분석 필요. 3단계(복잡도): 중 - 법률 내용과 적용 여부를 동시에 고려해야 함. 4단계(처리): 법률 내용 검색 + 적용 가능성 분석 필요. 5단계(검증): 단순 법률 확인이 아닌 적용 가능성도 요구하므로 COMPREHENSIVE 선택.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2533 (prompt: 2364, completion: 169)
+INFO - LLM agent selection reasoning: 1단계: 임대차보호법에 대한 정보 검색과 적용 가능 여부 판단이 필요. 2단계: 법률 정보 검색 후, 해당 법률이 사용자의 상황에 어떻게 적용될 수 있는지 분석해야 하므로 중간 복잡도. 3단계: 법률 정보 검색 후 분석이 필요하므로 순차적 의존 관계. 4단계: 단순 법률 조회로는 '적용 가능 여부'를 판단할 수 없으므로 분석 팀이 필요.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 임대차보호법 내용 찾고 적용 가능 여부 판단해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2903 (prompt: 2717, completion: 186)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 26.63초)
+INFO - 
+================================================================================
+INFO - [30] 복합 질문 테스트: D010
+INFO - 질문: 용산구 매매 시세 조회하고 전세 전환 계산해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 용산구 매매 시세 조회하고 전세 전환 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3433 (prompt: 3185, completion: 248)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['용산구', '매매 시세', '전세 전환', '계산'], 'sub_intents': ['MARKET_INQUIRY', 'LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['용산구 매매 시세 조회', '전세 전환 계산'], 'entities': {'location': '용산구', 'action_verbs': ['조회', '계산']}, 'reasoning': '1단계(구조): 두 개의 요청(매매 시세 조회 + 전세 전환 계산) 포함. 2단계(유형): 정보 확인형(시세) + 해결책 요청형(전세 전환 계산). 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 검색 + 계산 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2557 (prompt: 2370, completion: 187)
+INFO - LLM agent selection reasoning: 1단계: 용산구의 매매 시세 조회와 전세 전환 계산이 필요하므로, 시세 정보 검색과 데이터 분석이 모두 요구됨. 2단계: 중간 복잡도로, 시세 조회 후 전세 전환 계산이 필요함. 3단계: 시세 데이터를 먼저 수집한 후, 이를 바탕으로 전세 전환 계산을 수행해야 하므로 순차적 의존성이 있음. 4단계: 단순히 시세 조회만으로는 전세 전환 계산이 불가능하므로, 분석 팀이 필요함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 용산구 매매 시세 조회하고 전세 전환 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2874 (prompt: 2695, completion: 179)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 용산구 매매 시세 조회 (search_team)
+INFO -     - task_1: 전세 전환 계산 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 용산구 매매 시세 조회하고 전세 전환 계산해줘...
+INFO - Analyzing intent for query: 용산구 매매 시세 조회하고 전세 전환 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3431 (prompt: 3185, completion: 246)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['용산구', '매매 시세', '전세 전환', '계산'], 'sub_intents': ['MARKET_INQUIRY', 'LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['용산구 매매 시세 조회', '전세 전환 계산'], 'entities': {'location': '용산구', 'action_verbs': ['조회', '계산']}, 'reasoning': '1단계(구조): 두 개의 요청(매매 시세 조회 + 전세 전환 계산) 포함. 2단계(유형): 정보 확인형 + 해결책 요청형. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 매매 시세 검색 + 전세 전환 계산 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2546 (prompt: 2370, completion: 176)
+INFO - LLM agent selection reasoning: 1단계: 용산구의 매매 시세 조회와 전세 전환 계산이 필요하므로, 시세 정보 검색과 데이터 분석이 모두 요구됨. 2단계: 중간 복잡도 (정보 조회 + 계산). 3단계: 시세 데이터를 먼저 수집한 후, 이를 바탕으로 전세 전환 계산을 수행해야 하므로 순차적 의존성이 있음. 4단계: search_team으로 시세를 조회한 후, analysis_team으로 전세 전환 계산을 진행해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 용산구 매매 시세 조회하고 전세 전환 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2893 (prompt: 2714, completion: 179)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 28.00초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [31] 복합 질문 테스트: D011
+INFO - 질문: 주택담보대출 조건 확인하고 한도 계산해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 주택담보대출 조건 확인하고 한도 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3397 (prompt: 3183, completion: 214)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['주택담보대출', '조건', '한도', '계산'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['확인', '계산']}, 'reasoning': '1단계(구조): 주택담보대출 조건 확인과 한도 계산 요청. 2단계(유형): 대출 조건과 한도에 대한 정보 요청으로 LOAN_CONSULT로 분류. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 조건 검색과 한도 계산 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 충분.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2531 (prompt: 2366, completion: 165)
+INFO - LLM agent selection reasoning: 1단계: 주택담보대출 조건 확인과 한도 계산이 필요하므로, 대출 상품 정보 검색과 데이터 분석이 필요합니다. 2단계: 중간 복잡도 (검색 + 분석). 3단계: 대출 조건을 확인한 후 한도를 계산해야 하므로 순차적 의존성이 있습니다. 4단계: search_team이 대출 조건을 조회한 후, analysis_team이 그 데이터를 바탕으로 한도를 계산할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 주택담보대출 조건 확인하고 한도 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2873 (prompt: 2693, completion: 180)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 주택담보대출 조건 조회 (search_team)
+INFO -     - task_1: 대출 한도 계산 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 주택담보대출 조건 확인하고 한도 계산해줘...
+INFO - Analyzing intent for query: 주택담보대출 조건 확인하고 한도 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3397 (prompt: 3183, completion: 214)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['주택담보대출', '조건', '한도', '계산'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['확인', '계산']}, 'reasoning': '1단계(구조): 주택담보대출 조건 확인 + 한도 계산 요청. 2단계(유형): 대출 조건과 한도에 대한 정보 요청으로 LOAN_CONSULT로 분류. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 조건 검색 및 한도 계산 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 충분.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2544 (prompt: 2366, completion: 178)
+INFO - LLM agent selection reasoning: 1단계: 주택담보대출 조건 확인과 한도 계산이 필요하므로 대출 정보 검색과 데이터 분석이 필요합니다. 2단계: 중간 복잡도로, 대출 조건을 확인한 후 한도를 계산해야 합니다. 3단계: 대출 조건을 검색한 후 그 데이터를 바탕으로 한도 계산을 진행해야 하므로 순차적 의존성이 있습니다. 4단계: 단순 검색만으로는 한도 계산이 불가능하므로, search_team과 analysis_team이 모두 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 대출상담 (confidence: 0.90)
+INFO - Decomposing query: 주택담보대출 조건 확인하고 한도 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2901 (prompt: 2717, completion: 184)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 대출상담 (confidence: 0.90) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 24.32초)
+INFO - 
+================================================================================
+INFO - [32] 복합 질문 테스트: D012
+INFO - 질문: 계약 갱신 청구권 확인하고 행사 방법 알려줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 계약 갱신 청구권 확인하고 행사 방법 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3447 (prompt: 3182, completion: 265)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['계약', '갱신', '청구권', '행사', '방법'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['계약 갱신 청구권 확인', '갱신 청구권 행사 방법 안내'], 'entities': {'contract_type': '임대차계약', 'action_verbs': ['확인', '행사', '알려줘']}, 'reasoning': '1단계(구조): 계약 갱신 청구권 확인 + 행사 방법 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 방법 필요. 3단계(복잡도): 중 - 법률적 요소와 구체적 방법이 결합된 요청. 4단계(처리): 법률 정보 검색 + 행사 방법 안내 필요. 5단계(검증): LEGAL_CONSULT만으로는 부족, 종합적 분석 필요 → COMPREHENSIVE 선택.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2534 (prompt: 2367, completion: 167)
+INFO - LLM agent selection reasoning: 1단계: 계약 갱신 청구권 확인과 행사 방법에 대한 정보가 필요. 2단계: 법률 정보 검색이 필요하므로 search_team이 필요하고, 행사 방법에 대한 분석이 필요하므로 analysis_team도 필요. 3단계: 법률 확인 후 행사 방법을 분석해야 하므로 순차적 의존성이 존재. 4단계: 단순 법률 조회로는 충분하지 않으며, 분석이 필수적이므로 두 팀 모두 필요.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 계약 갱신 청구권 확인하고 행사 방법 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2889 (prompt: 2692, completion: 197)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 계약 갱신 청구권 관련 법률 정보 조회 (search_team)
+INFO -     - task_1: 계약 갱신 청구권 행사 방법 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 계약 갱신 청구권 확인하고 행사 방법 알려줘...
+INFO - Analyzing intent for query: 계약 갱신 청구권 확인하고 행사 방법 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3431 (prompt: 3182, completion: 249)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['계약', '갱신', '청구권', '행사', '방법'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['계약 갱신 청구권 확인', '행사 방법 안내'], 'entities': {'contract_type': '임대차계약', 'action_verbs': ['확인', '행사']}, 'reasoning': '1단계(구조): 계약 갱신 청구권 확인 + 행사 방법 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 방법 필요. 3단계(복잡도): 중 - 법률적 확인과 구체적 방법 안내 필요. 4단계(처리): 법률 정보 검색 + 행사 방법 안내 필요. 5단계(검증): LEGAL_CONSULT만으로는 불충분, 종합적 분석 필요 → COMPREHENSIVE 선택'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2549 (prompt: 2367, completion: 182)
+INFO - LLM agent selection reasoning: 1단계: 계약 갱신 청구권 확인과 행사 방법에 대한 정보가 필요하므로 법률 검색이 필요하고, 이를 바탕으로 상황 분석과 해결책 제시가 필요하다. 2단계: 복잡한 질문으로, 법률 정보 확인 후 그에 대한 분석이 필요하다. 3단계: 법률 정보 검색 후 분석이 필요하므로 순차적 의존성이 있다. 4단계: 단순 법률 조회로는 해결책을 제시할 수 없으므로 분석 팀이 반드시 포함되어야 한다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 계약 갱신 청구권 확인하고 행사 방법 알려줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2906 (prompt: 2715, completion: 191)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 26.46초)
+INFO - 
+================================================================================
+INFO - [33] 복합 질문 테스트: D013
+INFO - 질문: 강남 전세 시세 확인하고 월세 전환 비교해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 강남 전세 시세 확인하고 월세 전환 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3450 (prompt: 3184, completion: 266)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['강남', '전세', '시세', '월세', '전환', '비교'], 'sub_intents': ['MARKET_INQUIRY'], 'is_compound': True, 'decomposed_tasks': ['강남 전세 시세 확인', '강남 월세 시세 확인', '전세와 월세 비교'], 'entities': {'location': '강남', 'contract_type': '전세', 'action_verbs': ['확인', '비교']}, 'reasoning': '1단계(구조): 두 개의 요청(전세 시세 확인 + 월세 전환 비교) 포함. 2단계(유형): 정보 확인형 - 시세 조회와 비교 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 데이터 조회 및 비교 분석 필요. 5단계(검증): 두 가지 요청이 명확하므로 MARKET_INQUIRY로 분류하고, 복합 질문으로 처리.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2568 (prompt: 2371, completion: 197)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 강남의 전세 시세를 확인하고 월세 전환을 비교하고자 하므로, 시세 조회와 비교 분석이 필요합니다. 2단계: 이는 중간 복잡도로, 단순 정보 조회가 아닌 시세 데이터와 그에 따른 분석이 요구됩니다. 3단계: 시세 데이터가 필요하므로 search_team이 먼저 실행되고, 그 결과를 바탕으로 analysis_team이 월세 전환 비교를 수행해야 합니다. 4단계: search_team이 시세를 조회한 후, analysis_team이 그 데이터를 기반으로 월세 전환을 비교할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 강남 전세 시세 확인하고 월세 전환 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2886 (prompt: 2693, completion: 193)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 강남 전세 시세 조회 (search_team)
+INFO -     - task_1: 강남 전세 시세를 기반으로 월세 전환 비교 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 강남 전세 시세 확인하고 월세 전환 비교해줘...
+INFO - Analyzing intent for query: 강남 전세 시세 확인하고 월세 전환 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3443 (prompt: 3184, completion: 259)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['강남', '전세', '시세', '월세', '비교'], 'sub_intents': ['MARKET_INQUIRY', 'MARKET_INQUIRY'], 'is_compound': True, 'decomposed_tasks': ['강남 전세 시세 확인', '강남 월세 시세 확인', '전세와 월세 비교'], 'entities': {'location': '강남', 'contract_type': '전세', 'action_verbs': ['확인', '비교']}, 'reasoning': '1단계(구조): 강남 전세 시세 확인 요청 + 월세 전환 비교 요청 포함. 2단계(유형): 두 가지 정보 요청이므로 각각 MARKET_INQUIRY로 분류. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 각각의 시세 조회 후 비교 분석 필요. 5단계(검증): 두 가지 요청이 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2556 (prompt: 2368, completion: 188)
+INFO - LLM agent selection reasoning: 1단계: 강남 전세 시세 확인과 월세 전환 비교가 필요하므로, 시세 조회(search_team)와 비교 분석(analysis_team)이 필요합니다. 2단계: 중간 복잡도로, 시세 데이터를 수집한 후 이를 바탕으로 월세 전환에 대한 분석이 필요합니다. 3단계: 시세 조회 후 분석이 이루어져야 하므로 순차적 의존성이 있습니다. 4단계: 단순 시세 조회만으로는 월세 전환 비교를 할 수 없으므로, 두 팀이 모두 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 강남 전세 시세 확인하고 월세 전환 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 3003 (prompt: 2721, completion: 282)
+INFO - Successfully decomposed into 3 tasks
+INFO - Query decomposed into 3 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' depends on missing 'task_1'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 3
+INFO - 
+\u2713 테스트 성공 (소요시간: 30.19초)
+INFO - 
+================================================================================
+INFO - [34] 복합 질문 테스트: D014
+INFO - 질문: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3437 (prompt: 3186, completion: 251)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['보증금', '반환', '법적', '보호', '절차'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['보증금 반환 절차 설명', '법적 보호 방법 설명'], 'entities': {'action_verbs': ['알려주고', '설명해줘']}, 'reasoning': '1단계(구조): 보증금 반환 절차와 법적 보호 방법 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 절차와 방법 필요. 3단계(복잡도): 중 - 두 가지 독립적 요청이지만 관련성이 높음. 4단계(처리): 보증금 반환 절차와 법적 보호 방법에 대한 정보 검색 및 분석 필요. 5단계(검증): 두 가지 요청이 서로 연결되어 있으므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2560 (prompt: 2371, completion: 189)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 보증금 반환 절차와 법적 보호 방법을 요청하고 있습니다. 이는 단순 정보 조회가 아니라 법률적 조언과 상황 분석이 필요한 복합적인 질문입니다. 2단계: 복잡도는 높으며, 법률 정보 검색 후 그에 대한 분석이 필요합니다. 3단계: 법률 정보를 검색한 후, 그 정보를 바탕으로 법적 보호 방법에 대한 분석이 필요하므로 순차적으로 진행해야 합니다. 4단계: 단순 법률 조회로는 충분하지 않으며, 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2886 (prompt: 2696, completion: 190)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 보증금 반환 절차에 대한 정보 조회 (search_team)
+INFO -     - task_1: 보증금 반환 시 법적 보호 방법 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘...
+INFO - Analyzing intent for query: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3444 (prompt: 3186, completion: 258)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['보증금', '반환', '법적', '보호', '절차'], 'sub_intents': ['LEGAL_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['보증금 반환 절차 설명', '법적 보호 방법 설명'], 'entities': {'action_verbs': ['알려주고', '설명해줘']}, 'reasoning': '1단계(구조): 보증금 반환 절차와 법적 보호 방법에 대한 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 절차와 법적 보호 방안 필요. 3단계(복잡도): 중 - 두 가지 독립적 요청이지만 서로 관련된 주제. 4단계(처리): 보증금 반환 절차에 대한 정보 검색과 법적 보호 방법에 대한 분석 필요. 5단계(검증): 두 가지 요청이 모두 포함되어 있어 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2569 (prompt: 2371, completion: 198)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 보증금 반환 절차와 법적 보호 방법을 요청하고 있습니다. 이는 단순한 정보 조회가 아니라 법률적 조언과 상황 분석이 필요합니다. 2단계: 복잡도가 높습니다. 보증금 반환 절차에 대한 법률 정보 검색이 필요하고, 그에 따른 법적 보호 방법을 분석해야 합니다. 3단계: 법률 정보 검색 후, 그 정보를 바탕으로 법적 보호 방법을 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순 법률 조회로는 충분하지 않으며, 분석이 필수적입니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 보증금 반환 절차 알려주고 법적 보호 방법도 설명해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2904 (prompt: 2712, completion: 192)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 24.33초)
+INFO - 
+================================================================================
+INFO - [35] 복합 질문 테스트: D015
+INFO - 질문: 서초 아파트 가격 조회하고 상승률 분석해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 서초 아파트 가격 조회하고 상승률 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3399 (prompt: 3181, completion: 218)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.9, 'keywords': ['서초', '아파트', '가격', '상승률', '조회', '분석'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'location': '서초', 'property_type': '아파트', 'action_verbs': ['조회', '분석']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 가격 조회와 상승률 분석 포함. 2단계(유형): 정보 확인형 - 가격과 상승률에 대한 사실 확인 필요. 3단계(복잡도): 중 - 두 가지 독립적 조회가 필요. 4단계(처리): 가격 데이터 조회와 상승률 분석 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 MARKET_INQUIRY로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2556 (prompt: 2367, completion: 189)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 서초 아파트의 가격 조회와 상승률 분석을 요청했습니다. 이는 단순한 정보 조회가 아니라, 시세 데이터 수집 후 그 데이터를 기반으로 상승률을 분석해야 하므로 search_team과 analysis_team이 필요합니다. 2단계: 중간 복잡도로, 시세 조회 후 분석이 필요합니다. 3단계: 시세 데이터가 분석에 필요하므로 순차적으로 진행해야 합니다. 4단계: search_team이 시세를 조회한 후, analysis_team이 상승률을 분석하는 구조로, 두 팀 모두 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 서초 아파트 가격 조회하고 상승률 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2864 (prompt: 2690, completion: 174)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 서초 아파트 시세 조회 (search_team)
+INFO -     - task_1: 서초 아파트 상승률 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 서초 아파트 가격 조회하고 상승률 분석해줘...
+INFO - Analyzing intent for query: 서초 아파트 가격 조회하고 상승률 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3422 (prompt: 3181, completion: 241)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['서초', '아파트', '가격', '상승률', '조회', '분석'], 'sub_intents': [], 'is_compound': True, 'decomposed_tasks': ['서초 아파트 가격 조회', '서초 아파트 상승률 분석'], 'entities': {'location': '서초', 'property_type': '아파트', 'action_verbs': ['조회', '분석']}, 'reasoning': '1단계(구조): 두 개의 요청(가격 조회 + 상승률 분석) 포함. 2단계(유형): 정보 확인형 - 가격과 상승률에 대한 정보 요청. 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 검색 + 분석 필요. 5단계(검증): 두 가지 요청 모두 MARKET_INQUIRY에 해당하므로 주 의도는 MARKET_INQUIRY로 설정.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2563 (prompt: 2367, completion: 196)
+INFO - LLM agent selection reasoning: 1단계: 사용자는 서초 아파트의 가격 조회와 상승률 분석을 요청했습니다. 이는 단순한 정보 조회가 아니라, 가격 데이터 수집 후 상승률을 분석해야 하므로 search_team과 analysis_team이 필요합니다. 2단계: 중간 복잡도로, 시세 조회 후 분석이 필요합니다. 3단계: 시세 데이터가 필요하므로 search_team이 먼저 실행되고, 그 결과를 바탕으로 analysis_team이 상승률을 분석해야 합니다. 4단계: search_team이 시세를 조회한 후, analysis_team이 상승률을 분석하는 순서로 진행해야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 시세조회 (confidence: 0.85)
+INFO - Decomposing query: 서초 아파트 가격 조회하고 상승률 분석해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2891 (prompt: 2716, completion: 175)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 시세조회 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 24.50초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+================================================================================
+INFO - [36] 복합 질문 테스트: D016
+INFO - 질문: 전세자금대출 상품 찾고 금리 비교해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 전세자금대출 상품 찾고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3397 (prompt: 3183, completion: 214)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['전세자금대출', '상품', '금리', '비교'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '전세자금대출', 'action_verbs': ['찾고', '비교']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 전세자금대출 상품과 금리 비교 요청. 2단계(유형): 정보 확인형 - 대출 상품과 금리에 대한 정보 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 상품과 금리 정보 검색만 필요. 5단계(검증): 단순 정보 요청이므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2517 (prompt: 2366, completion: 151)
+INFO - LLM agent selection reasoning: 1단계: 전세자금대출 상품 검색과 금리 비교가 필요하므로 search_team이 필요합니다. 2단계: 금리 비교는 단순 정보 조회가 아닌 여러 상품을 비교해야 하므로 analysis_team이 필요합니다. 3단계: search_team이 대출 상품 정보를 수집한 후, analysis_team이 이를 바탕으로 금리를 비교하는 순차적 의존 관계가 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.90
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 전세자금대출 상품 찾고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2883 (prompt: 2693, completion: 190)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 전세자금대출 상품 정보 조회 (search_team)
+INFO -     - task_1: 대출 상품의 금리 비교 분석 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 전세자금대출 상품 찾고 금리 비교해줘...
+INFO - Analyzing intent for query: 전세자금대출 상품 찾고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3400 (prompt: 3183, completion: 217)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.9, 'keywords': ['전세자금대출', '상품', '금리', '비교'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'loan_type': '전세자금대출', 'action_verbs': ['찾다', '비교하다']}, 'reasoning': '1단계(구조): 단순 정보 요청으로 전세자금대출 상품과 금리 비교 요청. 2단계(유형): 정보 확인형 - 대출 상품과 금리에 대한 정보 확인 필요. 3단계(복잡도): 저 - 단일 개념 확인. 4단계(처리): 대출 상품과 금리 정보 검색 필요. 5단계(검증): 단순 정보 제공으로 충분하므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2543 (prompt: 2366, completion: 177)
+INFO - LLM agent selection reasoning: 1단계: 전세자금대출 상품 검색과 금리 비교가 필요. 2단계: 대출 상품 검색은 단순 정보 조회이지만, 금리 비교는 분석이 필요하므로 중간 복잡도로 판단. 3단계: 대출 상품 정보를 검색한 후, 그 정보를 바탕으로 금리를 비교해야 하므로 순차적 의존성이 존재. 4단계: search_team이 대출 상품 정보를 수집한 후, analysis_team이 그 정보를 분석하여 금리를 비교할 수 있도록 해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 대출상담 (confidence: 0.90)
+INFO - Decomposing query: 전세자금대출 상품 찾고 금리 비교해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2905 (prompt: 2718, completion: 187)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 대출상담 (confidence: 0.90) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 45.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 25.30초)
+INFO - 
+================================================================================
+INFO - [37] 복합 질문 테스트: D017
+INFO - 질문: 계약서 특약사항 검토하고 수정안 제시해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 계약서 특약사항 검토하고 수정안 제시해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3392 (prompt: 3183, completion: 209)
+INFO - LLM Intent Analysis Result: {'intent': 'CONTRACT_REVIEW', 'confidence': 0.85, 'keywords': ['계약서', '특약사항', '검토', '수정안'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'contract_type': '계약서', 'action_verbs': ['검토', '제시']}, 'reasoning': '1단계(구조): 계약서의 특약사항 검토 및 수정안 제시 요청. 2단계(유형): 검토 및 수정 요청으로 평가/판단형. 3단계(복잡도): 중 - 계약서 검토와 수정 제안이 포함됨. 4단계(처리): 계약서 분석 및 수정사항 제안 필요. 5단계(검증): 계약서 검토 요청이므로 CONTRACT_REVIEW로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2552 (prompt: 2366, completion: 186)
+INFO - LLM agent selection reasoning: 1단계: 계약서 특약사항 검토 및 수정안 제시가 필요하므로, 법률 정보 검색이 필요하고, 문서 검토 및 수정이 필요하다. 2단계: 중간 복잡도 (법률 검토 + 문서 수정). 3단계: search_team이 법률 정보를 수집한 후, document_team이 계약서의 특약사항을 검토하고 수정안을 제시해야 하므로 순차적 의존성이 있다. 4단계: 법률 정보 검색 후 문서 팀이 계약서 수정안을 작성할 수 있다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'document_team']
+INFO -   의도: 계약서검토
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'document_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 계약서 특약사항 검토하고 수정안 제시해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2858 (prompt: 2693, completion: 165)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 계약서 특약사항 검토 (search_team)
+INFO -     - task_1: 수정안 제안 생성 (document_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 계약서 특약사항 검토하고 수정안 제시해줘...
+INFO - Analyzing intent for query: 계약서 특약사항 검토하고 수정안 제시해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3398 (prompt: 3183, completion: 215)
+INFO - LLM Intent Analysis Result: {'intent': 'CONTRACT_REVIEW', 'confidence': 0.85, 'keywords': ['계약서', '특약사항', '검토', '수정안'], 'sub_intents': [], 'is_compound': False, 'decomposed_tasks': [], 'entities': {'contract_type': '계약서', 'action_verbs': ['검토', '제시']}, 'reasoning': '1단계(구조): 계약서의 특약사항 검토 및 수정 요청 포함. 2단계(유형): 검토 및 수정 제안 요청형 - 단순 정보가 아닌 분석과 제안 필요. 3단계(복잡도): 중 - 계약서 검토와 수정안 제시가 필요. 4단계(처리): 계약서 분석 및 수정사항 제안 필요. 5단계(검증): 계약서 검토 요청이므로 CONTRACT_REVIEW로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2557 (prompt: 2366, completion: 191)
+INFO - LLM agent selection reasoning: 1단계: 계약서의 특약사항을 검토하고 수정안을 제시하는 요청이므로, 법률 정보 검색이 필요하고, 문서 검토 및 수정이 필요하다. 2단계: 중간 복잡도로, 법률 정보 확인 후 문서 수정이 필요하다. 3단계: 법률 정보 검색 후 문서 팀이 계약서 수정안을 제시하는 순차적 의존 관계가 있다. 4단계: '검토하고 수정안 제시'라는 요청은 단순한 법률 조회로는 해결되지 않으므로, document_team이 필요하다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'document_team']
+INFO - Intent analyzed: 계약서검토 (confidence: 0.85)
+INFO - Decomposing query: 계약서 특약사항 검토하고 수정안 제시해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2876 (prompt: 2714, completion: 162)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'document_team' depends on missing 'task_0'", "Agent 'document_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 계약서검토 (confidence: 0.85) | Strategy: sequential | Agents: search_team, document_team | Estimated time: 50.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 26.49초)
+INFO - 
+================================================================================
+INFO - [38] 복합 질문 테스트: D018
+INFO - 질문: 성동구 시세 알려주고 투자 수익률 계산해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 성동구 시세 알려주고 투자 수익률 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3441 (prompt: 3184, completion: 257)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['성동구', '시세', '투자', '수익률'], 'sub_intents': ['LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['성동구 시세 조회', '투자 수익률 계산'], 'entities': {'location': '성동구', 'action_verbs': ['알려주고', '계산해줘']}, 'reasoning': '1단계(구조): 두 개의 요청(시세 조회 + 투자 수익률 계산) 포함. 2단계(유형): 정보 확인형(시세) + 해결책 요청형(수익률 계산). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 데이터 검색 + 수익률 계산 필요. 5단계(검증): 주 의도는 시세 조회이므로 MARKET_INQUIRY로 분류, 부가 의도로 투자 수익률 계산 포함.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2512 (prompt: 2365, completion: 147)
+INFO - LLM agent selection reasoning: 1단계: 성동구 시세 조회와 투자 수익률 계산이 필요. 2단계: 중간 복잡도(시세 조회 후 수익률 분석 필요). 3단계: 시세 데이터가 필요하므로 순차적 의존성 존재. 4단계: search_team으로 시세를 조회한 후, analysis_team으로 투자 수익률을 계산해야 함.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 시세조회
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 성동구 시세 알려주고 투자 수익률 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2871 (prompt: 2693, completion: 178)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 성동구 아파트 시세 조회 (search_team)
+INFO -     - task_1: 투자 수익률 계산 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 성동구 시세 알려주고 투자 수익률 계산해줘...
+INFO - Analyzing intent for query: 성동구 시세 알려주고 투자 수익률 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3436 (prompt: 3184, completion: 252)
+INFO - LLM Intent Analysis Result: {'intent': 'MARKET_INQUIRY', 'confidence': 0.85, 'keywords': ['성동구', '시세', '투자', '수익률'], 'sub_intents': ['LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['성동구 시세 조회', '투자 수익률 계산'], 'entities': {'location': '성동구', 'action_verbs': ['알려주고', '계산해줘']}, 'reasoning': '1단계(구조): 두 개의 요청(시세 조회 + 투자 수익률 계산) 포함. 2단계(유형): 정보 확인형(시세) + 해결책 요청형(수익률 계산). 3단계(복잡도): 중 - 두 가지 독립적 조회 필요. 4단계(처리): 시세 데이터 검색 + 수익률 계산 필요. 5단계(검증): 주 의도는 시세 조회이므로 MARKET_INQUIRY로 분류, 부가 의도로 투자 수익률 계산 포함.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2542 (prompt: 2365, completion: 177)
+INFO - LLM agent selection reasoning: 1단계: 성동구 시세 조회와 투자 수익률 계산이 필요하므로, 시세 정보를 수집하기 위해 search_team이 필요하고, 수집된 데이터를 바탕으로 투자 수익률을 계산하기 위해 analysis_team이 필요합니다. 2단계: 중간 복잡도 (검색 + 분석). 3단계: 시세 데이터가 필요하므로 순차적으로 진행해야 합니다. 4단계: search_team으로 시세를 조회한 후, analysis_team으로 투자 수익률을 계산할 수 있습니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 시세조회 (confidence: 0.85)
+INFO - Decomposing query: 성동구 시세 알려주고 투자 수익률 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2893 (prompt: 2717, completion: 176)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 시세조회 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 24.25초)
+INFO - 
+================================================================================
+INFO - [39] 복합 질문 테스트: D019
+INFO - 질문: 임대차 계약 해지 조건 확인하고 위약금 계산해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: 임대차 계약 해지 조건 확인하고 위약금 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3457 (prompt: 3184, completion: 273)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['임대차', '계약', '해지', '위약금', '조건'], 'sub_intents': ['LEGAL_CONSULT', 'LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['임대차 계약 해지 조건 확인', '위약금 계산'], 'entities': {'contract_type': '임대차 계약', 'action_verbs': ['확인', '계산']}, 'reasoning': '1단계(구조): 임대차 계약 해지 조건 확인 + 위약금 계산 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 계산과 조건 확인 필요. 3단계(복잡도): 중 - 계약 해지 조건과 위약금 계산이 포함된 복합적인 요청. 4단계(처리): 계약 해지 조건 법률 검색 + 위약금 계산 필요. 5단계(검증): LEGAL_CONSULT와 LOAN_CONSULT가 모두 필요하므로 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2556 (prompt: 2369, completion: 187)
+INFO - LLM agent selection reasoning: 1단계: 임대차 계약 해지 조건과 위약금 계산을 요청하였으므로 법률 정보 검색과 데이터 분석이 필요합니다. 2단계: 복잡한 질문으로, 법률적 조건 확인 후 위약금 계산이 필요하므로 중간 복잡도입니다. 3단계: 법률 정보를 검색한 후, 그 결과를 바탕으로 위약금을 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순히 법률 검색만으로는 위약금 계산이 불가능하므로 분석 팀이 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 종합분석
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: 임대차 계약 해지 조건 확인하고 위약금 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2877 (prompt: 2694, completion: 183)
+INFO - Successfully decomposed into 2 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 2
+INFO -   실행 모드: sequential
+INFO -     - task_0: 임대차 계약 해지 조건 관련 법률 정보 조회 (search_team)
+INFO -     - task_1: 위약금 계산 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: 임대차 계약 해지 조건 확인하고 위약금 계산해줘...
+INFO - Analyzing intent for query: 임대차 계약 해지 조건 확인하고 위약금 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3445 (prompt: 3184, completion: 261)
+INFO - LLM Intent Analysis Result: {'intent': 'COMPREHENSIVE', 'confidence': 0.85, 'keywords': ['임대차', '계약', '해지', '위약금', '조건'], 'sub_intents': ['LEGAL_CONSULT', 'LOAN_CONSULT'], 'is_compound': True, 'decomposed_tasks': ['임대차 계약 해지 조건 확인', '위약금 계산'], 'entities': {'contract_type': '임대차', 'action_verbs': ['확인', '계산']}, 'reasoning': '1단계(구조): 임대차 계약 해지 조건과 위약금 계산 요청 포함. 2단계(유형): 해결책 요청형 - 단순 정보가 아닌 구체적인 조건과 계산 필요. 3단계(복잡도): 중 - 계약 해지 조건과 위약금 계산이라는 두 가지 작업 포함. 4단계(처리): 계약 해지 조건 확인과 위약금 계산을 위한 정보 검색 필요. 5단계(검증): 두 가지 작업이 포함되어 있어 COMPREHENSIVE로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2547 (prompt: 2369, completion: 178)
+INFO - LLM agent selection reasoning: 1단계: 임대차 계약 해지 조건과 위약금 계산을 요청하는 복합적인 질문입니다. 2단계: 법률 정보 검색이 필요하고, 위약금 계산은 데이터 분석이 필요하므로 중간 복잡도로 판단했습니다. 3단계: 법률 정보를 먼저 확인한 후, 그 정보를 바탕으로 위약금을 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순 법률 검색만으로는 위약금 계산이 불가능하므로 analysis_team이 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 종합분석 (confidence: 0.85)
+INFO - Decomposing query: 임대차 계약 해지 조건 확인하고 위약금 계산해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2892 (prompt: 2715, completion: 177)
+INFO - Successfully decomposed into 2 tasks
+INFO - Query decomposed into 2 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 종합분석 (confidence: 0.85) | Strategy: sequential | Agents: search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 2
+INFO - 
+\u2713 테스트 성공 (소요시간: 28.83초)
+INFO - 
+================================================================================
+INFO - [40] 복합 질문 테스트: D020
+INFO - 질문: LTV, DTI 규제 확인하고 대출 가능액 산정해줘
+INFO - ================================================================================
+INFO - 
+[Step 1] Intent 분석...
+INFO - Analyzing intent for query: LTV, DTI 규제 확인하고 대출 가능액 산정해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3443 (prompt: 3186, completion: 257)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.85, 'keywords': ['LTV', 'DTI', '대출', '가능액', '규제'], 'sub_intents': [], 'is_compound': True, 'decomposed_tasks': ['LTV 규제 확인', 'DTI 규제 확인', '대출 가능액 산정'], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['확인', '산정']}, 'reasoning': '1단계(구조): LTV와 DTI 규제 확인 요청 + 대출 가능액 산정 요청 포함. 2단계(유형): 대출 관련 정보 확인 및 계산 요청. 3단계(복잡도): 중 - 두 가지 규제 확인과 대출 가능액 산정이 필요. 4단계(처리): LTV와 DTI 규제 검색 후 대출 가능액 계산 필요. 5단계(검증): 대출 관련 정보와 계산이 모두 포함되어 있어 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2562 (prompt: 2370, completion: 192)
+INFO - LLM agent selection reasoning: 1단계: LTV와 DTI 규제를 확인하고 대출 가능액을 산정하는 요청이므로, 법률 정보 검색과 데이터 분석이 필요합니다. 2단계: 대출 상담은 중간 복잡도로, 검색과 분석이 모두 필요합니다. 3단계: LTV와 DTI 규제 정보를 검색한 후, 이를 바탕으로 대출 가능액을 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순히 법률 정보만으로는 대출 가능액 산정이 불가능하므로, 분석 팀이 반드시 포함되어야 합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO -   의도: 대출상담
+INFO -   신뢰도: 0.85
+INFO -   추천 Agent: ['search_team', 'analysis_team']
+INFO - 
+[Step 2] Query Decomposition...
+INFO - Decomposing query: LTV, DTI 규제 확인하고 대출 가능액 산정해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2973 (prompt: 2696, completion: 277)
+INFO - Successfully decomposed into 3 tasks
+INFO -   복합 질문: True
+INFO -   작업 수: 3
+INFO -   실행 모드: conditional
+INFO -     - task_0: LTV 규제 정보 조회 (search_team)
+INFO -     - task_1: DTI 규제 정보 조회 (search_team)
+INFO -     - task_2: 대출 가능액 산정 (analysis_team)
+INFO - 
+[Step 3] Comprehensive Plan 생성...
+INFO - Creating comprehensive plan for query: LTV, DTI 규제 확인하고 대출 가능액 산정해줘...
+INFO - Analyzing intent for query: LTV, DTI 규제 확인하고 대출 가능액 산정해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: intent_analysis | Model: gpt-4o-mini-2024-07-18 | Tokens: 3442 (prompt: 3186, completion: 256)
+INFO - LLM Intent Analysis Result: {'intent': 'LOAN_CONSULT', 'confidence': 0.85, 'keywords': ['LTV', 'DTI', '대출', '가능액', '산정'], 'sub_intents': [], 'is_compound': True, 'decomposed_tasks': ['LTV 규제 확인', 'DTI 규제 확인', '대출 가능액 산정'], 'entities': {'loan_type': '주택담보대출', 'action_verbs': ['확인', '산정']}, 'reasoning': '1단계(구조): LTV와 DTI 규제 확인 요청 + 대출 가능액 산정 포함. 2단계(유형): 대출 관련 정보 확인 및 계산 요청. 3단계(복잡도): 중 - 두 가지 규제 확인과 대출 가능액 산정이 필요. 4단계(처리): LTV와 DTI 규제 검색 후 대출 가능액 계산 필요. 5단계(검증): 대출 관련 정보와 계산이 포함되어 있으므로 LOAN_CONSULT로 분류.'}
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: agent_selection | Model: gpt-4o-mini-2024-07-18 | Tokens: 2566 (prompt: 2370, completion: 196)
+INFO - LLM agent selection reasoning: 1단계: 대출 가능액 산정에는 LTV와 DTI 규제를 확인해야 하므로 법률 정보 검색이 필요하고, 대출 가능액 계산을 위해 데이터 분석이 필요합니다. 2단계: 대출 상담은 검색과 분석이 결합된 중간 복잡도 작업입니다. 3단계: LTV와 DTI 정보를 검색한 후, 이를 바탕으로 대출 가능액을 분석해야 하므로 순차적 의존성이 있습니다. 4단계: 단순 검색만으로는 대출 가능액 산정이 불가능하므로, search_team과 analysis_team이 모두 필요합니다.
+INFO - \u2705 Primary LLM selected agents: ['search_team', 'analysis_team']
+INFO - Intent analyzed: 대출상담 (confidence: 0.85)
+INFO - Decomposing query: LTV, DTI 규제 확인하고 대출 가능액 산정해줘...
+INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO - LLM Call: query_decomposition | Model: gpt-4o-mini-2024-07-18 | Tokens: 2997 (prompt: 2720, completion: 277)
+INFO - Successfully decomposed into 3 tasks
+INFO - Query decomposed into 3 tasks
+WARNING - Plan validation errors: ["Agent 'search_team' not found in registry", "Agent 'search_team' not found in registry", "Agent 'analysis_team' depends on missing 'task_0'", "Agent 'analysis_team' depends on missing 'task_1'", "Agent 'analysis_team' not found in registry"]
+INFO - Optimizing execution plan
+INFO - Comprehensive plan created: Intent: 대출상담 (confidence: 0.85) | Strategy: sequential | Agents: search_team, search_team, analysis_team | Estimated time: 35.0s
+INFO -   전략: sequential
+INFO -   단계 수: 3
+INFO - 
+\u2713 테스트 성공 (소요시간: 29.95초)
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+결과 저장: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 
+
+================================================================================
+INFO - 테스트 결과 요약
+INFO - ================================================================================
+INFO - 
+[단일 질문 테스트]
+INFO -   성공: 20/20
+INFO -   검증 통과: 0/20
+INFO - 
+[복합 질문 테스트]
+INFO -   성공: 20/20
+INFO -   검증 통과: 0/20
+INFO - 
+평균 실행 시간: 17.50초
+INFO - 
+결과 파일: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+INFO - 로그 파일: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_log.txt
+INFO - 
+================================================================================
+Backend dir: C:\kdy\Projects\holmesnyangz\beta_v001\backend
+sys.path[0]: C:\kdy\Projects\holmesnyangz\beta_v001\backend
+
+테스트 완료!
+결과: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_results.json
+로그: C:\kdy\Projects\holmesnyangz\beta_v001\backend\app\service_agent\reports\phase1_test_log.txt
