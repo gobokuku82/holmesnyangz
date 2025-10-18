@@ -26,7 +26,8 @@
       "Bash(powershell.exe:*)",
       "Bash(python analyze_chunk_metadata.py:*)",
       "Bash(python scripts/verify_faiss_db.py:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

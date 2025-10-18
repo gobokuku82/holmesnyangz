@@ -1,6 +1,6 @@
 """
 Hybrid Legal Search System
-계층적 하이브리드 구조: SQLite (메타데이터) + ChromaDB (벡터 검색)
+계층적 하이브리드 구조: SQLite (메타데이터) + FAISS (벡터 검색)
 
 아키텍처:
 1. SQLite: 빠른 메타데이터 쿼리 및 필터링
@@ -8,12 +8,13 @@ Hybrid Legal Search System
    - 조항 상세 정보 (articles 테이블)
    - 법령 간 참조 관계 (legal_references 테이블)
 
-2. ChromaDB: 시맨틱 벡터 검색
+2. FAISS: 시맨틱 벡터 검색
    - 문맥 기반 법률 조항 검색
    - 임베딩 모델: KURE_v1
+   - Enhanced 임베딩: [장] 제목\n본문
 
 검색 전략:
-- Hybrid Search: SQLite 필터 + ChromaDB 벡터 검색
+- Hybrid Search: SQLite 필터 + FAISS 벡터 검색
 - Metadata-First: 빠른 메타데이터 기반 필터링 후 벡터 검색
 - Vector-First: 벡터 검색 후 SQLite로 상세 정보 보강
 """
@@ -24,9 +25,10 @@ from typing import Dict, Any, List, Optional
 from pathlib import Path
 from datetime import datetime
 import json
+import pickle
 
-import chromadb
-from chromadb.config import Settings
+import faiss
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 # Config import 추가
@@ -39,34 +41,31 @@ logger = logging.getLogger(__name__)
 class HybridLegalSearch:
     """
     하이브리드 법률 검색 시스템
-    SQLite 메타데이터 + ChromaDB 벡터 검색
+    SQLite 메타데이터 + FAISS 벡터 검색
     """
 
     def __init__(
         self,
         sqlite_db_path: Optional[str] = None,
-        chroma_db_path: Optional[str] = None,
-        embedding_model_path: Optional[str] = None,
-        collection_name: str = "korean_legal_documents"
+        faiss_db_path: Optional[str] = None,
+        embedding_model_path: Optional[str] = None
     ):
         """
         초기화 - Config를 사용하여 경로 자동 설정
 
         Args:
             sqlite_db_path: SQLite DB 경로 (None이면 Config에서 가져옴)
-            chroma_db_path: ChromaDB 경로 (None이면 Config에서 가져옴)
+            faiss_db_path: FAISS DB 경로 (None이면 Config에서 가져옴)
             embedding_model_path: 임베딩 모델 경로 (None이면 Config에서 가져옴)
-            collection_name: ChromaDB 컬렉션 이름
         """
         # Config에서 경로 가져오기
         self.sqlite_db_path = sqlite_db_path or str(Config.LEGAL_PATHS["sqlite_db"])
-        self.chroma_db_path = chroma_db_path or str(Config.LEGAL_PATHS["chroma_db"])
+        self.faiss_db_path = faiss_db_path or str(Config.LEGAL_PATHS["faiss_db"])
         self.embedding_model_path = embedding_model_path or str(Config.LEGAL_PATHS["embedding_model"])
-        self.collection_name = collection_name
 
         # 초기화
         self._init_sqlite()
-        self._init_chromadb()
+        self._init_faiss()
         self._init_embedding_model()
 
         logger.info("HybridLegalSearch initialized successfully")
@@ -81,17 +80,27 @@ class HybridLegalSearch:
             logger.error(f"SQLite initialization failed: {e}")
             raise
 
-    def _init_chromadb(self):
-        """ChromaDB 초기화"""
+    def _init_faiss(self):
+        """FAISS 초기화"""
         try:
-            self.chroma_client = chromadb.PersistentClient(
-                path=self.chroma_db_path,
-                settings=Settings(anonymized_telemetry=False)
-            )
-            self.collection = self.chroma_client.get_collection(self.collection_name)
-            logger.info(f"ChromaDB loaded: {self.chroma_db_path} ({self.collection.count()} documents)")
+            # FAISS 인덱스 로드
+            faiss_index_path = Path(self.faiss_db_path) / "legal_documents.index"
+            self.faiss_index = faiss.read_index(str(faiss_index_path))
+
+            # 메타데이터 로드
+            metadata_path = Path(self.faiss_db_path) / "legal_metadata.pkl"
+            with open(metadata_path, 'rb') as f:
+                self.faiss_metadata = pickle.load(f)
+
+            # 빠른 조회를 위한 chunk_id → metadata dict 생성
+            self._faiss_meta_dict = {
+                meta.get("chunk_id"): meta
+                for meta in self.faiss_metadata
+            }
+
+            logger.info(f"FAISS loaded: {self.faiss_index.ntotal} vectors, {len(self.faiss_metadata)} metadata")
         except Exception as e:
-            logger.error(f"ChromaDB initialization failed: {e}")
+            logger.error(f"FAISS initialization failed: {e}")
             raise
 
     def _init_embedding_model(self):
@@ -188,7 +197,7 @@ class HybridLegalSearch:
         return [dict(row) for row in rows]
 
     def get_chunk_ids_for_article(self, article_id: int) -> List[str]:
-        """조항의 ChromaDB chunk ID 목록 조회"""
+        """조항의 FAISS chunk ID 목록 조회"""
         cursor = self.sqlite_conn.cursor()
         cursor.execute(
             "SELECT chunk_ids FROM articles WHERE article_id = ?",
@@ -204,8 +213,140 @@ class HybridLegalSearch:
         return []
 
     # =========================================================================
-    # ChromaDB 벡터 검색
+    # 쿼리 전처리
     # =========================================================================
+
+    def _enhance_query_for_search(self, query: str) -> str:
+        """
+        쿼리를 문서 형식과 유사하게 변환
+
+        문서 형식: "[장] 제목\n본문"
+        쿼리 형식: "키워드\n원본 쿼리"
+
+        Args:
+            query: 원본 검색 쿼리
+
+        Returns:
+            Enhanced 쿼리 (키워드 + 원본)
+        """
+        try:
+            import re
+
+            # 법률 용어 리스트 (확장 가능)
+            legal_terms = [
+                # 공인중개사 관련
+                "자격시험", "응시", "조건", "등록", "중개사", "중개업", "공인중개사",
+                # 임대차 관련
+                "전세금", "인상률", "임대차", "계약", "보증금", "갱신", "임차인",
+                "임대인", "월세", "전세", "계약서", "설명의무",
+                # 주택 관련
+                "주택", "공동주택", "아파트", "다세대", "분양", "임대주택",
+                # 법률 용어
+                "금지행위", "손해배상", "권리", "의무", "벌칙", "과태료",
+                # 절차 관련
+                "신고", "허가", "승인", "검사", "확인", "제출"
+            ]
+
+            # 쿼리에서 키워드 추출
+            keywords = []
+
+            # 법률 용어 매칭 (조사 포함)
+            for term in legal_terms:
+                # 조사 포함 패턴
+                patterns = [term, f"{term}에", f"{term}의", f"{term}을", f"{term}를",
+                           f"{term}은", f"{term}는", f"{term}이", f"{term}가"]
+                if any(p in query for p in patterns):
+                    if term not in keywords:  # 중복 방지
+                        keywords.append(term)
+
+            # 키워드가 있으면 제목 형식으로 변환
+            if keywords:
+                # 최대 3개 키워드 사용
+                title = " ".join(keywords[:3])
+                enhanced = f"{title}\n{query}"
+                logger.debug(f"Query enhanced: '{query}' → '{enhanced}'")
+                return enhanced
+
+            # 키워드 없으면 원본 그대로
+            return query
+
+        except Exception as e:
+            logger.warning(f"Query enhancement failed: {e}")
+            return query
+
+    # =========================================================================
+    # FAISS 벡터 검색
+    # =========================================================================
+
+    def _rerank_by_legal_hierarchy(
+        self,
+        results: Dict[str, Any],
+        n_results: int = 10
+    ) -> Dict[str, Any]:
+        """
+        법률 계층 구조를 고려하여 검색 결과 재정렬
+
+        법률 계층: 법률 > 시행령 > 시행규칙 > 대법원규칙
+
+        전략:
+        1. 벡터 유사도 기반으로 후보 검색 (n_results * 3)
+        2. doc_type 우선순위에 따라 가중치 부여
+        3. 조정된 스코어로 재정렬
+        4. 상위 n_results 반환
+
+        Args:
+            results: FAISS 검색 결과
+            n_results: 최종 반환할 결과 개수
+
+        Returns:
+            재정렬된 검색 결과
+        """
+        # doc_type 우선순위 가중치
+        doc_type_weights = {
+            "법률": 3.0,          # 최우선
+            "시행령": 2.0,        # 2순위
+            "시행규칙": 1.0,      # 3순위
+            "대법원규칙": 1.5,    # 중간
+            "용어집": 0.5         # 최하위
+        }
+
+        # 결과와 스코어 리스트
+        reranked = []
+
+        for i in range(len(results["ids"])):
+            meta = results["metadatas"][i]
+            distance = results["distances"][i]
+            doc_type = meta.get("doc_type", "시행규칙")
+
+            # 유사도 스코어 (distance가 낮을수록 유사도 높음)
+            similarity_score = 1.0 / (1.0 + distance)
+
+            # doc_type 가중치 적용
+            weight = doc_type_weights.get(doc_type, 1.0)
+
+            # 최종 스코어 = 유사도 * 가중치
+            final_score = similarity_score * weight
+
+            reranked.append({
+                "index": i,
+                "score": final_score,
+                "doc_type": doc_type,
+                "distance": distance
+            })
+
+        # 스코어 기준 정렬 (높은 순)
+        reranked.sort(key=lambda x: x["score"], reverse=True)
+
+        # 상위 n_results 선택
+        top_indices = [item["index"] for item in reranked[:n_results]]
+
+        # 재정렬된 결과 구성
+        return {
+            "ids": [results["ids"][i] for i in top_indices],
+            "documents": [results["documents"][i] for i in top_indices],
+            "metadatas": [results["metadatas"][i] for i in top_indices],
+            "distances": [results["distances"][i] for i in top_indices]
+        }
 
     def vector_search(
         self,
@@ -214,37 +355,68 @@ class HybridLegalSearch:
         where_filters: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        벡터 검색
+        벡터 검색 (FAISS)
 
         Args:
             query: 검색 쿼리
             n_results: 결과 개수
-            where_filters: ChromaDB 메타데이터 필터 (예: {"doc_type": "법률"})
+            where_filters: 메타데이터 필터 (예: {"doc_type": "법률"})
 
         Returns:
-            ChromaDB 검색 결과
+            FAISS 검색 결과 (ChromaDB와 동일한 형식)
         """
         try:
+            # ⭐ 쿼리 전처리 추가
+            enhanced_query = self._enhance_query_for_search(query)
+
             # 쿼리 임베딩
-            query_embedding = self.embedding_model.encode(query, convert_to_tensor=False).tolist()
+            query_embedding = self.embedding_model.encode(enhanced_query, convert_to_tensor=False)
+            query_embedding = query_embedding.astype('float32').reshape(1, -1)
 
-            # ChromaDB 검색
-            search_params = {
-                "query_embeddings": [query_embedding],
-                "n_results": n_results
+            # ⭐ FAISS 검색 (법률 계층 재정렬을 위해 3배 검색)
+            search_n = n_results * 3
+            distances, indices = self.faiss_index.search(query_embedding, search_n)
+
+            # 결과 구성
+            ids = []
+            documents = []
+            metadatas = []
+            result_distances = []
+
+            for i, idx in enumerate(indices[0]):
+                if idx >= 0 and idx < len(self.faiss_metadata):
+                    meta = self.faiss_metadata[idx]
+
+                    # where_filters 적용
+                    if where_filters:
+                        skip = False
+                        for key, value in where_filters.items():
+                            if meta.get(key) != value:
+                                skip = True
+                                break
+                        if skip:
+                            continue
+
+                    ids.append(meta.get("chunk_id", f"chunk_{idx}"))
+                    documents.append(meta.get("content", ""))
+                    metadatas.append(meta)
+                    result_distances.append(float(distances[0][i]))
+
+            # 임시 결과 (재정렬 전)
+            temp_results = {
+                "ids": ids,
+                "documents": documents,
+                "metadatas": metadatas,
+                "distances": result_distances
             }
 
-            if where_filters:
-                search_params["where"] = where_filters
+            # ⭐ 법률 계층 구조 기반 재정렬
+            if len(ids) > 0:
+                final_results = self._rerank_by_legal_hierarchy(temp_results, n_results)
+            else:
+                final_results = temp_results
 
-            results = self.collection.query(**search_params)
-
-            return {
-                "ids": results["ids"][0] if results["ids"] else [],
-                "documents": results["documents"][0] if results["documents"] else [],
-                "metadatas": results["metadatas"][0] if results["metadatas"] else [],
-                "distances": results["distances"][0] if results["distances"] else []
-            }
+            return final_results
 
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
@@ -264,7 +436,7 @@ class HybridLegalSearch:
         is_tax_related: Optional[bool] = None
     ) -> List[Dict[str, Any]]:
         """
-        하이브리드 검색: SQLite 필터 + ChromaDB 벡터 검색
+        하이브리드 검색: SQLite 필터 + FAISS 벡터 검색
 
         Args:
             query: 검색 쿼리
@@ -279,7 +451,7 @@ class HybridLegalSearch:
         """
         logger.info(f"Hybrid search: query='{query}', doc_type={doc_type}, category={category}")
 
-        # 1단계: ChromaDB 벡터 검색
+        # 1단계: FAISS 벡터 검색
         where_filters = {}
         if doc_type:
             where_filters["doc_type"] = doc_type
@@ -349,7 +521,7 @@ class HybridLegalSearch:
             article_number: 조항 번호 (예: "제7조")
 
         Returns:
-            조항 상세 정보 + ChromaDB 내용
+            조항 상세 정보 + FAISS 내용
         """
         logger.info(f"Searching specific article: {law_title} {article_number}")
 
@@ -360,17 +532,19 @@ class HybridLegalSearch:
             logger.warning(f"Article not found: {law_title} {article_number}")
             return None
 
-        # ChromaDB에서 chunk 내용 조회
+        # FAISS에서 chunk 내용 조회
         chunk_ids = self.get_chunk_ids_for_article(article["article_id"])
 
         chunks = []
         if chunk_ids:
             try:
-                chroma_results = self.collection.get(ids=chunk_ids)
-                if chroma_results and chroma_results["documents"]:
-                    chunks = chroma_results["documents"]
+                # FAISS 메타데이터 dict에서 chunk_id로 검색 (O(1) 조회)
+                for chunk_id in chunk_ids:
+                    meta = self._faiss_meta_dict.get(chunk_id)
+                    if meta:
+                        chunks.append(meta.get("content", ""))
             except Exception as e:
-                logger.error(f"Failed to retrieve chunks from ChromaDB: {e}")
+                logger.error(f"Failed to retrieve chunks from FAISS: {e}")
 
         # 결과 구성
         return {
@@ -430,7 +604,7 @@ class HybridLegalSearch:
                 "tax_related": tax_related_count,
                 "delegation": delegation_count
             },
-            "chromadb_documents": self.collection.count()
+            "faiss_vectors": self.faiss_index.ntotal
         }
 
     def close(self):
@@ -554,13 +728,13 @@ def create_hybrid_legal_search(
         data_dir = backend_dir / "data" / "storage" / "legal_info"
 
     sqlite_db_path = str(data_dir / "sqlite_db" / "legal_metadata.db")
-    chroma_db_path = str(data_dir / "chroma_db")
+    faiss_db_path = str(data_dir / "faiss_db")
 
     # 임베딩 모델 경로
-    embedding_model_path = str(backend_dir / "app" / "service_agent" / "models" / "KURE_v1")
+    embedding_model_path = str(backend_dir / "app" / "ml_models" / "KURE_v1")
 
     return HybridLegalSearch(
         sqlite_db_path=sqlite_db_path,
-        chroma_db_path=chroma_db_path,
+        faiss_db_path=faiss_db_path,
         embedding_model_path=embedding_model_path
     )

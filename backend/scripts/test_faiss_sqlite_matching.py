@@ -181,6 +181,58 @@ def phase2_question_search(run_full_test=True):
     # 5. 질문별 검색 실행
     print(f"\n[5/6] {len(all_questions)}개 질문 검색 중...")
 
+    # 쿼리 전처리 함수 (hybrid_legal_search.py와 동일)
+    def enhance_query_for_search(query: str) -> str:
+        """쿼리를 문서 형식과 유사하게 변환"""
+        legal_terms = [
+            "자격시험", "응시", "조건", "등록", "중개사", "중개업", "공인중개사",
+            "전세금", "인상률", "임대차", "계약", "보증금", "갱신", "임차인",
+            "임대인", "월세", "전세", "계약서", "설명의무",
+            "주택", "공동주택", "아파트", "다세대", "분양", "임대주택",
+            "금지행위", "손해배상", "권리", "의무", "벌칙", "과태료",
+            "신고", "허가", "승인", "검사", "확인", "제출"
+        ]
+
+        keywords = []
+        for term in legal_terms:
+            patterns = [term, f"{term}에", f"{term}의", f"{term}을", f"{term}를",
+                       f"{term}은", f"{term}는", f"{term}이", f"{term}가"]
+            if any(p in query for p in patterns):
+                if term not in keywords:
+                    keywords.append(term)
+
+        if keywords:
+            title = " ".join(keywords[:3])
+            return f"{title}\n{query}"
+        return query
+
+    # 법률 계층 구조 재정렬 함수
+    def rerank_by_legal_hierarchy(results, n_results=3):
+        """법률 계층 구조를 고려하여 검색 결과 재정렬"""
+        doc_type_weights = {
+            "법률": 3.0,
+            "시행령": 2.0,
+            "시행규칙": 1.0,
+            "대법원규칙": 1.5,
+            "용어집": 0.5
+        }
+
+        reranked = []
+        for i, (result, dist) in enumerate(zip(results, distances[0][:len(results)])):
+            doc_type = result.get('doc_type', '시행규칙')
+            similarity_score = 1.0 / (1.0 + dist)
+            weight = doc_type_weights.get(doc_type, 1.0)
+            final_score = similarity_score * weight
+
+            reranked.append({
+                "index": i,
+                "score": final_score,
+                "result": result
+            })
+
+        reranked.sort(key=lambda x: x["score"], reverse=True)
+        return [item["result"] for item in reranked[:n_results]]
+
     results = []
     category_stats = defaultdict(lambda: {'total': 0, 'law_match': 0})
     law_frequency = defaultdict(int)
@@ -190,17 +242,18 @@ def phase2_question_search(run_full_test=True):
         if (i + 1) % 20 == 0:
             print(f"   진행 중: {i+1}/{len(all_questions)} ({(i+1)/len(all_questions)*100:.1f}%)")
 
-        # 질문 임베딩
+        # ⭐ 쿼리 전처리 추가
         question_text = question['question']
-        query_embedding = model.encode([question_text], convert_to_tensor=False).astype('float32')
+        enhanced_query = enhance_query_for_search(question_text)
 
-        # FAISS 검색 (Top 3)
-        distances, indices = index.search(query_embedding, 3)
+        # 질문 임베딩 (전처리된 쿼리 사용)
+        query_embedding = model.encode([enhanced_query], convert_to_tensor=False).astype('float32')
 
-        # 검색 결과 처리
-        search_results = []
-        law_matched = False
+        # ⭐ FAISS 검색 (재정렬을 위해 Top 9 검색)
+        distances, indices = index.search(query_embedding, 9)
 
+        # 임시 검색 결과 수집
+        temp_results = []
         for rank, (dist, idx) in enumerate(zip(distances[0], indices[0])):
             if idx >= len(faiss_metadata):
                 continue
@@ -221,27 +274,28 @@ def phase2_question_search(run_full_test=True):
             sqlite_result = cursor.fetchone()
 
             if sqlite_result:
-                law_title = sqlite_result['law_title']
-                article_number = sqlite_result['article_number']
-                article_title = sqlite_result['article_title']
-                doc_type = sqlite_result['doc_type']
-
-                search_results.append({
+                temp_results.append({
                     'rank': rank + 1,
-                    'law_title': law_title,
-                    'article_number': article_number,
-                    'article_title': article_title,
-                    'doc_type': doc_type,
+                    'law_title': sqlite_result['law_title'],
+                    'article_number': sqlite_result['article_number'],
+                    'article_title': sqlite_result['article_title'],
+                    'doc_type': sqlite_result['doc_type'],
                     'distance': float(dist),
                     'chunk_id': chunk_id
                 })
 
-                # 법령 빈도 카운트
-                law_frequency[law_title] += 1
+        # ⭐ 법률 계층 구조로 재정렬
+        search_results = rerank_by_legal_hierarchy(temp_results, n_results=3)
 
-                # related_law 매칭 확인
-                if question['related_law'] in law_title:
-                    law_matched = True
+        # 통계 수집
+        law_matched = False
+        for result in search_results:
+            # 법령 빈도 카운트
+            law_frequency[result['law_title']] += 1
+
+            # related_law 매칭 확인
+            if question['related_law'] in result['law_title']:
+                law_matched = True
 
         # 통계 업데이트
         category_stats[question['category_name']]['total'] += 1

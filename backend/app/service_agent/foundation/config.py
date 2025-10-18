@@ -44,7 +44,7 @@ class Config:
     # ============ Legal Search Paths ============
     LEGAL_INFO_BASE = BASE_DIR / "data" / "storage" / "legal_info"
     LEGAL_PATHS = {
-        "chroma_db": LEGAL_INFO_BASE / "chroma_db",                          # ChromaDB vector database
+        "faiss_db": LEGAL_INFO_BASE / "faiss_db",                            # FAISS vector database
         "sqlite_db": LEGAL_INFO_BASE / "sqlite_db" / "legal_metadata.db",   # SQLite metadata
         "embedding_model": BASE_DIR / "app" / "ml_models" / "KURE_v1",  # Korean Legal Embedding Model
     }
